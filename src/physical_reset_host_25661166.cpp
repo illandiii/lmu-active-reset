@@ -35,6 +35,7 @@ static double last_time;
 static bool seen_time, scope_active;
 static uint64_t last_id, callbacks, pins;
 static volatile LONG fatal, active_boundaries;
+static volatile LONG ready, observed_thread;
 static thread_local unsigned boundary_depth;
 static void(WINAPI *outer_original)(uint64_t);
 static void(WINAPI *dynamics_original)(void *, double);
@@ -143,6 +144,17 @@ static void publish(uint64_t id) {
     InterlockedExchange64(&ipc->completed_id, id);
 }
 static void WINAPI dynamics(void *object, double time) {
+    if (!InterlockedCompareExchange(&ready, 0, 0)) {
+        if (reinterpret_cast<uintptr_t>(object) == physics_root && boundary_depth == 1 &&
+            native_lock_witness(worker_lock).held_by_caller) {
+            const LONG thread = static_cast<LONG>(GetCurrentThreadId());
+            const LONG prior = InterlockedCompareExchange(&observed_thread, thread, 0);
+            if (prior && prior != thread)
+                InterlockedExchange(&observed_thread, -1);
+        }
+        dynamics_original(object, time);
+        return;
+    }
     if (reinterpret_cast<uintptr_t>(object) == physics_root &&
         GetCurrentThreadId() == physics_thread && std::isfinite(time)) {
         if (seen_time && time < last_time)
@@ -154,6 +166,10 @@ static void WINAPI dynamics(void *object, double time) {
         dynamics_original(object, time);
 }
 static void WINAPI scoring(void *object, float dt) {
+    if (!InterlockedCompareExchange(&ready, 0, 0)) {
+        scoring_original(object, dt);
+        return;
+    }
     FenceTicket ticket{};
     if (!simulation_fence_callback_enter(&fence, FENCE_SCORING, reinterpret_cast<uintptr_t>(object),
                                          &ticket))
@@ -163,6 +179,10 @@ static void WINAPI scoring(void *object, float dt) {
     simulation_fence_callback_leave(&ticket);
 }
 static void WINAPI contacts(void *object, double dt, double horizon, void *world, double angular) {
+    if (!InterlockedCompareExchange(&ready, 0, 0)) {
+        contacts_original(object, dt, horizon, world, angular);
+        return;
+    }
     FenceTicket ticket{};
     if (!simulation_fence_callback_enter(&fence, FENCE_CONTACTS,
                                          reinterpret_cast<uintptr_t>(object), &ticket))
@@ -187,6 +207,12 @@ static void WINAPI boundary(uint64_t input) {
     InterlockedIncrement(&active_boundaries);
     ++boundary_depth;
     ++callbacks;
+    if (!InterlockedCompareExchange(&ready, 0, 0)) {
+        outer_original(input);
+        --boundary_depth;
+        InterlockedDecrement(&active_boundaries);
+        return;
+    }
     if (fatal) {
         --boundary_depth;
         InterlockedDecrement(&active_boundaries);
@@ -324,7 +350,7 @@ static DWORD WINAPI worker(void *) {
     gate_lock = g();
 #else
     uintptr_t vehicle = 0;
-    if (!verified_game_25661166() || !physics_thread || !field(base + 0x1e194c8, owner_root) ||
+    if (!verified_game_25661166() || !field(base + 0x1e194c8, owner_root) ||
         !field(owner_root + 0x159a8, physics_root) || !field(owner_root, vehicle)) {
         ipc->error = 100;
         ipc->status = 4;
@@ -354,7 +380,6 @@ static DWORD WINAPI worker(void *) {
     native_lifecycle_init(&lifecycle);
     context = {{GetCurrentProcessId(), 1, physics_root, 25661166}, 1, physics_root, 0, {}};
     uintptr_t objects[]{base + 0xcd1f40, scoring_root, tires[0]};
-    simulation_fence_init(&fence, 1, physics_thread, objects, tires, 4);
     runtime = new (std::nothrow) ResetNativeRuntime{};
     diagnostic = new (std::nothrow) SnapshotFrame{};
     if (!runtime || !diagnostic || MH_Initialize() != MH_OK) {
@@ -392,19 +417,46 @@ static DWORD WINAPI worker(void *) {
         ipc->status = 4;
         return 0;
     }
-    VehicleRestoreHost host{base,    worker_lock, control_lock,     physics_thread,
-                            nullptr, pinned,      contacts_original};
-    adapter = vehicle_restore_adapter_create(&host);
-    handoff = native_handoff_create(host.native_lock, host.control_lock, gate_lock);
-#ifdef LMU_RESET_HOST_FIXTURE
-    if (adapter)
-        vehicle_restore_adapter_fixture_reader(adapter, read_vehicle, scoring_root);
-#endif
-    if (!adapter || !handoff || MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
+    handoff = native_handoff_create(worker_lock, control_lock, gate_lock);
+    if (!handoff || MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
         ipc->error = 106;
         ipc->status = 4;
         return 0;
     }
+    // Observe the player's Dynamics call nested inside the outer callback,
+    // with the worker lock actually owned by that caller. No sampled lock owner.
+    const auto discovery_deadline = GetTickCount64() + 2000;
+    LONG discovered = 0;
+    while (!(discovered = InterlockedCompareExchange(&observed_thread, 0, 0)) && !ipc->stop &&
+           GetTickCount64() < discovery_deadline)
+        Sleep(1);
+    if (discovered <= 0 || (physics_thread && physics_thread != static_cast<DWORD>(discovered))) {
+        native_handoff_shutdown(handoff);
+        const bool detached = MH_DisableHook(MH_ALL_HOOKS) == MH_OK;
+        ipc->error = 112;
+        ipc->status = detached ? 4 : 5;
+        return 0;
+    }
+    physics_thread = static_cast<DWORD>(discovered);
+    ipc->owner_thread = physics_thread;
+    runtime->control.owner_thread = physics_thread;
+    // First initialization: bootstrap callbacks bypass the fence until ready.
+    simulation_fence_init(&fence, 1, physics_thread, objects, tires, 4);
+    VehicleRestoreHost host{base,    worker_lock, control_lock,     physics_thread,
+                            nullptr, pinned,      contacts_original};
+    adapter = vehicle_restore_adapter_create(&host);
+#ifdef LMU_RESET_HOST_FIXTURE
+    if (adapter)
+        vehicle_restore_adapter_fixture_reader(adapter, read_vehicle, scoring_root);
+#endif
+    if (!adapter) {
+        native_handoff_shutdown(handoff);
+        const bool detached = MH_DisableHook(MH_ALL_HOOKS) == MH_OK;
+        ipc->error = 106;
+        ipc->status = detached ? 4 : 5;
+        return 0;
+    }
+    InterlockedExchange(&ready, 1);
     ipc->status = 2;
     const auto start = GetTickCount64();
     uint64_t next_request = 0;

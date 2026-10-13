@@ -194,3 +194,24 @@ acceptance with the correct cache model, immediate rejection of invalid caches
 without retries, and the full moving/1,000 m restore. The launcher selects v7 only.
 This fixes the demonstrated model error offline; a fresh live hotkey run is still
 needed to verify the updated reader in the current game session.
+
+## V8: discover the worker from native callbacks
+
+The launcher no longer samples a critical section's owner to infer a physics
+thread. That sampling could see too few acquisitions or other legitimate owners
+and incorrectly report `Physics worker not stable` before loading the host.
+
+V8 starts with commands disabled and callbacks forwarding normally. It identifies
+the player Dynamics callback only when nested one level inside the outer boundary
+and running on a thread that actually owns the worker lock. It then initializes
+the adapter and fence with that observed thread before enabling commands. The
+launcher supplies owner thread zero for automatic discovery; explicit nonzero
+thread IDs must match the native observation. The discovery phase writes no
+vehicle state. If no qualifying callback arrives within two seconds, it disables
+the hooks and reports failure instead of guessing an owner.
+
+The loaded-host fixture passes with no externally provided thread ID, followed by
+the complete 10,077-field restore. A second fixture suppresses the player callback
+while outer callbacks continue and confirms refusal, zero writes and original
+outer instructions restored. The launcher now selects only v8. Actual user launch
+against LMU remains the final live confirmation of this startup change.

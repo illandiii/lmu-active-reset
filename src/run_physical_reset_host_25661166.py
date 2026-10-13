@@ -438,9 +438,9 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 10), default=7)
+    parser.add_argument("--revision", type=int, choices=range(1, 10), default=8)
     parser.add_argument("--pid", type=int, required=True)
-    parser.add_argument("--owner-thread", type=int, required=True)
+    parser.add_argument("--owner-thread", type=int, default=0)
     parser.add_argument("--seconds", type=int, default=180)
     parser.add_argument("--request-file", type=Path, required=True)
     parser.add_argument("--offline-launch-confirmed", action="store_true")
@@ -449,6 +449,6 @@ if __name__ == "__main__":
     parser.add_argument("--save-key", default="F6")
     parser.add_argument("--restore-key", default="F7")
     args = parser.parse_args()
-    if not 5 <= args.seconds <= 240 or args.owner_thread <= 0:
-        parser.error("Duration must be 5..240 seconds and owner thread positive")
+    if not 5 <= args.seconds <= 240 or args.owner_thread < 0:
+        parser.error("Duration must be 5..240 seconds; owner thread 0 selects native discovery")
     run(args)

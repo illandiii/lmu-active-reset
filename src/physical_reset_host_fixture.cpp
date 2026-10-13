@@ -8,6 +8,7 @@ static int host_owner;
 static double host_time = 42;
 static volatile LONG original_boundaries, lifecycle_calls;
 static int mismatched_reads;
+static bool suppress_player_callback;
 extern "C" __declspec(dllexport) uintptr_t FixtureWorkerLock() {
     return reinterpret_cast<uintptr_t>(&game_lock);
 }
@@ -66,7 +67,8 @@ extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureBoundar
     void(WINAPI *volatile score_fn)(void *, float) = FixtureScore;
     void(WINAPI *volatile dynamics_fn)(void *, double) = FixtureDynamics;
     score_fn(score, .0025f);
-    dynamics_fn(reinterpret_cast<void *>(source_bindings.address[104]), host_time);
+    if (!suppress_player_callback)
+        dynamics_fn(reinterpret_cast<void *>(source_bindings.address[104]), host_time);
     host_time += .0025;
 }
 extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureClear(void *,
@@ -114,7 +116,8 @@ static ResetHostReport request(ResetHostIPC *ipc, uint64_t id, unsigned action) 
     return ipc->report;
 }
 int main(int argc, char **argv) {
-    assert(argc == 3);
+    assert(argc == 3 || argc == 4);
+    suppress_player_callback = argc == 4;
     load_frame(argv[2]);
     // Reproduce the reader bug: sectors have advanced but applied body caches
     // have not. The original validator rejects it; the cache-aware one accepts
@@ -175,15 +178,26 @@ int main(int argc, char **argv) {
     ipc->magic = RESET_HOST_MAGIC;
     ipc->version = 1;
     ipc->pid = GetCurrentProcessId();
-    ipc->owner_thread = GetCurrentThreadId();
+    ipc->owner_thread = 0; // Resolve it from the actual nested callback.
     ipc->heartbeat_ms = GetTickCount64();
     ipc->allow = 1;
+    unsigned char outer_prolog[16];
+    std::memcpy(outer_prolog, reinterpret_cast<void *>(FixtureBoundary), sizeof(outer_prolog));
     assert(LoadLibraryA(argv[1]));
-    for (unsigned i = 0; i < 200 && ipc->status < 2; ++i) {
+    for (unsigned i = 0; i < 4000 && ipc->status < 2; ++i) {
         ipc->heartbeat_ms = GetTickCount64();
-        Sleep(10);
+        tick(ipc);
+    }
+    if (suppress_player_callback) {
+        assert(ipc->status == 4 && ipc->error == 112 && !ipc->owner_thread &&
+               !ipc->physical_field_write_attempts);
+        assert(std::memcmp(outer_prolog, reinterpret_cast<void *>(FixtureBoundary),
+                           sizeof(outer_prolog)) == 0);
+        puts("PASS absent player callback: no guessed owner, no physical writes, hook removed.");
+        return 0;
     }
     assert(ipc->status == 2);
+    assert(ipc->owner_thread == GetCurrentThreadId());
     tick(ipc);
     auto saved = request(ipc, 1, HOST_SAVE);
     std::printf("host saved result=%llu saves=%llu readable=%llu\n", saved.result, saved.saves,

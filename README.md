@@ -3,13 +3,12 @@
 Experimental checkpoint and physical-state restoration for Le Mans Ultimate,
 developed for offline Practice on Windows x64.
 
-**The complete reset is not yet operational in the game.** The physical/scoring
-transaction, compensation, four-wheel contact adapter and callback guards have
-been tested on owned fixture memory. Live observations confirm the outer physics
-boundary and acquisition of its native lifetime locks. The integrated experimental
-host now includes lifecycle invalidation and the full checkpoint adapter. Live
-capture has so far been rejected because the vehicle reports a terminal engine
-failure; no physical reset has been performed. See the [host evidence](docs/PHYSICAL_RESET_HOST.md).
+**The first near-stationary physical reset succeeded in offline Practice.** The
+experimental host restored and verified all 10,077 planned fields, rebuilt four
+native tire contacts and resumed simulation without transaction recovery. Its
+11 hooks stopped cleanly. This is a bounded initial experiment, not qualification
+for moving resets, damage recovery or lap validity. Hotkeys are not yet connected
+to this host. See the [host evidence](docs/PHYSICAL_RESET_HOST.md).
 
 ## Repository layout
 
@@ -47,8 +46,7 @@ Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 
 ## Current work
 
-1. Validate the first stationary reset with a healthy vehicle using the
-   [integrated host](docs/PHYSICAL_RESET_HOST.md).
+1. Connect save/restore hotkeys to the validated experimental host.
 2. Qualify lifecycle transitions and physical stability beyond the initial experiment.
 3. Validate moving resets, lap validity and hotkeys.
 

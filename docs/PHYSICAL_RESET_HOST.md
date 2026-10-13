@@ -70,7 +70,44 @@ acquired the native scopes but rejected capture:
 
 An independent read confirmed `game_vehicle+1CF9C == 1` and the vehicle root matched
 the player. All three runs stopped with status 3/error 0, restored all 11 target
-prologs and attempted zero physical field writes. The first live reset still
-requires a healthy vehicle in a fresh Practice.
+prologs and attempted zero physical field writes.
+
+### First successful live reset
+
+After starting a fresh Practice with terminal failure zero,
+`20261013T204517144116Z_physical_reset_host_v4` completed the first actual reset.
+The game remained PID 31512 and the physics thread was 9756. The first checkpoint
+was refreshed because the unbraked vehicle had rolled beyond the initial 0.25 m
+displacement bound. The subsequent save/prepare/restore commands were acknowledged
+sequentially; no limit or reader guard was bypassed.
+
+| Measurement | Result |
+| --- | --- |
+| Restore command | ID 5, control result 0, flow result 0 |
+| Speed before restore | 0.0788066719 m/s |
+| Fields written / verified after contacts | 10,077 / 10,077 |
+| Mismatched fields / recovery writes | 0 / 0 |
+| Native contact calls / completed mask | 4 / 15 |
+| Completed saves / restores | 2 / 1 |
+| Lifecycle generation | 1 |
+
+Saved and post-restore body position matched exactly:
+`[-186.16254928547082, -12.037670200296452, 359.92693603335323]`.
+The pre-restore position was
+`[-186.13655513664276, -12.037827192677504, 359.9308149324934]`.
+These are physical body coordinates, not the telemetry reference point.
+
+A later read/prepare (command 6) passed all full-reader checks and prepared the
+same 10,077-field plan after 5,934 additional outer callbacks, with no further
+physical writes. Telemetry continued advancing with finite positions, velocities
+and angular velocities. The user changed controls during the subsequent capture;
+this does not establish deterministic replay or long-term unattended stability.
+The reported lap-invalidated flag stayed false, but no completed lap was tested.
+
+Shutdown returned status 3/error 0, with all 11 original target prologs restored.
+An independent audit confirmed all six resident project modules stopped and a
+cumulative total of exactly 10,077 physical field write attempts. No hotkey loop
+or automatic restore remains active. Moving resets, terminal-damage restoration,
+general lifecycle coverage and lap-validity behavior remain unqualified.
 
 Raw captures, game dumps and decompiled game code remain local and are not committed.

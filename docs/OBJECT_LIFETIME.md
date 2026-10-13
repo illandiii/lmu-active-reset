@@ -77,3 +77,25 @@ Local raw evidence lives under `analysis/rea-25661166/control-lifetime-20261013/
 It is excluded from Git. Reusable direct-reference and absolute-pointer scanners
 are included in `src/`; absolute data candidates can be checked using read-only
 `--pid` validation against the matching executable hash.
+
+## Asynchronous admission gate
+
+`native_lifetime_handoff` implements the control loop's gate exchange without
+blocking the physics thread. The host requests a window of at most 50 ms. A
+helper uses `TryEnterCriticalSection` on the distinct gate (`1A5A5F0`), then
+offers the window. The control loop can release `1A5A5C8` and wait at its gate;
+physics retains its worker lock and tries the now-available control lock.
+The helper releases its own gate on acquisition, cancellation or expiration.
+The acquired control lock remains scoped to the physics caller.
+
+Neither helper nor physics waits for the control lock. If teardown holds control
+while waiting for the worker, physics refuses the request and continues; the
+helper's window expires independently even if no further physics callback runs.
+The timeout bounds the requested wait, not Windows scheduling latency. Admission
+can briefly delay the control thread and must be requested only for an operation,
+not held continuously. It does not replace lifecycle coverage or an epoch.
+
+The Win32 fixture verifies successful exchange, occupied gate, absent worker
+ownership, overlapping requests, expiration without callbacks, cancellation,
+opposite lock order on teardown, and helper shutdown. These tests use owned locks;
+successful admission inside LMU and the first physical reset remain unverified.

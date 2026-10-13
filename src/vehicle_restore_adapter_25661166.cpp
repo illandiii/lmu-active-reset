@@ -16,11 +16,13 @@ struct VehicleRestoreAdapter {
     uintptr_t scoring;
     VehicleCheckpointWorkspace *workspace;
     ContactBatchFlow contacts;
+    double saved_angular[4], saved_dt[4], saved_horizon[4];
 #ifdef LMU_VEHICLE_ADAPTER_FIXTURE
     VehicleFixtureReader reader = vehicle_read_25661166;
     uintptr_t fixture_scoring;
 #endif
 };
+static bool prepare_contacts(VehicleRestoreAdapter *);
 
 static int owner(void *user, uint64_t epoch) {
     auto *adapter = static_cast<VehicleRestoreAdapter *>(user);
@@ -54,13 +56,18 @@ static int capture(void *user, const ResetIdentity *identity) {
     if (!identity || !same_identity(*identity, adapter->context.identity) ||
         !read_current(adapter) ||
         vehicle_checkpoint_validate(adapter->workspace, &adapter->current) ||
-        !owner(adapter, adapter->context.epoch))
+        !prepare_contacts(adapter) || !owner(adapter, adapter->context.epoch))
         return 1;
     // Publish only after every subsystem validates. A failed replacement keeps
     // the previous checkpoint and identity intact.
     adapter->saved = adapter->current;
     adapter->saved_identity = *identity;
     adapter->saved_epoch = adapter->context.epoch;
+    for (unsigned i = 0; i < 4; ++i) {
+        adapter->saved_angular[i] = adapter->context.contacts[i].angular;
+        adapter->saved_dt[i] = adapter->context.contacts[i].dt;
+        adapter->saved_horizon[i] = adapter->context.contacts[i].horizon;
+    }
     adapter->occupied = true;
     return 0;
 }
@@ -138,6 +145,10 @@ static int prepare(void *user, const ResetIdentity *identity, RestorePlan *plan,
         !field(adapter->scoring + 0x164, flags.next_timed) ||
         !field(adapter->scoring + 0x272b8, flags.off_track) || !prepare_contacts(adapter))
         return 1;
+    for (unsigned i = 0; i < 4; ++i)
+        if (std::fabs(adapter->contacts.batch.dt[i] - adapter->saved_dt[i]) > 1e-12 ||
+            std::fabs(adapter->contacts.batch.horizon[i] - adapter->saved_horizon[i]) > 1e-12)
+            return 1;
     RestoreBackend backend{adapter, owner, allowed, read, nullptr};
     if (vehicle_checkpoint_prepare(adapter->workspace, &adapter->saved, &adapter->current,
                                    &adapter->bindings, &backend, &flags, plan) ||
@@ -160,8 +171,12 @@ static int enter(void *user, uint64_t epoch) {
 
 static int contacts(void *user, uint64_t epoch, int original) {
     auto *adapter = static_cast<VehicleRestoreAdapter *>(user);
-    return adapter->held && owner(user, epoch) &&
-           contact_batch_flow_contacts(&adapter->contacts, epoch, original);
+    if (!adapter->held || !owner(user, epoch) || (original != 0 && original != 1))
+        return 0;
+    ContactBatch batch = adapter->contacts.batch;
+    if (!original)
+        std::memcpy(batch.angular, adapter->saved_angular, sizeof(batch.angular));
+    return contact_batch_rebuild_25661166(&batch, &adapter->contacts.report);
 }
 
 static void leave(void *user, int) {

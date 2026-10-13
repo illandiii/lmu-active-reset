@@ -6,8 +6,10 @@ developed for offline Practice on Windows x64.
 **The complete reset is not yet operational in the game.** The physical/scoring
 transaction, compensation, four-wheel contact adapter and callback guards have
 been tested on owned fixture memory. Live observations confirm the outer physics
-boundary and its native critical section. Object lifetime coverage and the live
-checkpoint adapter remain under development.
+boundary and acquisition of its native lifetime locks. The integrated experimental
+host now includes lifecycle invalidation and the full checkpoint adapter. Live
+capture has so far been rejected because the vehicle reports a terminal engine
+failure; no physical reset has been performed. See the [host evidence](docs/PHYSICAL_RESET_HOST.md).
 
 ## Repository layout
 
@@ -45,10 +47,10 @@ Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 
 ## Current work
 
-1. Complete [synchronization coverage](docs/OBJECT_LIFETIME.md) for object destruction and control changes.
-2. Install the [full checkpoint/four-contact adapter](docs/VEHICLE_ADAPTER.md) only after
-   the native lifetime contract is established. Its integrated fixtures now pass.
-3. Validate the first full reset, physical stability, lap validity and hotkeys.
+1. Validate the first stationary reset with a healthy vehicle using the
+   [integrated host](docs/PHYSICAL_RESET_HOST.md).
+2. Qualify lifecycle transitions and physical stability beyond the initial experiment.
+3. Validate moving resets, lap validity and hotkeys.
 
 The UI is postponed. See [physics thread findings](docs/PHYSICS_THREAD_2026-10-13.md)
 and [restore integration](docs/RESTORE_INTEGRATION_2026-10-13.md).

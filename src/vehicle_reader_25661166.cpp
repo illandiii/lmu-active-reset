@@ -39,6 +39,11 @@ static uint64_t hash_bytes(uint64_t hash, const void *data, size_t size) {
     return hash;
 }
 struct Reader {
+    SnapshotFrame *diagnostic;
+    bool fail(unsigned line) {
+        diagnostic->binding_status = line;
+        return false;
+    }
     uintptr_t module_base;
     uintptr_t native_bindings[RESTORE_OBJECT_COUNT];
     uintptr_t player() {
@@ -54,7 +59,7 @@ struct Reader {
             !read_field(fuel + 0x60, d.fuel.density) ||
             !read_field(fuel + 0x80, d.fuel.base_mass) || !read_field(fuel + 0x78, fuel_body) ||
             !read_field(p + 0x550, branch))
-            return false;
+            return fail(__LINE__);
         size_t matches = 0;
         for (size_t i = 0; i < f.root_count; i++)
             if (bodies[i] == fuel_body) {
@@ -62,7 +67,7 @@ struct Reader {
                 ++matches;
             }
         if (matches != 1)
-            return false;
+            return fail(__LINE__);
         if (!branch) {
             uintptr_t game = 0;
             float initial = 0;
@@ -70,21 +75,21 @@ struct Reader {
             double term = 0, tail = 0, extra = 0;
             if (!read_field(p + 0x4bc0, game) || !read_field(game + 0x440d8, initial) ||
                 !read_field(p + 0x138, indices))
-                return false;
+                return fail(__LINE__);
             d.fuel.additional_mass = initial;
             for (int i = 0; i < 14; i++)
                 if (indices[i] > 3)
-                    return false;
+                    return fail(__LINE__);
             for (int i = 0; i < 13; i++) {
                 if (!read_field(p + 0x148 + i * 0x20 + indices[i] * 8, term))
-                    return false;
+                    return fail(__LINE__);
                 d.fuel.additional_mass += term;
             }
             if (!read_field(p + 0x2e8 + indices[13] * 8, tail) || !read_field(p + 0x558, extra))
-                return false;
+                return fail(__LINE__);
             tail += extra;
             if (!read_field(p + 0x2608, term))
-                return false;
+                return fail(__LINE__);
             d.fuel.additional_mass += term;
             d.fuel.additional_mass += tail;
         }
@@ -92,7 +97,7 @@ struct Reader {
             uintptr_t wheel = p + 0x618 + w * 0x6b0, body = 0, tire = 0;
             if (!read_field(wheel + 0x1d0, body) || !read_field(wheel + 0x3e8, tire) ||
                 tire + 0xac0 != bodies[f.root_count + w])
-                return false;
+                return fail(__LINE__);
             matches = 0;
             for (size_t i = 0; i < f.root_count; i++)
                 if (bodies[i] == body) {
@@ -100,18 +105,18 @@ struct Reader {
                     ++matches;
                 }
             if (matches != 1)
-                return false;
+                return fail(__LINE__);
             links.tires[w] = f.root_count + w;
             uintptr_t hub = 0, rear = 0;
             unsigned char flags[2];
             auto &phase = f.wheel_phase[w];
             if (!read_field(p + 0x20d8, rear) || !read_field(wheel + 0x301, flags) || flags[0] ||
                 flags[1])
-                return false;
+                return fail(__LINE__);
             if (w >= 2 && rear)
                 hub = rear;
             else if (!read_field(wheel + 0x1d8, hub))
-                return false;
+                return fail(__LINE__);
             size_t hub_matches = 0;
             for (size_t i = 0; i < f.root_count; i++)
                 if (bodies[i] == hub) {
@@ -119,55 +124,55 @@ struct Reader {
                     ++hub_matches;
                 }
             if (hub_matches != 1)
-                return false;
+                return fail(__LINE__);
             phase.wheel_index = (uint32_t)links.wheels[w];
             phase.spin.attached = 1;
             if (!read_field(wheel + 0x120, phase.spin.angle) ||
                 !read_field(wheel + 0x128, phase.spin.angular_rate))
-                return false;
+                return fail(__LINE__);
             f.topology_token = hash_bytes(f.topology_token, &phase.hub_index, sizeof(uint32_t) * 2);
             if (!read_field(wheel + 0x130, d.wheels[w].base_130) ||
                 !read_field(wheel + 0x4b8, d.wheels[w].term_4b8) ||
                 !read_field(wheel + 0x5d8, d.wheels[w].term_5d8) ||
                 !read_field(wheel + 0x4f0, d.wheels[w].factor_4f0) ||
                 !read_field(tire + 0xce4, d.tires[w].total_table))
-                return false;
+                return fail(__LINE__);
             for (int sector = 0; sector < 8; sector++)
                 if (!read_field(tire + 0x48 + sector * 0x60, d.tires[w].sectors[sector]))
-                    return false;
+                    return fail(__LINE__);
             for (int i = 0; i < 8; i++) {
                 auto &cache = f.native_cache.sectors[w][i];
                 if (!read_field(tire + 0x30 + i * 0x60, cache.first_moment) ||
                     !read_field(tire + 0x60 + i * 0x60, cache.aggregate))
-                    return false;
+                    return fail(__LINE__);
             }
             uintptr_t pool = 0, inner = 0, outer = 0, table = 0;
             if (!read_field(tire + 0x318, pool) || !read_field(tire + 0xa10, inner) ||
                 !read_field(tire + 0xa18, outer) || !read_field(tire + 0xa28, table))
-                return false;
+                return fail(__LINE__);
             uintptr_t refs[4] = {pool, inner, outer, table};
             for (auto ref : refs)
                 if (ref < 0x10000 || ref >= 0x800000000000ULL)
-                    return false;
+                    return fail(__LINE__);
             f.topology_token = hash_bytes(f.topology_token, refs, sizeof(refs));
             auto &grid = f.thermal_grid.tires[w];
             for (int sector = 0; sector < 8; sector++) {
                 uint16_t indices[9];
                 if (!read_field(tire + 0x10 + sector * 0x60, indices))
-                    return false;
+                    return fail(__LINE__);
                 f.topology_token = hash_bytes(f.topology_token, indices, sizeof(indices));
                 for (int j = 0; j < 9; j++) {
                     uint32_t idx = indices[j];
                     int row = sector * 9 + j;
                     if (idx >= 256)
-                        return false;
+                        return fail(__LINE__);
                     grid.angular_index[row] = idx;
                     for (int previous = 0; previous < row; previous++)
                         if (grid.angular_index[previous] == idx)
-                            return false;
+                            return fail(__LINE__);
                     uintptr_t pointers[9], expected[9];
                     if (!read_field(table + idx * 72, pointers))
-                        return false;
+                        return fail(__LINE__);
                     for (int k = 0; k < 7; k++)
                         expected[k] = pool + idx * 0x770 + k * 0x110;
                     expected[7] = inner + idx * 0x60;
@@ -178,19 +183,19 @@ struct Reader {
                             if (pointer == expected[k])
                                 ++matches;
                         if (matches != 1)
-                            return false;
+                            return fail(__LINE__);
                         if (k < 7) {
                             auto &h = f.tread_history.nodes[w][row][k];
                             if (!read_field(expected[k] + 0x28, h.fields_28) ||
                                 !read_field(expected[k] + 0x100, h.field_100))
-                                return false;
+                                return fail(__LINE__);
                         }
                         native_bindings[RESTORE_THERMAL_BASE + (w * 72 + row) * 9 + k] =
                             expected[k];
                         auto &cell = grid.cells[row][k];
                         if (!read_field(expected[k], cell.layers) ||
                             !read_field(expected[k] + 0x40, cell.coefficients))
-                            return false;
+                            return fail(__LINE__);
                     }
                 }
             }
@@ -198,27 +203,27 @@ struct Reader {
             if (!read_field(wheel + 0x5d8, brake.fields_5d8) ||
                 !read_field(wheel + 0x630, brake.field_630) ||
                 !read_field(wheel + 0x138, brake.cache_138))
-                return false;
+                return fail(__LINE__);
             double inverse = f.bodies[links.wheels[w]].mass.inverse_inertia_local[0];
             if (brake.fields_5d8[0] != d.wheels[w].term_5d8 ||
                 std::fabs(brake.cache_138 - inverse) >
                     32 * 2.2204460492503131e-16 * std::fabs(inverse))
-                return false;
+                return fail(__LINE__);
             native_bindings[96 + w] = tire;
             native_bindings[100 + w] = wheel;
             auto &state = f.tire_state[w];
             if (!read_field(tire + 0xac8, f.tire_mass_cache[w]))
-                return false;
+                return fail(__LINE__);
             if (!read_field(tire + 0xc18, state.total_mass) ||
                 !read_field(tire + 0xc20, state.cached_sector_inertia) ||
                 !read_field(tire + 0xc, state.update_phase) ||
                 !read_field(tire + 0xfb0, state.thermal_fb0) ||
                 !read_field(tire + 0xfb8, state.thermal_fb8) ||
                 !read_field(tire + 0xfc0, state.accumulated_fc0))
-                return false;
+                return fail(__LINE__);
             for (int sector = 0; sector < 8; sector++)
                 if (!read_field(tire + 0x28 + sector * 0x60, state.sector_mass[sector]))
-                    return false;
+                    return fail(__LINE__);
         }
         RigidMassProperties mass[32];
         RigidPreparedBody out[32];
@@ -233,25 +238,25 @@ struct Reader {
     bool capture_control(uintptr_t p, PowertrainControl &c) {
         uintptr_t engine = 0;
         if (!read_field(p + 0x46f0, engine))
-            return false;
+            return fail(__LINE__);
         if (!read_field(p + 0x4810, c.ramp_d0) || !read_field(p + 0x4818, c.index_d8) ||
             !read_field(p + 0x481c, c.index_dc) || !read_field(p + 0x4820, c.active_e0) ||
             !read_field(p + 0x4821, c.latched_e1) || !read_field(p + 0x4828, c.timer_e8) ||
             !read_field(p + 0x4830, c.factor_f0) || !read_field(p + 0x4838, c.factor_f8) ||
             !read_field(engine + 0x50, c.engine_50) || !read_field(engine + 0x1b0, c.engine_1b0))
-            return false;
+            return fail(__LINE__);
         uint64_t hash = 14695981039346656037ULL;
         for (unsigned i = 0; i < 4; i++) {
             uintptr_t v[3];
             if (!read_field(p + 0x4740 + 24 * i, v) || v[1] < v[0] || v[2] < v[1] ||
                 (v[1] - v[0]) % 8 || (v[2] - v[0]) % 8 || (v[1] - v[0]) / 8 > 64)
-                return false;
+                return fail(__LINE__);
             c.table_counts[i] = (uint32_t)((v[1] - v[0]) / 8);
             hash = hash_bytes(hash, &c.table_counts[i], 4);
             for (unsigned j = 0; j < c.table_counts[i]; j++) {
                 double value;
                 if (!read_field(v[0] + 8 * j, value) || !std::isfinite(value))
-                    return false;
+                    return fail(__LINE__);
                 hash = hash_bytes(hash, &value, 8);
             }
         }
@@ -260,7 +265,7 @@ struct Reader {
     }
     bool capture(uintptr_t p, SnapshotFrame &f) {
         if (!capture_control(p, f.powertrain_control))
-            return false;
+            return fail(__LINE__);
         auto &shift = f.shift_observed;
         if (!read_field(p + 0x4ac0, shift.timer_4ac0) ||
             !read_field(p + 0x4668, shift.control_4668) || !read_field(p + 0xa8, shift.clock_a8) ||
@@ -269,32 +274,32 @@ struct Reader {
             !read_field(p + 0x4bb8, shift.accumulators[1]) ||
             !read_field(p + 0x4ba0, shift.gears) || !read_field(p + 0x4ae8, shift.notification) ||
             !read_field(p + 0x48, shift.request))
-            return false;
+            return fail(__LINE__);
         if (!read_field(p + 0x4900, f.driveline_cache.drive_type) ||
             !read_field(p + 0x49d8, f.driveline_cache.torque[0]) ||
             !read_field(p + 0x4a18, f.driveline_cache.torque[1]) ||
             !read_field(p + 0x4a58, f.driveline_cache.torque[2]) ||
             !driveline_cache_valid(&f.driveline_cache))
-            return false;
+            return fail(__LINE__);
         if (!read_field(p + 0x46d0, f.driveline_outputs.hdv_46d0) ||
             !read_field(p + 0x46e0, f.driveline_outputs.hdv_46e0) ||
             !read_field(p + 0x46e8, f.driveline_outputs.hdv_46e8) ||
             !read_field(p + 0x4b38, f.driveline_outputs.hdv_4b38) ||
             !driveline_outputs_valid(&f.driveline_outputs))
-            return false;
+            return fail(__LINE__);
         uintptr_t game_vehicle = 0;
         if (!read_field(p + 0x4bc0, game_vehicle) ||
             !read_field(game_vehicle + 0x1cf9c, f.terminal_failure))
-            return false;
+            return fail(__LINE__);
         uintptr_t bodies[64], constraints[64];
         size_t roots = 0, nc = 0;
         if (player() != p || !vector(p + 0x23f8, bodies, roots) || roots > 28 ||
             !vector(p + 0x2410, constraints, nc))
-            return false;
+            return fail(__LINE__);
         for (int w = 0; w < 4; w++) {
             uintptr_t tire = 0;
             if (!read_field(p + 0x618 + w * 0x6b0 + 0x3e8, tire) || tire < 0x10000)
-                return false;
+                return fail(__LINE__);
             bodies[roots + w] = tire + 0xac0;
         }
         f.root_count = roots;
@@ -311,42 +316,42 @@ struct Reader {
         for (size_t i = 0; i < f.total_count; i++) {
             for (size_t j = 0; j < i; j++)
                 if (bodies[j] == bodies[i])
-                    return false;
+                    return fail(__LINE__);
             native_bindings[i] = bodies[i];
             if (!body(bodies[i], f.bodies[i]))
-                return false;
+                return fail(__LINE__);
             mass[i] = f.bodies[i].mass;
             auto &cache = f.native_cache.bodies[i];
             if (!read_field(bodies[i] + 8, cache.mass) ||
                 !read_field(bodies[i] + 0x140, cache.inertia_local) ||
                 !read_field(bodies[i] + 0x60, cache.inverse_world) ||
                 !read_field(bodies[i] + 0xe0, cache.omega))
-                return false;
+                return fail(__LINE__);
             auto &h = f.history.bodies[i];
             if (!read_field(bodies[i] + 0x10, h.force) ||
                 !read_field(bodies[i] + 0x128, h.torque) ||
                 !read_field(bodies[i] + 0xd8, h.renormalization))
-                return false;
+                return fail(__LINE__);
             for (int j = 0; j < 3; j++)
                 if (!std::isfinite(h.force[j]) || !std::isfinite(h.torque[j]))
-                    return false;
+                    return fail(__LINE__);
         }
         if (rigid_prepare_restore(f.bodies, mass, f.total_count, prepared))
-            return false;
+            return fail(__LINE__);
         for (size_t i = 0; i < f.total_count; i++) {
             double iw[6], omega[3];
             if (!read_field(bodies[i] + 0x60, iw) || !read_field(bodies[i] + 0xe0, omega))
-                return false;
+                return fail(__LINE__);
             for (int j = 0; j < 6; j++) {
                 if (!std::isfinite(iw[j]))
-                    return false;
+                    return fail(__LINE__);
                 double e = std::fabs(iw[j] - prepared[i].inverse_inertia_world[j]);
                 if (e > f.inertia_error)
                     f.inertia_error = e;
             }
             for (int j = 0; j < 3; j++) {
                 if (!std::isfinite(omega[j]))
-                    return false;
+                    return fail(__LINE__);
                 double e = std::fabs(omega[j] - prepared[i].angular_velocity_world[j]);
                 if (e > f.omega_error)
                     f.omega_error = e;
@@ -359,9 +364,9 @@ struct Reader {
             auto &m = f.memory[i];
             for (size_t j = 0; j < i; j++)
                 if (constraints[j] == c)
-                    return false;
+                    return fail(__LINE__);
             if (!read_field(c, vt))
-                return false;
+                return fail(__LINE__);
             size_t link = 0, axis = 0, stride = 0, soft = 0, impulse = 0, lower = 0, upper = 0,
                    rows = 0;
             if (vt == module_base + 0x1807698) {
@@ -402,9 +407,9 @@ struct Reader {
                 lower = 0xe0;
                 upper = 0xe8;
             } else
-                return false;
+                return fail(__LINE__);
             if (!read_field(c + link, pair))
-                return false;
+                return fail(__LINE__);
             for (int side = 0; side < 2; side++) {
                 size_t matches = 0;
                 for (size_t j = 0; j < roots; j++)
@@ -413,20 +418,20 @@ struct Reader {
                         ++matches;
                     }
                 if (matches != 1)
-                    return false;
+                    return fail(__LINE__);
             }
             if (pair[0] == pair[1])
-                return false;
+                return fail(__LINE__);
             r.identity = m.identity = i;
             m.kind = r.kind;
             m.row_count = rows;
             if (r.kind == CONSTRAINT_BAR) {
                 if (!read_field(c + 0x50, r.geometry.bar.anchors_local) ||
                     !read_field(c + soft, r.geometry.bar.softness))
-                    return false;
+                    return fail(__LINE__);
             } else if (r.kind == CONSTRAINT_BALL) {
                 if (!read_field(c + 0x50, r.geometry.ball.anchors_local))
-                    return false;
+                    return fail(__LINE__);
             }
             for (size_t j = 0; j < rows; j++) {
                 auto &row = m.rows[j];
@@ -434,20 +439,20 @@ struct Reader {
                 auto &history = f.history.rows[i][j];
                 if (!read_field(q + soft - 8, history.bias) ||
                     !read_field(q + upper + 8, history.coefficient))
-                    return false;
+                    return fail(__LINE__);
                 if (r.kind <= CONSTRAINT_BALL) {
                     size_t jo = r.kind == CONSTRAINT_BAR ? 0xb0 : 0xa8,
                            wo = r.kind == CONSTRAINT_BAR ? 0x140 : 0x138;
                     if (!read_field(q + jo, history.jacobian) ||
                         !read_field(q + wo, history.weighted))
-                        return false;
+                        return fail(__LINE__);
                 } else {
                     size_t jo = r.kind == CONSTRAINT_HINGE ? 0xc0 : 0x98,
                            wo = r.kind == CONSTRAINT_HINGE ? 0x120 : 0xf8;
                     double a[3], b[3], wa[3], wb[3];
                     if (!read_field(q + jo, a) || !read_field(q + jo + 24, b) ||
                         !read_field(q + wo, wa) || !read_field(q + wo + 24, wb))
-                        return false;
+                        return fail(__LINE__);
                     for (int k = 0; k < 3; k++) {
                         history.jacobian[3 + k] = a[k];
                         history.jacobian[9 + k] = b[k];
@@ -456,23 +461,23 @@ struct Reader {
                     }
                 }
                 if (!std::isfinite(history.bias) || !std::isfinite(history.coefficient))
-                    return false;
+                    return fail(__LINE__);
                 for (int k = 0; k < 12; k++)
                     if (!std::isfinite(history.jacobian[k]) || !std::isfinite(history.weighted[k]))
-                        return false;
+                        return fail(__LINE__);
 
                 if (r.kind == CONSTRAINT_BALL && !read_field(q + soft, r.geometry.ball.softness[j]))
-                    return false;
+                    return fail(__LINE__);
                 if (r.kind >= CONSTRAINT_HINGE &&
                     (!read_field(q + axis, r.geometry.angular.axes_local[j]) ||
                      !read_field(q + soft, r.geometry.angular.softness[j])))
-                    return false;
+                    return fail(__LINE__);
                 if (!read_field(q + impulse, row.impulse) || !read_field(q + lower, row.lower) ||
                     !read_field(q + upper, row.upper))
-                    return false;
+                    return fail(__LINE__);
                 if (!std::isfinite(row.impulse) || !std::isfinite(row.lower) ||
                     !std::isfinite(row.upper) || row.lower > row.upper)
-                    return false;
+                    return fail(__LINE__);
             }
         }
         ConstraintPrepared geometry[64];
@@ -483,41 +488,41 @@ struct Reader {
         auto &aux = f.powertrain;
         if (!read_field(p + 0x46f0, engine) || !read_field(engine, vt) ||
             vt != module_base + 0x1793578)
-            return false;
+            return fail(__LINE__);
         aux.engine_type_rva = 0x1793578;
         auto &eg = f.integration;
         if (!read_field(engine + 0x88, eg.channel_count) || eg.channel_count > 2 ||
             !read_field(engine + 0x208, eg.outputs_208) ||
             !read_field(engine + 0x240, eg.fields_240))
-            return false;
+            return fail(__LINE__);
         for (uint32_t i = 0; i < eg.channel_count; i++)
             if (!read_field(engine + 0x98 + i * 0x70, eg.channel_state[i]))
-                return false;
+                return fail(__LINE__);
         for (int i = 0; i < 7; i++)
             if (!std::isfinite(eg.outputs_208[i]))
-                return false;
+                return fail(__LINE__);
         for (int i = 0; i < 3; i++)
             if (!std::isfinite(eg.fields_240[i]))
-                return false;
+                return fail(__LINE__);
         for (uint32_t i = 0; i < eg.channel_count; i++)
             for (int j = 0; j < 2; j++)
                 if (!std::isfinite(eg.channel_state[i][j]))
-                    return false;
+                    return fail(__LINE__);
 
         if (!read_field(engine + 0x1f8, aux.engine_1f8) ||
             !read_field(engine + 0x250, aux.engine_250) ||
             !read_field(engine + 0x260, aux.engine_260) ||
             !read_field(engine + 0x280, aux.engine_280))
-            return false;
+            return fail(__LINE__);
         const size_t offsets[7] = {0x48a0, 0x48a8, 0x48b0, 0x48b8, 0x48e8, 0x48f0, 0x48f8};
         double *fields[7] = {&aux.hdv_48a0, &aux.hdv_48a8, &aux.hdv_48b0, &aux.hdv_48b8,
                              &aux.hdv_48e8, &aux.hdv_48f0, &aux.hdv_48f8};
         for (int i = 0; i < 7; i++)
             if (!read_field(p + offsets[i], *fields[i]) || !std::isfinite(*fields[i]))
-                return false;
+                return fail(__LINE__);
         if (!std::isfinite(aux.engine_1f8) || !std::isfinite(aux.engine_250) ||
             !std::isfinite(aux.engine_260) || !std::isfinite(aux.engine_280))
-            return false;
+            return fail(__LINE__);
         uintptr_t shaft = 0, gearbox = 0;
         auto &tr = f.transmission;
         if (!read_field(p + 0x4918, shaft) || !read_field(p + 0x4920, gearbox) ||
@@ -525,23 +530,33 @@ struct Reader {
             !read_field(gearbox + 0x64, tr.gear_64) || !read_field(p + 0x18, tr.input_18) ||
             !read_field(p + 0x20, tr.input_20) || !read_field(p + 0x30, tr.input_30) ||
             !read_field(p + 0x38, tr.input_38))
-            return false;
+            return fail(__LINE__);
         if (!std::isfinite(tr.shaft_0) || !std::isfinite(tr.shaft_8) ||
             !std::isfinite(tr.input_18) || !std::isfinite(tr.input_20) ||
             !std::isfinite(tr.input_30) || !std::isfinite(tr.input_38))
-            return false;
+            return fail(__LINE__);
         native_bindings[104] = p;
         native_bindings[105] = engine;
         native_bindings[106] = gearbox;
         native_bindings[107] = shaft;
         if (!read_field(p + 0x46c8, f.history.driveline_timer_46c8) ||
             !std::isfinite(f.history.driveline_timer_46c8))
+            return fail(__LINE__);
+        if (!mechanical(p, bodies, f))
             return false;
-        return mechanical(p, bodies, f) &&
-               native_cache_valid(&f.native_cache, f.bodies, f.total_count) &&
-               thermal_grid_valid(&f.thermal_grid) && tread_history_valid(&f.tread_history) &&
-               wheel_phase_valid(f.wheel_phase, f.bodies, f.total_count) &&
-               brake_state_valid(f.brake_state) && player() == p;
+        if (!native_cache_valid(&f.native_cache, f.bodies, f.total_count))
+            return fail(__LINE__);
+        if (!thermal_grid_valid(&f.thermal_grid))
+            return fail(__LINE__);
+        if (!tread_history_valid(&f.tread_history))
+            return fail(__LINE__);
+        if (!wheel_phase_valid(f.wheel_phase, f.bodies, f.total_count))
+            return fail(__LINE__);
+        if (!brake_state_valid(f.brake_state))
+            return fail(__LINE__);
+        if (player() != p)
+            return fail(__LINE__);
+        return true;
     }
 };
 } // namespace
@@ -557,10 +572,21 @@ bool vehicle_read_25661166(uintptr_t module_base, uintptr_t physics, uint64_t ep
         return false;
     Reader reader{};
     reader.module_base = module_base;
+    reader.diagnostic = frame;
     frame->simulation_time = simulation_time;
-    if (!reader.capture(physics, *frame) || frame->terminal_failure || frame->geometry_status ||
-        frame->mechanical_status || !frame->memory_valid)
+    if (!reader.capture(physics, *frame)) {
+        if (!frame->binding_status)
+            frame->binding_status = 90000;
         return false;
+    }
+    if (frame->terminal_failure || frame->geometry_status || frame->mechanical_status ||
+        !frame->memory_valid) {
+        frame->binding_status = frame->terminal_failure    ? 90001
+                                : frame->geometry_status   ? 90100 + frame->geometry_status
+                                : frame->mechanical_status ? 90200 + frame->mechanical_status
+                                                           : 90003;
+        return false;
+    }
     bindings->epoch = epoch;
     std::memcpy(bindings->address, reader.native_bindings, sizeof(bindings->address));
     bindings->body_count = static_cast<uint32_t>(frame->total_count);

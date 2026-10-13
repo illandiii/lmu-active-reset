@@ -13,6 +13,30 @@ def audit(pid):
     listed = modules(pid)
     reports = {}
     registry = {
+        "lmu-physical-reset-v4-25661166.dll": (
+            "run_physical_reset_host_25661166",
+            "steam-25661166-physical-reset-v4.json",
+            "LMU_PhysicalReset25661166_v4_",
+            0x4C4D555253543034,
+        ),
+        "lmu-physical-reset-v3-25661166.dll": (
+            "run_physical_reset_host_25661166",
+            "steam-25661166-physical-reset-v3.json",
+            "LMU_PhysicalReset25661166_v3_",
+            0x4C4D555253543033,
+        ),
+        "lmu-physical-reset-v2-25661166.dll": (
+            "run_physical_reset_host_25661166",
+            "steam-25661166-physical-reset-v2.json",
+            "LMU_PhysicalReset25661166_v2_",
+            0x4C4D555253543032,
+        ),
+        "lmu-physical-reset-v1-25661166.dll": (
+            "run_physical_reset_host_25661166",
+            "steam-25661166-physical-reset-v1.json",
+            "LMU_PhysicalReset25661166_v1_",
+            0x4C4D555253543031,
+        ),
         "lmu-boundary-observer-v4-25661166.dll": (
             "run_boundary_observer_v4_25661166",
             "steam-25661166-boundary-observer-v4.json",
@@ -308,6 +332,18 @@ def audit(pid):
     if not handle:
         raise OSError("Cannot verify restored code")
     try:
+        for revision in (1, 2, 3, 4):
+            if f"lmu-physical-reset-v{revision}-25661166.dll" not in reports:
+                continue
+            profile = json.loads(
+                (
+                    PROJECT / f"compatibility/steam-25661166-physical-reset-v{revision}.json"
+                ).read_text()
+            )
+            for target in profile["targets"]:
+                expected = bytes.fromhex(target["prolog"])
+                if read_process(handle, image["base"] + target["rva"], len(expected)) != expected:
+                    raise ValueError("Physical reset target not restored: " + target["name"])
         raw = read_process(handle, image["base"] + 0xECB4E0, 15)
         if raw != bytes.fromhex("488bc4488958104889701848897820"):
             raise ValueError("Dynamics instructions not original")

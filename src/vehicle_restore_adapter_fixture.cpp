@@ -26,7 +26,10 @@ static bool pinned = true;
 static int original_calls;
 static int fault;
 static void WINAPI refresh(void *object, double dt, double horizon, void *world, double angular) {
-    FixtureRefresh(object, dt, horizon, world, angular);
+    const auto forward_calls = fault == 1 ? 2u : fault == 2 ? 1u : 4u;
+    assert(angular == (calls < forward_calls ? 2.5 : 3.5));
+    // The geometric fixture's fixed input is independent of this argument test.
+    FixtureRefresh(object, dt, horizon, world, 2.5);
     if (fault == 2 || (fault == 1 && calls == 2)) {
         const auto nodes = get<uintptr_t>(static_cast<unsigned char *>(object) + 0x318);
         reinterpret_cast<unsigned char *>(nodes)[0x67] = 1;
@@ -101,10 +104,12 @@ int main(int argc, char **argv) {
     simulation_fence_init(&fence, 42, GetCurrentThreadId(), objects, tires, 4);
     VehicleRestoreContext context{
         {1, 2, 3, 4}, 42, source_bindings.address[104], source_frame.simulation_time, {}};
+    double current_angular = 2.5;
     auto samples = [&] {
         for (unsigned i = 0; i < 4; ++i)
-            context.contacts[i] = {
-                tires[i], .001, .003, 2.5, 0x12345678, GetCurrentThreadId(), GetTickCount64(), 42};
+            context.contacts[i] = {tires[i],         .001,       .003,
+                                   current_angular,  0x12345678, GetCurrentThreadId(),
+                                   GetTickCount64(), 42};
     };
     samples();
     assert(!vehicle_restore_adapter_bind(adapter, &context)); // no native lock
@@ -145,6 +150,7 @@ int main(int argc, char **argv) {
     source_frame.terminal_failure = 1;
     assert(dispatch(2, RESET_SAVE).control_result == CONTROL_SAVE_FAILED);
     load_frame(argv[2]);
+    current_angular = 3.5;
     context.simulation_time = source_frame.simulation_time;
     samples();
     context.contacts[3].tick_ms = GetTickCount64() - 101;
@@ -225,4 +231,5 @@ int main(int argc, char **argv) {
          "10077-field native boundary "
          "transaction -> four contact rebuilds; failed save preserves checkpoint; stale contacts, "
          "missing lock/pin and changed session rejected. Owned memory only; refresh modeled.");
+    return 0;
 }

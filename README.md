@@ -7,8 +7,27 @@ developed for offline Practice on Windows x64.
 experimental host restored and verified all 10,077 planned fields, rebuilt four
 native tire contacts and resumed simulation without transaction recovery. Its
 11 hooks stopped cleanly. This is a bounded initial experiment, not qualification
-for moving resets, damage recovery or lap validity. Hotkeys are not yet connected
-to this host. See the [host evidence](docs/PHYSICAL_RESET_HOST.md).
+for moving resets, damage recovery or lap validity. Focused save/restore hotkeys
+are connected to this host. See the [host evidence](docs/PHYSICAL_RESET_HOST.md).
+
+## Try the local build
+
+Open a healthy vehicle in offline Practice without EAC, enter driving mode, stay
+nearly stationary in neutral and hold the brake. Run `Start-Reset.cmd`, then return
+focus to LMU and release both function keys before using them:
+
+- **F6** saves the checkpoint.
+- **F7** prepares and restores it after successful native acknowledgement.
+- **Ctrl+C in the console** stops the tool; it also stops automatically after four minutes.
+
+A system sound and console message report save/restore success or rejection.
+The first-experiment limits remain 0.5 m/s and 0.25 m displacement from the saved
+position. The keys are observed, not swallowed: select unused game bindings.
+For different keys run `scripts/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
+The launcher discovers the process and worker, chooses an unused locally built
+host revision, and never replaces a resident DLL. Restart LMU if no revision is
+available. Generated binaries and the local Python runtime are required; a fresh
+clone must be built before this launcher can be used.
 
 ## Repository layout
 
@@ -46,7 +65,7 @@ Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 
 ## Current work
 
-1. Connect save/restore hotkeys to the validated experimental host.
+1. Validate the focused hotkey workflow with user input in LMU.
 2. Qualify lifecycle transitions and physical stability beyond the initial experiment.
 3. Validate moving resets, lap validity and hotkeys.
 

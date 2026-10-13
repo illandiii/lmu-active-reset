@@ -105,6 +105,15 @@ def as_dict(report):
 
 
 def run(args):
+    from physical_reset_hotkeys import HotkeyCommands, WindowsKeys, function_key
+
+    hotkeys = HotkeyCommands() if getattr(args, "hotkeys", False) else None
+    keyboard = None
+    if hotkeys:
+        save_vk, restore_vk = function_key(args.save_key), function_key(args.restore_key)
+        if save_vk == restore_vk or not args.allow_writes:
+            raise ValueError("Distinct hotkeys and explicit write opt-in required")
+        keyboard = WindowsKeys(args.pid, save_vk, restore_vk)
     if not args.offline_launch_confirmed:
         raise ValueError("Offline launch without EAC must be explicitly confirmed")
     binary, _, _ = verify_telemetry(args.pid)
@@ -213,6 +222,12 @@ def run(args):
             json.dumps(dict(host="active", log_prefix=prefix.name, writes_require_command=True)),
             flush=True,
         )
+        if hotkeys:
+            print(
+                f"{args.save_key}: SALVA | {args.restore_key}: RIPRISTINA | Ctrl+C: ARRESTA. "
+                "Solo con LMU in primo piano. Durata massima: " + str(args.seconds) + " s.",
+                flush=True,
+            )
         deadline = time.monotonic() + args.seconds
         tail, telemetry = "", None
         last_completed = sent_id = 0
@@ -241,6 +256,7 @@ def run(args):
                 reasons[decision["reason"]] = reasons.get(decision["reason"], 0) + 1
                 if decision["context_decision"] == "forbidden":
                     raise ValueError("Offline Practice context ended")
+                acknowledged = None
                 completed = ipc.completed_id
                 sequence = ipc.report_sequence
                 if completed > last_completed and not sequence & 1:
@@ -255,18 +271,52 @@ def run(args):
                             physical_field_write_attempts=copy.physical_field_write_attempts,
                         )
                         reports.append(row)
+                        acknowledged = row
                         output.write(json.dumps(row, allow_nan=False) + "\n")
                         output.flush()
                         print(json.dumps(row, allow_nan=False), flush=True)
+                        if hotkeys and (row["action"] != 2 or row["result"] != 0):
+                            import winsound
+
+                            if row["result"] == 0:
+                                message = (
+                                    "Checkpoint salvato."
+                                    if row["action"] == 1
+                                    else "Ripristino completato."
+                                )
+                            else:
+                                message = f"Comando rifiutato: risultato {row['result']}, causa {row['cause']}."
+                            print(message, flush=True)
+                            winsound.MessageBeep(
+                                winsound.MB_OK if row["result"] == 0 else winsound.MB_ICONHAND
+                            )
                         last_completed = completed
                         prepared_at = (
                             time.monotonic()
                             if row["action"] == 2 and row["result"] == 0 and row["fields"] == 10077
                             else 0.0
                         )
-                command = (
-                    json.loads(args.request_file.read_text()) if args.request_file.exists() else {}
-                )
+                if hotkeys:
+                    focused, save, restore, modifiers = keyboard.read()
+                    command = hotkeys.poll(
+                        focused,
+                        bool(ipc.allow),
+                        save,
+                        restore,
+                        modifiers,
+                        time.monotonic(),
+                        acknowledged,
+                    )
+                    # Do not queue input while a previous native request is in flight.
+                    if command and ipc.completed_id != sent_id:
+                        hotkeys.pending = None
+                        command = {}
+                else:
+                    command = (
+                        json.loads(args.request_file.read_text())
+                        if args.request_file.exists()
+                        else {}
+                    )
                 if command.get("stop") is True:
                     break
                 request_id, action = command.get("id", 0), command.get("action", 0)
@@ -292,6 +342,8 @@ def run(args):
                     ipc.request_id = request_id  # Publish last.
                     sent_id = request_id
                 time.sleep(0.05)
+    except KeyboardInterrupt:
+        print("Arresto richiesto; ripristino degli agganci in corso.", flush=True)
     except Exception as error:
         failure = f"{type(error).__name__}: {error}"
     finally:
@@ -322,7 +374,10 @@ def run(args):
             Path(str(prefix) + ".summary.json").write_text(json.dumps(summary, indent=2))
             print(json.dumps(summary, indent=2), flush=True)
         if native is not None:
-            native.wait(timeout=args.seconds + 5)
+            # This is our read-only telemetry child, not the game process.
+            if native.poll() is None:
+                native.terminate()
+            native.wait(timeout=5)
         if console:
             console.close()
         if view:
@@ -343,6 +398,9 @@ if __name__ == "__main__":
     parser.add_argument("--request-file", type=Path, required=True)
     parser.add_argument("--offline-launch-confirmed", action="store_true")
     parser.add_argument("--allow-writes", action="store_true")
+    parser.add_argument("--hotkeys", action="store_true")
+    parser.add_argument("--save-key", default="F6")
+    parser.add_argument("--restore-key", default="F7")
     args = parser.parse_args()
     if not 5 <= args.seconds <= 240 or args.owner_thread <= 0:
         parser.error("Duration must be 5..240 seconds and owner thread positive")

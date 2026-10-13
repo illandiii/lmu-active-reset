@@ -107,7 +107,25 @@ The reported lap-invalidated flag stayed false, but no completed lap was tested.
 Shutdown returned status 3/error 0, with all 11 original target prologs restored.
 An independent audit confirmed all six resident project modules stopped and a
 cumulative total of exactly 10,077 physical field write attempts. No hotkey loop
-or automatic restore remains active. Moving resets, terminal-damage restoration,
+or automatic restore remained active after that test. Moving resets, terminal-damage restoration,
 general lifecycle coverage and lap-validity behavior remain unqualified.
 
 Raw captures, game dumps and decompiled game code remain local and are not committed.
+
+## Hotkey connection
+
+`Start-Reset.cmd` now starts a four-minute session using F6 to save and F7 to
+prepare/restore. The controller requires a clean key release in the foreground
+game window, ignores chords/modifiers and does not repeat held keys. Restore
+requires an acknowledged successful save and a matching 10,077-field preparation;
+focus/context loss or an acknowledgement older than two seconds cancels the
+pending preparation. Native speed, displacement, lifecycle and lease checks are
+unchanged. Ctrl+C stops and drains the native host before terminating its own
+read-only telemetry child. The game process is never terminated.
+
+Six focused-controller tests pass for acknowledgement sequencing, held keys,
+missing checkpoints, chords, invalid preparation, focus/context loss and timeout.
+The v5 host passed the loaded 10,077-field fixture. Read-only live checks resolved
+worker 9756 and queried the foreground/key state successfully. Actual physical
+keyboard presses through this new frontend have not yet been exercised in LMU;
+the earlier successful live reset used explicit commands.

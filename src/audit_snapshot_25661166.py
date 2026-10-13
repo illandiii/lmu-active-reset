@@ -13,6 +13,12 @@ def audit(pid):
     listed = modules(pid)
     reports = {}
     registry = {
+        "lmu-physical-reset-v5-25661166.dll": (
+            "run_physical_reset_host_25661166",
+            "steam-25661166-physical-reset-v5.json",
+            "LMU_PhysicalReset25661166_v5_",
+            0x4C4D555253543035,
+        ),
         "lmu-physical-reset-v4-25661166.dll": (
             "run_physical_reset_host_25661166",
             "steam-25661166-physical-reset-v4.json",
@@ -332,7 +338,7 @@ def audit(pid):
     if not handle:
         raise OSError("Cannot verify restored code")
     try:
-        for revision in (1, 2, 3, 4):
+        for revision in (1, 2, 3, 4, 5):
             if f"lmu-physical-reset-v{revision}-25661166.dll" not in reports:
                 continue
             profile = json.loads(

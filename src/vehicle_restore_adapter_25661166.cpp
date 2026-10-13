@@ -27,6 +27,7 @@ static int owner(void *user, uint64_t epoch) {
     return adapter && adapter->bound && !adapter->quarantined && epoch == adapter->context.epoch &&
            GetCurrentThreadId() == adapter->host.owner_thread &&
            native_lock_witness(adapter->host.native_lock).held_by_caller &&
+           native_lock_witness(adapter->host.control_lock).held_by_caller &&
            adapter->host.pinned(adapter->host.user, &adapter->context);
 }
 
@@ -172,7 +173,8 @@ static void quarantine(void *user, int) {
 }
 
 VehicleRestoreAdapter *vehicle_restore_adapter_create(const VehicleRestoreHost *host) {
-    if (!host || !host->module_base || !host->native_lock || !host->owner_thread || !host->pinned ||
+    if (!host || !host->module_base || !host->native_lock || !host->control_lock ||
+        host->native_lock == host->control_lock || !host->owner_thread || !host->pinned ||
         !host->refresh)
         return nullptr;
     auto *adapter = new (std::nothrow) VehicleRestoreAdapter{};

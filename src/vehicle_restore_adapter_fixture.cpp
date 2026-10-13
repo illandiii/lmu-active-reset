@@ -1,5 +1,6 @@
 #include "vehicle_restore_adapter_25661166.h"
 #include "active_reset_boundary.h"
+#include "native_lifetime_pin.h"
 #include "vehicle_contact_fixture_model.h"
 #include <memory>
 #include <cstdlib>
@@ -7,7 +8,7 @@
 static SnapshotFrame source_frame;
 static RestoreBindings source_bindings;
 static unsigned char score[0x27400];
-static CRITICAL_SECTION game_lock;
+static CRITICAL_SECTION game_lock, control_lock;
 static bool pinned = true;
 static int original_calls;
 static int fault;
@@ -63,8 +64,10 @@ int main(int argc, char **argv) {
     score[0x164] = 1;
     score[0x180] = 0x5a; // unrelated record byte must survive.
     InitializeCriticalSection(&game_lock);
+    InitializeCriticalSection(&control_lock);
     VehicleRestoreHost host{0x12345678 - 0x1aa4090,
                             reinterpret_cast<uintptr_t>(&game_lock),
+                            reinterpret_cast<uintptr_t>(&control_lock),
                             GetCurrentThreadId(),
                             nullptr,
                             lifetime,
@@ -92,6 +95,9 @@ int main(int argc, char **argv) {
     samples();
     assert(!vehicle_restore_adapter_bind(adapter, &context)); // no native lock
     EnterCriticalSection(&game_lock);
+    assert(!vehicle_restore_adapter_bind(adapter, &context)); // worker lock alone is insufficient
+    NativeLifetimePin lifetime_pin{};
+    assert(native_lifetime_try_acquire(&lifetime_pin, host.native_lock, host.control_lock));
     auto ops = vehicle_restore_adapter_ops(adapter);
     auto dispatch = [&](uint64_t id, unsigned action) {
         assert(vehicle_restore_adapter_bind(adapter, &context));
@@ -155,16 +161,25 @@ int main(int argc, char **argv) {
     for (unsigned offset : {0x160u, 0x27290u, 0x27360u})
         assert(get<int32_t>(score + offset) == (fault ? 2 : 0));
     if (fault != 2) {
+        // Reconstructing the vehicle at identical addresses still ends its lifetime.
+        ++context.epoch;
+        samples();
+        assert(dispatch(7, RESET_LOAD).control_result == CONTROL_REJECTED);
+        --context.epoch;
+        samples();
+        assert(dispatch(8, RESET_LOAD).control_result == CONTROL_REJECTED);
         ++context.identity.session;
         samples();
-        assert(dispatch(7, RESET_LOAD).control_result == CONTROL_NO_CHECKPOINT);
+        assert(dispatch(9, RESET_LOAD).control_result == CONTROL_NO_CHECKPOINT);
     }
     pinned = false;
     assert(!vehicle_restore_adapter_bind(adapter, &context));
+    assert(native_lifetime_release(&lifetime_pin));
     LeaveCriticalSection(&game_lock);
     vehicle_restore_adapter_destroy(adapter);
     DeleteCriticalSection(&game_lock);
-    assert(original_calls == (fault == 2 ? 5 : 7) && abi_errors == 0);
+    DeleteCriticalSection(&control_lock);
+    assert(original_calls == (fault == 2 ? 5 : 9) && abi_errors == 0);
     puts("PASS full vehicle adapter: saved/current capture -> 10077-field native boundary "
          "transaction -> four contact rebuilds; failed save preserves checkpoint; stale contacts, "
          "missing lock/pin and changed session rejected. Owned memory only; refresh modeled.");

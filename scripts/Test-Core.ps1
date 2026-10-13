@@ -5,6 +5,7 @@ $builds = @(
     'Build-RestoreTransaction.ps1',
     'Build-RestoreFlow.ps1',
     'Build-NativeMemory.ps1',
+    'Build-NativeLifetimePin.ps1',
     'Build-ContactBatch.ps1',
     'Build-CheckpointBank.ps1',
     'Build-ActiveResetRuntime.ps1',

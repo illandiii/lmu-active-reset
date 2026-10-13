@@ -10,9 +10,11 @@ from observer IPC. The adapter resolves fresh bindings, validates all four conta
 samples and supplies the real contact-batch implementation to `RestoreFlowOps`.
 
 The host must supply a verified build, the physics thread, the already-owned
-native critical section and a lifetime pin that covers the entire callback,
+native worker critical section, the separate control critical section and a lifetime pin that covers the entire callback,
 including capture and preparation. A pointer comparison or heartbeat is not a
 lifetime pin. This remaining host contract prevents enabling a game writer now.
+The [object lifetime investigation](OBJECT_LIFETIME.md) describes the implemented
+nonblocking dual-lock scope and the coverage still open.
 
 The adapter owns the saved payload and preallocated preparation workspace. It
 publishes a new save only after every subsystem validates; a failed replacement
@@ -35,7 +37,9 @@ processes passed:
 
 Additional checks cover failed-save preservation, stale contact time/epoch,
 changed topology/session, absent native lock/pin, next-lap restrictions and an
-unrelated scoring byte. Successful and compensated paths compare every mapped
+unrelated scoring byte. An epoch change at identical addresses invalidates the
+checkpoint permanently, including if the previous epoch is subsequently supplied.
+Successful and compensated paths compare every mapped
 field against the expected final bytes.
 
 ```powershell

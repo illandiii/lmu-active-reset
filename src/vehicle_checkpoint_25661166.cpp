@@ -260,10 +260,12 @@ struct VehicleCheckpointWorkspace {
 };
 
 static bool valid_shape(const SnapshotFrame *frame) {
-    return frame && frame->total_count > 0 && frame->total_count <= 32 &&
-           frame->root_count + 4 == frame->total_count && frame->constraint_count > 0 &&
-           frame->constraint_count <= 64 && frame->topology_token && !frame->terminal_failure &&
-           !frame->geometry_status && !frame->mechanical_status && frame->memory_valid;
+    return frame && frame->root_count > 0 && frame->root_count <= 28 && frame->total_count > 0 &&
+           frame->total_count <= 32 && frame->root_count + 4 == frame->total_count &&
+           frame->constraint_count > 0 && frame->constraint_count <= 64 && frame->topology_token &&
+           !frame->terminal_failure && !frame->geometry_status && !frame->mechanical_status &&
+           frame->memory_valid &&
+           native_cache_valid(&frame->native_cache, frame->bodies, frame->total_count);
 }
 
 static void reset(VehicleCheckpointWorkspace *work) {

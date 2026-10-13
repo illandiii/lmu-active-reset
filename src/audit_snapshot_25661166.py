@@ -13,6 +13,12 @@ def audit(pid):
     listed = modules(pid)
     reports = {}
     registry = {
+        "lmu-boundary-observer-v3-25661166.dll": (
+            "run_boundary_observer_v3_25661166",
+            "steam-25661166-boundary-observer-v3.json",
+            "LMU_Boundary25661166_v3_",
+            0x4C4D555048415334,
+        ),
         "lmu-boundary-observer-v2-25661166.dll": (
             "run_boundary_observer_v2_25661166",
             "steam-25661166-boundary-observer-v2.json",
@@ -246,10 +252,18 @@ def audit(pid):
         module, manifest, prefix, magic = registry[name]
         path = (PROJECT / "bin" / name).resolve()
         profile = json.loads((PROJECT / "compatibility" / manifest).read_text())
-        if (
-            Path(entry["path"]) != path
-            or hashlib.sha256(path.read_bytes()).hexdigest() != profile["dll_sha256"]
-        ):
+        # The initial repository migration moved the unchanged bin directory.
+        # Windows keeps the original mapped path until process exit. Accept only
+        # an explicit local migration record for this exact former project path.
+        former = PROJECT / "outputs" / "lmu-active-reset" / "bin" / name
+        migrated = (
+            profile.get("previous_dll_path") == str(former)
+            and Path(entry["path"]) == former
+            and not former.exists()
+        )
+        if (Path(entry["path"]) != path and not migrated) or hashlib.sha256(
+            path.read_bytes()
+        ).hexdigest() != profile["dll_sha256"]:
             raise ValueError("Resident identity mismatch")
         IPC = importlib.import_module(module).IPC
         mapping = k.OpenFileMappingW(4, False, f"Local\\{prefix}{pid}")
@@ -315,6 +329,7 @@ def audit(pid):
                     "lmu-phase-observer-25661166.dll",
                     "lmu-boundary-observer-25661166.dll",
                     "lmu-boundary-observer-v2-25661166.dll",
+                    "lmu-boundary-observer-v3-25661166.dll",
                 )
             )
             and read_process(handle, image["base"] + 0xCF19F0, len(scoring_prolog))
@@ -323,7 +338,11 @@ def audit(pid):
             raise ValueError("Scoring instructions not original")
         if any(
             n in reports
-            for n in ("lmu-boundary-observer-25661166.dll", "lmu-boundary-observer-v2-25661166.dll")
+            for n in (
+                "lmu-boundary-observer-25661166.dll",
+                "lmu-boundary-observer-v2-25661166.dll",
+                "lmu-boundary-observer-v3-25661166.dll",
+            )
         ) and read_process(handle, image["base"] + 0xCD1F40, 15) != bytes.fromhex(
             "488bc4488958104889701848897820"
         ):
@@ -334,7 +353,11 @@ def audit(pid):
         modules=reports,
         outer_update_original=any(
             n in reports
-            for n in ("lmu-boundary-observer-25661166.dll", "lmu-boundary-observer-v2-25661166.dll")
+            for n in (
+                "lmu-boundary-observer-25661166.dll",
+                "lmu-boundary-observer-v2-25661166.dll",
+                "lmu-boundary-observer-v3-25661166.dll",
+            )
         ),
         dynamics_original=True,
         contact_original=any(
@@ -350,6 +373,7 @@ def audit(pid):
                 "lmu-phase-observer-25661166.dll",
                 "lmu-boundary-observer-25661166.dll",
                 "lmu-boundary-observer-v2-25661166.dll",
+                "lmu-boundary-observer-v3-25661166.dll",
             )
         ),
         physics_writes=sum(m["physics_writes"] for m in reports.values()),

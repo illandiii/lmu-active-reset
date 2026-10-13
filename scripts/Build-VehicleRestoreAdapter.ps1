@@ -27,7 +27,7 @@ $core = @(
 $native = @(
     'vehicle_checkpoint_25661166', 'vehicle_reader_25661166',
     'vehicle_restore_adapter_25661166', 'contact_batch_25661166',
-    'native_lock_witness', 'fenced_restore', 'simulation_fence', 'active_reset_boundary'
+    'native_lock_witness', 'native_lifetime_pin', 'fenced_restore', 'simulation_fence', 'active_reset_boundary'
 ) | ForEach-Object { Join-Path $sourceRoot "${_}.cpp" }
 $options = @('-O2', '-Wall', '-Wextra', '-Werror', '-Wno-deprecated', '-target', 'x86_64-windows-gnu')
 

@@ -25,7 +25,7 @@ struct VehicleRestoreContext {
 };
 
 struct VehicleRestoreHost {
-    uintptr_t module_base, native_lock;
+    uintptr_t module_base, native_lock, control_lock;
     DWORD owner_thread;
     void *user;
     int (*pinned)(void *, const VehicleRestoreContext *);

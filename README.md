@@ -45,7 +45,7 @@ Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 
 ## Current work
 
-1. Complete synchronization coverage for object destruction and control changes.
+1. Complete [synchronization coverage](docs/OBJECT_LIFETIME.md) for object destruction and control changes.
 2. Install the [full checkpoint/four-contact adapter](docs/VEHICLE_ADAPTER.md) only after
    the native lifetime contract is established. Its integrated fixtures now pass.
 3. Validate the first full reset, physical stability, lap validity and hotkeys.

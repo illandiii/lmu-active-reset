@@ -1,0 +1,16 @@
+/work/
+/bin/
+/logs/
+/analysis/
+/compatibility/
+/*.json
+/.env
+/.env.*
+**/__pycache__/
+*.pyc
+*.dll
+*.exe
+*.pdb
+*.obj
+*.o
+*.dmp

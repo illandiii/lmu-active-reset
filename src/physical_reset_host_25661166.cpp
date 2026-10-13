@@ -224,17 +224,6 @@ static void WINAPI boundary(uint64_t input) {
                 read_vehicle(base, physics_root, 1, last_time, diagnostic, &diagnostic_bindings);
             if (!report.readable)
                 report.cause = pinned(nullptr, &context) ? diagnostic->binding_status : 90004;
-            if (!report.readable && report.cause == 90205 && now - issued < 1200) {
-                // Native inertia caches may disagree at a particular boundary.
-                // Retry this SAME request on a later boundary, without weakening
-                // the reader or writing anything. The existing TTL still applies.
-                release_scope();
-                if (!fatal)
-                    outer_original(input);
-                --boundary_depth;
-                InterlockedDecrement(&active_boundaries);
-                return;
-            }
             if (report.readable && vehicle_restore_adapter_bind(adapter, &context)) {
                 std::memcpy(report.before_position, diagnostic->bodies[0].position_world,
                             sizeof(report.before_position));

@@ -28,6 +28,27 @@ static int normalize(const TirePersistentState t[4], const double cache[4],
     }
     return 0;
 }
+int checkpoint_validate_cached_mechanical(const RigidSavedBody *bodies, size_t count,
+                                          const MechanicalLinks *links,
+                                          const MechanicalDependencies *dependencies,
+                                          const TirePersistentState tires[4],
+                                          const double cache[4]) {
+    if (!bodies || !count || count > 32)
+        return MECHANICAL_BAD_ARGUMENT;
+    RigidMassProperties mass[32];
+    for (size_t i = 0; i < count; ++i)
+        mass[i] = bodies[i].mass;
+    TirePersistentState numerical[4];
+    MechanicalDependencies normalized;
+    if (normalize(tires, cache, links, mass, count, numerical) ||
+        tire_persistent_validate(numerical, dependencies, mass, count, links, &normalized))
+        return MECHANICAL_DEPENDENCY_INVALID;
+    RigidPreparedBody prepared[32];
+    FuelPrepared fuel;
+    return mechanical_prepare(bodies, mass, count, links, &normalized, &normalized, prepared,
+                              &fuel);
+}
+
 int checkpoint_save_cached_mass(CachedMassBank *b, const PartialCheckpoint *s,
                                 const MechanicalLinks *l, const MechanicalDependencies *d,
                                 const TirePersistentState t[4], const PowertrainPartialState *p,

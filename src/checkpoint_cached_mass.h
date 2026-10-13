@@ -9,6 +9,11 @@ typedef struct CachedMassPreparation {
     TransmissionPreparation state;
     double tire_mass_cache[4];
 } CachedMassPreparation;
+/* Validate a live frame using the same native mass/inertia caches as the bank.
+ * Current sector data is preserved and need not equal the last applied cache. */
+int checkpoint_validate_cached_mechanical(const RigidSavedBody *, size_t, const MechanicalLinks *,
+                                          const MechanicalDependencies *,
+                                          const TirePersistentState[4], const double[4]);
 /* Native body mass caches are distinct state: sector updates may follow the
  * last mass update. Never infer these caches from current sector values. */
 int checkpoint_save_cached_mass(CachedMassBank *, const PartialCheckpoint *,

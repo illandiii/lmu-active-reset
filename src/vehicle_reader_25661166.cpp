@@ -225,13 +225,11 @@ struct Reader {
                 if (!read_field(tire + 0x28 + sector * 0x60, state.sector_mass[sector]))
                     return fail(__LINE__);
         }
-        RigidMassProperties mass[32];
-        RigidPreparedBody out[32];
-        FuelPrepared prepared;
-        for (size_t i = 0; i < f.total_count; i++)
-            mass[i] = f.bodies[i].mass;
-        f.mechanical_status =
-            mechanical_prepare(f.bodies, mass, f.total_count, &links, &d, &d, out, &prepared);
+        // Native tire bodies use applied persistent caches. Sector values may
+        // already belong to the next update; recomputing their sum here rejects
+        // a valid phase of the simulation. Share the checkpoint bank's model.
+        f.mechanical_status = checkpoint_validate_cached_mechanical(
+            f.bodies, f.total_count, &links, &d, f.tire_state, f.tire_mass_cache);
         return true;
     }
 

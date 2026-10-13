@@ -116,6 +116,34 @@ static ResetHostReport request(ResetHostIPC *ipc, uint64_t id, unsigned action) 
 int main(int argc, char **argv) {
     assert(argc == 3);
     load_frame(argv[2]);
+    // Reproduce the reader bug: sectors have advanced but applied body caches
+    // have not. The original validator rejects it; the cache-aware one accepts
+    // it without changing either the captured sectors or the native caches.
+    RigidMassProperties mass[32];
+    RigidPreparedBody prepared[32];
+    FuelPrepared fuel;
+    for (size_t i = 0; i < source_frame.total_count; ++i)
+        mass[i] = source_frame.bodies[i].mass;
+    auto &dependencies = source_frame.dependencies;
+    dependencies.tires[0].sectors[0][0] += .001;
+    assert(mechanical_prepare(source_frame.bodies, mass, source_frame.total_count,
+                              &source_frame.links, &dependencies, &dependencies, prepared,
+                              &fuel) == MECHANICAL_BODY_MISMATCH);
+    auto validate = [] {
+        return checkpoint_validate_cached_mechanical(
+            source_frame.bodies, source_frame.total_count, &source_frame.links,
+            &source_frame.dependencies, source_frame.tire_state, source_frame.tire_mass_cache);
+    };
+    const double advanced_sector = dependencies.tires[0].sectors[0][0];
+    assert(validate() == 0 && dependencies.tires[0].sectors[0][0] == advanced_sector);
+    const double cached_inertia = source_frame.tire_state[0].cached_sector_inertia[0];
+    source_frame.tire_state[0].cached_sector_inertia[0] += .01;
+    assert(validate() != 0);
+    source_frame.tire_state[0].cached_sector_inertia[0] = cached_inertia;
+    const double cached_mass = source_frame.tire_mass_cache[0];
+    source_frame.tire_mass_cache[0] *= 1.01;
+    assert(validate() != 0);
+    source_frame.tire_mass_cache[0] = cached_mass;
     source_frame.bodies[0].velocity_world[0] = 80;
     auto memory = std::make_unique<unsigned char[]>(108 * 0x5000 + 2592 * 0x110);
     for (unsigned i = 0; i < RESTORE_OBJECT_COUNT; ++i)
@@ -165,10 +193,9 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < source_frame.total_count; ++i)
         source_frame.bodies[i].position_world[0] += 1000;
     source_frame.bodies[0].velocity_world[0] = -100;
-    mismatched_reads = 3;
     auto plan = request(ipc, 2, HOST_PREPARE);
     assert(plan.result == 0 && plan.fields == 10077 && !plan.forward_writes);
-    assert(mismatched_reads == 0 && plan.pins >= 5);
+    assert(plan.pins == 2);
     auto denied = request(ipc, 3, HOST_RESTORE);
     assert(denied.result == CONTROL_REJECTED && denied.loads == 0 && !denied.forward_writes);
     ipc->permit_writes = 1;
@@ -186,6 +213,7 @@ int main(int argc, char **argv) {
     auto mismatch = request(ipc, 5, HOST_PREPARE);
     assert(mismatch.result == CONTROL_REJECTED && mismatch.cause == 90205 &&
            ipc->physical_field_write_attempts == 10077);
+    assert(mismatch.pins == restored.pins + 1); // No retry/failover.
     mismatched_reads = 0;
     void(WINAPI *volatile reconstruct)(void *) = FixtureReconstruct;
     reconstruct(reinterpret_cast<void *>(source_bindings.address[104]));
@@ -196,7 +224,8 @@ int main(int argc, char **argv) {
         Sleep(10);
     assert(ipc->status == 3 && !ipc->error && original_boundaries > 0);
     puts("PASS loaded physical host: moving save/restore at 80/100 m/s over 1000 m, bounded "
-         "inertia retry/refusal, write opt-in, full 10077-field restore, four "
+         "cache-aware inertia validation and immediate corruption refusal, write opt-in, full "
+         "10077-field restore, four "
          "contacts, native lock release before update, lifecycle invalidation and clean stop. "
          "Owned fixture memory only.");
 }

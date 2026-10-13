@@ -164,3 +164,33 @@ connection failures, late recovery report and duplicate/incomplete reports) and
 six hotkey tests pass. These are isolated tests; live moving/long-distance reset
 validation still requires reopening LMU. In particular they do not prove that
 native track/contact caches work for every distant checkpoint or airborne state.
+
+## V7: correct the inertia model, remove mechanical retries
+
+The root cause of the reproducible 90205 rejection is the integrated reader's
+legacy call to `mechanical_prepare` using current tire-sector sums. Native code
+F1222A/F12242/F12253 subtracts persistent C20/C28/C30 caches, and sectors can advance
+separately. The checkpoint bank already handled these different phases; the reader
+incorrectly rejected the frame before the bank could validate it.
+
+The reader now calls `checkpoint_validate_cached_mechanical`, sharing the existing
+cached-mass normalization and persistent-inertia validator with checkpoint storage.
+Original captured sectors and caches remain intact. The existing 32-epsilon
+tolerances, wheel inertia and other mechanical checks are unchanged. V6's 1.2-second
+mechanical retry block has been removed: a genuine invalid frame is rejected on its
+first attempt. Transport recovery remains separate from physical-state validity.
+
+Replay of the 12 unmodified real frames in
+`20261013T201355027985Z_snapshot_observer_v31.frames.jsonl` reproduces seven legacy
+mechanical-status-5 rejections and five successes. The corrected validator accepts
+all 12 and rejects all 192 deliberately corrupted mass/inertia-cache cases. Run:
+
+```powershell
+python src/test_cached_reader_recording.py logs/20261013T201355027985Z_snapshot_observer_v31.frames.jsonl
+```
+
+The loaded v7 host fixture also reproduces the phase mismatch, verifies immediate
+acceptance with the correct cache model, immediate rejection of invalid caches
+without retries, and the full moving/1,000 m restore. The launcher selects v7 only.
+This fixes the demonstrated model error offline; a fresh live hotkey run is still
+needed to verify the updated reader in the current game session.

@@ -3,7 +3,11 @@
 #include <windows.h>
 #include <stdint.h>
 #include <stdio.h>
+#ifdef LMU_BOUNDARY_HANDOFF
+#define PHASE_MAGIC 0x4c4d555048415335ULL
+#else
 #define PHASE_MAGIC 0x4c4d555048415334ULL
+#endif
 struct PhaseFrame {
     uint64_t tick_ms, dynamics_thread, scoring_thread, scoring_calls, overlaps, thread_changes,
         owner, physics, scoring, score_sequence, stable, current, remembered, last_computed,
@@ -22,6 +26,10 @@ struct PhaseIPC {
 };
 static_assert(sizeof(PhaseFrame) == 200 && sizeof(PhaseIPC) == 296, "Phase ABI");
 static void phase_mapping_name(wchar_t *out, DWORD pid) {
+#ifdef LMU_BOUNDARY_HANDOFF
+    swprintf(out, 96, L"Local\\LMU_Boundary25661166_v4_%lu", pid);
+#else
     swprintf(out, 96, L"Local\\LMU_Boundary25661166_v3_%lu", pid);
+#endif
 }
 #endif

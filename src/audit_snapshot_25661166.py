@@ -13,6 +13,12 @@ def audit(pid):
     listed = modules(pid)
     reports = {}
     registry = {
+        "lmu-boundary-observer-v4-25661166.dll": (
+            "run_boundary_observer_v4_25661166",
+            "steam-25661166-boundary-observer-v4.json",
+            "LMU_Boundary25661166_v4_",
+            0x4C4D555048415335,
+        ),
         "lmu-boundary-observer-v3-25661166.dll": (
             "run_boundary_observer_v3_25661166",
             "steam-25661166-boundary-observer-v3.json",
@@ -330,6 +336,7 @@ def audit(pid):
                     "lmu-boundary-observer-25661166.dll",
                     "lmu-boundary-observer-v2-25661166.dll",
                     "lmu-boundary-observer-v3-25661166.dll",
+                    "lmu-boundary-observer-v4-25661166.dll",
                 )
             )
             and read_process(handle, image["base"] + 0xCF19F0, len(scoring_prolog))
@@ -342,6 +349,7 @@ def audit(pid):
                 "lmu-boundary-observer-25661166.dll",
                 "lmu-boundary-observer-v2-25661166.dll",
                 "lmu-boundary-observer-v3-25661166.dll",
+                "lmu-boundary-observer-v4-25661166.dll",
             )
         ) and read_process(handle, image["base"] + 0xCD1F40, 15) != bytes.fromhex(
             "488bc4488958104889701848897820"
@@ -357,6 +365,7 @@ def audit(pid):
                 "lmu-boundary-observer-25661166.dll",
                 "lmu-boundary-observer-v2-25661166.dll",
                 "lmu-boundary-observer-v3-25661166.dll",
+                "lmu-boundary-observer-v4-25661166.dll",
             )
         ),
         dynamics_original=True,
@@ -374,6 +383,7 @@ def audit(pid):
                 "lmu-boundary-observer-25661166.dll",
                 "lmu-boundary-observer-v2-25661166.dll",
                 "lmu-boundary-observer-v3-25661166.dll",
+                "lmu-boundary-observer-v4-25661166.dll",
             )
         ),
         physics_writes=sum(m["physics_writes"] for m in reports.values()),

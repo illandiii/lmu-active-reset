@@ -30,6 +30,11 @@ The fixture uses recorded numerical states, fresh local allocations for all
 boundary, plan, Win32 memory backend and contact-node adapter. Three separate
 processes passed:
 
+Admission now uses the asynchronous gate with an actual competing control
+thread. That thread yields its control lock through the gate and cannot resume
+until the complete capture/restore/compensation sequence releases the acquired
+pin. This connects the new synchronization mechanism to the full adapter fixture.
+
 - Success: 10,077 fields committed and all four tires rebuilt.
 - Contact failure: all 10,077 fields compensated and four original contacts rebuilt.
 - Repeated contact failure: current and later original callbacks suppressed;

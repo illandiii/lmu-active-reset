@@ -10,7 +10,7 @@ $scoreSrc=Join-Path $projectRoot 'src'
 $scoreBuild=Join-Path $scoreWork 'boundary-v3-bin-25661166'
 New-Item -ItemType Directory -Force -Path $scoreBuild | Out-Null
 $scoreCommon=@('c++','-O2','-target','x86_64-windows-gnu','-I',(Join-Path $scoreMh 'include'),'-I',$scoreSrc)
-$scoreSources=@((Join-Path $scoreSrc 'native_lifetime_pin.cpp'),(Join-Path $scoreSrc 'native_lock_witness.cpp'),(Join-Path $scoreSrc 'boundary_native_v3_25661166.cpp'),(Join-Path $scoreMh 'src\buffer.c'),(Join-Path $scoreMh 'src\hook.c'),(Join-Path $scoreMh 'src\trampoline.c'),(Join-Path $scoreMh 'src\hde\hde64.c'))
+$scoreSources=@((Join-Path $scoreSrc 'native_lifetime_pin.cpp'),(Join-Path $scoreSrc 'native_lock_witness.cpp'),(Join-Path $scoreSrc 'boundary_phase_observer_25661166.cpp'),(Join-Path $scoreMh 'src\buffer.c'),(Join-Path $scoreMh 'src\hook.c'),(Join-Path $scoreMh 'src\trampoline.c'),(Join-Path $scoreMh 'src\hde\hde64.c'))
 & $ZigPath @scoreCommon '-shared' '-DLMU_PHASE_FIXTURE' @scoreSources '-ladvapi32' '-o' (Join-Path $scoreBuild 'boundary-fixture.dll')
 if($LASTEXITCODE -ne 0){throw 'Phase fixture DLL build failed'}
 & $ZigPath @scoreCommon (Join-Path $scoreSrc 'boundary_fixture_v3_25661166.cpp') '-o' (Join-Path $scoreBuild 'boundary-fixture.exe')

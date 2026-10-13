@@ -10,6 +10,11 @@
 #include "MinHook.h"
 #include "native_lock_witness.h"
 #include "native_lifetime_pin.h"
+#ifdef LMU_BOUNDARY_HANDOFF
+#include "native_lifetime_handoff.h"
+static NativeLifetimeHandoff *handoff;
+static volatile LONG64 pins_acquired, pins_valid, pins_released, control_owner_before;
+#endif
 static thread_local bool boundary_lock_held;
 static PhaseIPC *ipc;
 static uintptr_t module_base;
@@ -82,6 +87,17 @@ static uintptr_t worker_lock_address() {
     return module_base + 0x3b8a968;
 #endif
 }
+#ifdef LMU_BOUNDARY_HANDOFF
+static uintptr_t gate_address() {
+#ifdef LMU_PHASE_FIXTURE
+    using F = uintptr_t(WINAPI *)();
+    auto f = (F)GetProcAddress((HMODULE)module_base, "FixtureGate");
+    return f ? f() : 0;
+#else
+    return module_base + 0x1a5a5f0;
+#endif
+}
+#endif
 static void WINAPI boundary(uint64_t input) {
     bool prior = boundary_lock_held;
     boundary_lock_held = lock_witness().held_by_caller;
@@ -89,6 +105,20 @@ static void WINAPI boundary(uint64_t input) {
     if (lease()) {
         note_thread(&boundary_thread);
         InterlockedIncrement64(&boundary_calls);
+#ifdef LMU_BOUNDARY_HANDOFF
+        if (boundary_depth == 1 && boundary_lock_held && !number(&thread_changes)) {
+            NativeLifetimePin pin{};
+            InterlockedExchange64(&control_owner_before,
+                                  native_lock_witness(control_lock_address()).owner);
+            if (native_handoff_try_pin(handoff, &pin)) {
+                InterlockedIncrement64(&pins_acquired);
+                if (native_lifetime_valid(&pin))
+                    InterlockedIncrement64(&pins_valid);
+                if (native_lifetime_release(&pin))
+                    InterlockedIncrement64(&pins_released);
+            }
+        }
+#endif
     }
     original_boundary(input);
     --boundary_depth;
@@ -165,6 +195,13 @@ static void WINAPI dynamics(void *object, double dt) {
                    !InterlockedCompareExchange(&score_depth, 0, 0) && roots(o2, p2, s2) &&
                    o2 == o && p2 == p && s2 == s && f.scoring_thread == f.dynamics_thread &&
                    !f.thread_changes && !f.overlaps;
+#ifdef LMU_BOUNDARY_HANDOFF
+        // Cumulative counters preserve short admission windows between samples.
+        f.control_owner_before = number(&control_owner_before);
+        f.pin_acquired = number(&pins_acquired);
+        f.pin_valid = number(&pins_valid);
+        f.pin_released = number(&pins_released);
+#else
         if (f.stable) {
             auto control = control_lock_address();
             f.control_owner_before = native_lock_witness(control).owner;
@@ -175,6 +212,7 @@ static void WINAPI dynamics(void *object, double dt) {
                 f.pin_released = native_lifetime_release(&pin);
             }
         }
+#endif
         if (valid && lease()) {
             f.current = flags[0];
             f.remembered = flags[1];
@@ -303,23 +341,56 @@ static DWORD WINAPI worker(void *) {
         ipc->status = 4;
         return 0;
     }
+#ifdef LMU_BOUNDARY_HANDOFF
+    handoff = native_handoff_create(worker_lock_address(), control_lock_address(), gate_address());
+    if (!handoff) {
+        ipc->error = 110;
+        ipc->status = 4;
+        return 0;
+    }
+#endif
     status = MH_EnableHook(MH_ALL_HOOKS);
     if (status != MH_OK) {
+#ifdef LMU_BOUNDARY_HANDOFF
+        native_handoff_destroy(handoff);
+        handoff = nullptr;
+#endif
         ipc->error = 400 + status;
         ipc->status = 4;
         return 0;
     }
     ipc->status = 2;
     ULONGLONG start = GetTickCount64();
+#ifdef LMU_BOUNDARY_HANDOFF
+    ULONGLONG next_request = start;
+#endif
     while (!ipc->stop) {
         now = GetTickCount64();
         hb = number(&ipc->heartbeat_ms);
         if (hb > now || now - hb > 2000 || (ULONGLONG)now - start > 120000)
             break;
+#ifdef LMU_BOUNDARY_HANDOFF
+        if (!lease())
+            native_handoff_cancel(handoff);
+        else if (static_cast<ULONGLONG>(now) >= next_request) {
+            native_handoff_request(handoff, 25);
+            next_request = static_cast<ULONGLONG>(now) + 500;
+        }
+#endif
         Sleep(20);
     }
     ipc->allow_observation = 0;
     ipc->stop = 1;
+#ifdef LMU_BOUNDARY_HANDOFF
+    // Join the helper before detaching. Keep its storage resident because a
+    // callback may still return through a trampoline after hooks are disabled.
+    // Its storage/handles are reclaimed on process exit, like the DLL.
+    if (!native_handoff_shutdown(handoff)) {
+        ipc->error = 111;
+        ipc->status = 5;
+        return 0;
+    }
+#endif
     status = MH_DisableHook(MH_ALL_HOOKS);
     if (status != MH_OK) {
         ipc->error = 500 + status;

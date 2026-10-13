@@ -5,6 +5,12 @@
 #include <initializer_list>
 #include "boundary_ipc_v3_25661166.h"
 static CRITICAL_SECTION game_lock, control_lock;
+#ifdef LMU_BOUNDARY_HANDOFF
+static CRITICAL_SECTION gate_lock;
+extern "C" __declspec(dllexport) uintptr_t WINAPI FixtureGate() {
+    return (uintptr_t)&gate_lock;
+}
+#endif
 extern "C" __declspec(dllexport) uintptr_t WINAPI FixtureControlLock() {
     return (uintptr_t)&control_lock;
 }
@@ -70,6 +76,9 @@ int main(int argc, char **argv) {
     CHECK(argc >= 2);
     InitializeCriticalSection(&game_lock);
     InitializeCriticalSection(&control_lock);
+#ifdef LMU_BOUNDARY_HANDOFF
+    InitializeCriticalSection(&gate_lock);
+#endif
     for (unsigned off : {0x160u, 0x27290u, 0x27360u}) {
         int32_t x = 2;
         memcpy(scoring + off, &x, 4);
@@ -103,8 +112,10 @@ int main(int argc, char **argv) {
     CHECK(ipc->frame.stable && ipc->frame.boundary_depth == 1 &&
           ipc->frame.boundary_thread == GetCurrentThreadId() && ipc->frame.outside_boundary == 0 &&
           ipc->frame.boundary_lock_held && ipc->frame.lock_owner == GetCurrentThreadId() &&
-          ipc->frame.pin_acquired && ipc->frame.pin_valid && ipc->frame.pin_released &&
           ipc->frame.lock_recursion > 0 && dc == 1 && sc == 1 && bc == 1);
+#ifndef LMU_BOUNDARY_HANDOFF
+    CHECK(ipc->frame.pin_acquired && ipc->frame.pin_valid && ipc->frame.pin_released);
+#endif
     d(physics, .25);
     CHECK(!ipc->frame.stable && ipc->frame.boundary_depth == 0 &&
           ipc->frame.outside_boundary == 1 && dc == 2);
@@ -112,6 +123,15 @@ int main(int argc, char **argv) {
     b(0x1234567887654321ULL);
     nested = false;
     CHECK(dc == 4 && bc == 3 && sc == 3 && ipc->frame.boundary_depth == 1);
+#ifdef LMU_BOUNDARY_HANDOFF
+    for (int i = 0; i < 2000 && !ipc->frame.pin_acquired; ++i) {
+        ipc->heartbeat_ms = GetTickCount64();
+        b(0x1234567887654321ULL);
+        Sleep(1);
+    }
+    CHECK(ipc->frame.pin_acquired && ipc->frame.pin_acquired == ipc->frame.pin_valid &&
+          ipc->frame.pin_acquired == ipc->frame.pin_released);
+#endif
     void(WINAPI *volatile unlocked)(uint64_t) = FixtureBoundary;
     unlocked(0x1234567887654321ULL);
     CHECK(!ipc->frame.stable && !ipc->frame.boundary_lock_held && ipc->frame.boundary_depth == 1);
@@ -131,6 +151,10 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 150 && ipc->status == 2; i++)
         Sleep(20);
     CHECK(ipc->status == 3);
+#ifdef LMU_BOUNDARY_HANDOFF
+    CHECK(TryEnterCriticalSection(&gate_lock));
+    LeaveCriticalSection(&gate_lock);
+#endif
     for (int i = 0; i < 3; i++)
         CHECK(!memcmp(original[i], targets[i], 32));
     observed = ipc->observations;

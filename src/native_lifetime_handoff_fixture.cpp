@@ -135,6 +135,12 @@ int main() {
     // Shutdown cancels an offered request and joins the actual gate owner.
     assert(native_handoff_request(handoff, 50));
     until_offered();
+    assert(native_handoff_shutdown(handoff));
+    assert(native_handoff_drained(handoff));
+    assert(!native_handoff_request(handoff, 50));
+    EnterCriticalSection(&worker);
+    assert(!native_handoff_try_pin(handoff, &pin));
+    LeaveCriticalSection(&worker);
     assert(native_handoff_destroy(handoff));
     assert(TryEnterCriticalSection(&gate));
     LeaveCriticalSection(&gate);

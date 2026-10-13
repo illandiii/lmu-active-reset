@@ -99,3 +99,18 @@ The Win32 fixture verifies successful exchange, occupied gate, absent worker
 ownership, overlapping requests, expiration without callbacks, cancellation,
 opposite lock order on teardown, and helper shutdown. These tests use owned locks;
 successful admission inside LMU and the first physical reset remain unverified.
+
+The v4 boundary observer uses this mechanism with 25 ms offers every 500 ms,
+only while its offline observation lease is valid. Acquisition is attempted at
+the start of the outer boundary, before the original update. The three pin fields
+are cumulative acquisition/validation/release counters; this avoids losing brief
+successes between persisted frames. It releases each pin immediately and performs
+no vehicle writes. Its stop and watchdog fixtures pass, and the previous v3
+observer's fixtures still pass against their shared implementation.
+
+Build with `scripts/Build-BoundaryObserverV425661166.ps1 -ZigPath <zig.exe>`.
+Run `python src/run_boundary_observer_v4_25661166.py --pid <pid> --load
+--offline-launch-confirmed` in a verified offline Practice. Its mapping, magic,
+DLL name and compatibility manifest are distinct from v3. The shutdown audit
+recognizes v4 and checks all three original hook targets. A new live result has
+not been collected: LMU was closed during this implementation.

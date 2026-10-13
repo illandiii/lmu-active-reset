@@ -1,6 +1,6 @@
 #include "vehicle_restore_adapter_25661166.h"
 #include "active_reset_boundary.h"
-#include "native_lifetime_pin.h"
+#include "native_lifetime_handoff.h"
 #include "vehicle_contact_fixture_model.h"
 #include <memory>
 #include <cstdlib>
@@ -8,7 +8,20 @@
 static SnapshotFrame source_frame;
 static RestoreBindings source_bindings;
 static unsigned char score[0x27400];
-static CRITICAL_SECTION game_lock, control_lock;
+static CRITICAL_SECTION game_lock, control_lock, gate_lock;
+static HANDLE control_entered, control_yield, control_resumed;
+static DWORD WINAPI control_loop(void *) {
+    EnterCriticalSection(&control_lock);
+    SetEvent(control_entered);
+    assert(WaitForSingleObject(control_yield, 5000) == WAIT_OBJECT_0);
+    LeaveCriticalSection(&control_lock);
+    EnterCriticalSection(&gate_lock);
+    LeaveCriticalSection(&gate_lock);
+    EnterCriticalSection(&control_lock);
+    SetEvent(control_resumed);
+    LeaveCriticalSection(&control_lock);
+    return 0;
+}
 static bool pinned = true;
 static int original_calls;
 static int fault;
@@ -65,6 +78,7 @@ int main(int argc, char **argv) {
     score[0x180] = 0x5a; // unrelated record byte must survive.
     InitializeCriticalSection(&game_lock);
     InitializeCriticalSection(&control_lock);
+    InitializeCriticalSection(&gate_lock);
     VehicleRestoreHost host{0x12345678 - 0x1aa4090,
                             reinterpret_cast<uintptr_t>(&game_lock),
                             reinterpret_cast<uintptr_t>(&control_lock),
@@ -97,7 +111,27 @@ int main(int argc, char **argv) {
     EnterCriticalSection(&game_lock);
     assert(!vehicle_restore_adapter_bind(adapter, &context)); // worker lock alone is insufficient
     NativeLifetimePin lifetime_pin{};
-    assert(native_lifetime_try_acquire(&lifetime_pin, host.native_lock, host.control_lock));
+    auto *handoff = native_handoff_create(host.native_lock, host.control_lock,
+                                          reinterpret_cast<uintptr_t>(&gate_lock));
+    assert(handoff);
+    control_entered = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    control_yield = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    control_resumed = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    assert(control_entered && control_yield && control_resumed);
+    HANDLE control_thread = CreateThread(nullptr, 0, control_loop, nullptr, 0, nullptr);
+    assert(control_thread && WaitForSingleObject(control_entered, 5000) == WAIT_OBJECT_0);
+    assert(native_handoff_request(handoff, 50));
+    auto deadline = GetTickCount64() + 1000;
+    while (native_handoff_state(handoff) == LifetimeHandoffState::Queued &&
+           GetTickCount64() < deadline)
+        SwitchToThread();
+    assert(native_handoff_state(handoff) == LifetimeHandoffState::Offered);
+    assert(!native_handoff_try_pin(handoff, &lifetime_pin));
+    SetEvent(control_yield);
+    while (!native_handoff_try_pin(handoff, &lifetime_pin) && GetTickCount64() < deadline)
+        SwitchToThread();
+    assert(lifetime_pin.acquired && native_lifetime_valid(&lifetime_pin));
+    assert(WaitForSingleObject(control_resumed, 0) == WAIT_TIMEOUT);
     auto ops = vehicle_restore_adapter_ops(adapter);
     auto dispatch = [&](uint64_t id, unsigned action) {
         assert(vehicle_restore_adapter_bind(adapter, &context));
@@ -174,13 +208,21 @@ int main(int argc, char **argv) {
     }
     pinned = false;
     assert(!vehicle_restore_adapter_bind(adapter, &context));
+    assert(WaitForSingleObject(control_resumed, 0) == WAIT_TIMEOUT);
     assert(native_lifetime_release(&lifetime_pin));
     LeaveCriticalSection(&game_lock);
+    assert(WaitForSingleObject(control_thread, 5000) == WAIT_OBJECT_0);
+    assert(WaitForSingleObject(control_resumed, 0) == WAIT_OBJECT_0);
+    assert(native_handoff_destroy(handoff));
+    for (HANDLE handle : {control_thread, control_entered, control_yield, control_resumed})
+        CloseHandle(handle);
     vehicle_restore_adapter_destroy(adapter);
     DeleteCriticalSection(&game_lock);
     DeleteCriticalSection(&control_lock);
+    DeleteCriticalSection(&gate_lock);
     assert(original_calls == (fault == 2 ? 5 : 9) && abi_errors == 0);
-    puts("PASS full vehicle adapter: saved/current capture -> 10077-field native boundary "
+    puts("PASS full vehicle adapter: asynchronous control handoff -> saved/current capture -> "
+         "10077-field native boundary "
          "transaction -> four contact rebuilds; failed save preserves checkpoint; stale contacts, "
          "missing lock/pin and changed session rejected. Owned memory only; refresh modeled.");
 }

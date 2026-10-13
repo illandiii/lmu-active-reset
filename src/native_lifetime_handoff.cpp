@@ -150,9 +150,8 @@ bool native_handoff_try_pin(NativeLifetimeHandoff *h, NativeLifetimePin *pin) {
     InterlockedExchange(&h->in_callback, 0);
     return acquired;
 }
-bool native_handoff_destroy(NativeLifetimeHandoff *h) {
-    if (!host(h) || read(&h->in_callback) ||
-        native_handoff_state(h) == LifetimeHandoffState::Claiming)
+bool native_handoff_shutdown(NativeLifetimeHandoff *h) {
+    if (!host(h))
         return false;
     native_handoff_cancel(h);
     InterlockedExchange(&h->stop, 1);
@@ -160,6 +159,18 @@ bool native_handoff_destroy(NativeLifetimeHandoff *h) {
         SetEvent(h->request_event);
     if (h->thread && WaitForSingleObject(h->thread, 5000) != WAIT_OBJECT_0)
         return false; // Retain storage/handles if a helper has not actually exited.
+    InterlockedCompareExchange(&h->state, value(LifetimeHandoffState::Cancelled),
+                               value(LifetimeHandoffState::Queued));
+    InterlockedCompareExchange(&h->state, value(LifetimeHandoffState::Cancelled),
+                               value(LifetimeHandoffState::Offered));
+    if (h->drained_event)
+        SetEvent(h->drained_event);
+    return true;
+}
+bool native_handoff_destroy(NativeLifetimeHandoff *h) {
+    if (!host(h) || read(&h->in_callback) ||
+        native_handoff_state(h) == LifetimeHandoffState::Claiming || !native_handoff_shutdown(h))
+        return false;
     for (HANDLE handle : {h->thread, h->request_event, h->release_event, h->drained_event})
         if (handle)
             CloseHandle(handle);

@@ -74,7 +74,9 @@ def payload(value):
     return value
 
 
-def run(pid, seconds, execute, offline):
+def run(pid, seconds, execute, offline, variant=3):
+    if variant not in (3, 4):
+        raise ValueError("Unsupported boundary observer variant")
     if execute and not offline:
         raise ValueError("Confirmed offline no-EAC launch required")
     binary, _, _ = verify_telemetry(pid)
@@ -87,9 +89,9 @@ def run(pid, seconds, execute, offline):
     ):
         raise ValueError("Enter GUIDA before loading the snapshot observer")
     profile = json.loads(
-        (PROJECT / "compatibility/steam-25661166-boundary-observer-v3.json").read_text()
+        (PROJECT / f"compatibility/steam-25661166-boundary-observer-v{variant}.json").read_text()
     )
-    dll = (PROJECT / "bin/lmu-boundary-observer-v3-25661166.dll").resolve()
+    dll = (PROJECT / f"bin/lmu-boundary-observer-v{variant}-25661166.dll").resolve()
     if hashlib.sha256(dll.read_bytes()).hexdigest() != profile["dll_sha256"]:
         raise ValueError("Pose DLL hash changed")
     listed = modules(pid)
@@ -100,8 +102,8 @@ def run(pid, seconds, execute, offline):
     from audit_snapshot_25661166 import audit
 
     previous = audit(pid)
-    if any(m["name"].lower() == "lmu-boundary-observer-v3-25661166.dll" for m in listed):
-        raise ValueError("Snapshot v3 already resident")
+    if any(m["name"].lower() == dll.name.lower() for m in listed):
+        raise ValueError(f"Boundary observer v{variant} already resident")
     main = next(m for m in listed if m["name"].lower() == "le mans ultimate.exe")
     handle = k.OpenProcess(0x43A if execute else 0x410, False, pid)
     if not handle:
@@ -117,7 +119,7 @@ def run(pid, seconds, execute, offline):
         / "logs"
         / (
             datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-            + "_boundary_observer_v3"
+            + f"_boundary_observer_v{variant}"
         )
     )
     try:
@@ -141,6 +143,8 @@ def run(pid, seconds, execute, offline):
                     "dll_sha256": profile["dll_sha256"],
                     "previous": previous,
                     "scope": "Dynamics/scoring phase and thread relationship. No scoring or physics writes.",
+                    "asynchronous_admission": variant == 4,
+                    "pin_fields_are_cumulative": variant == 4,
                 },
                 indent=2,
             )
@@ -152,7 +156,7 @@ def run(pid, seconds, execute, offline):
             4,
             0,
             ctypes.sizeof(IPC),
-            f"Local\\LMU_Boundary25661166_v3_{pid}",
+            f"Local\\LMU_Boundary25661166_v{variant}_{pid}",
         )
         if not mapping or ctypes.get_last_error() == 183:
             raise ValueError("Pose mapping exists or unavailable")
@@ -161,7 +165,7 @@ def run(pid, seconds, execute, offline):
             raise OSError("Pose mapping unavailable")
         ipc = IPC.from_address(view)
         ctypes.memset(view, 0, ctypes.sizeof(IPC))
-        ipc.magic = 0x4C4D555048415334
+        ipc.magic = 0x4C4D555048415334 + variant - 3
         ipc.version = 1
         ipc.pid = pid
         ipc.heartbeat_ms = KERNEL.GetTickCount64()

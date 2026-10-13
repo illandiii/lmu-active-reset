@@ -23,6 +23,8 @@ void native_handoff_cancel(NativeLifetimeHandoff *);
 LifetimeHandoffState native_handoff_state(const NativeLifetimeHandoff *);
 bool native_handoff_drained(const NativeLifetimeHandoff *);
 bool native_handoff_try_pin(NativeLifetimeHandoff *, NativeLifetimePin *);
+// Stop/join the helper but retain storage while callbacks can still return.
+bool native_handoff_shutdown(NativeLifetimeHandoff *);
 // Call only after detaching/quiescing all physics callbacks using this object.
 bool native_handoff_destroy(NativeLifetimeHandoff *);
 #endif

@@ -15,6 +15,7 @@ from pathlib import Path
 import subprocess
 import struct
 import time
+from urllib.error import URLError
 
 from capture_context import PROJECT, KERNEL, get_json
 from capture_preparation_steam25661166 import verify_telemetry
@@ -102,6 +103,41 @@ def as_dict(report):
         else getattr(report, name)
         for name, _ in report._fields_
     }
+
+
+def context_attempt(ipc, hotkeys, reasons, fetch=get_json, clock=KERNEL.GetTickCount64):
+    """A failed transport read revokes admission without killing the runner."""
+    try:
+        before = fetch("/navigation/state")["state"]
+        game = fetch("/rest/sessions/GetGameState")
+        after = fetch("/navigation/state")["state"]
+        return before, game, after
+    except (TimeoutError, URLError, ConnectionError):
+        ipc.allow = 0
+        ipc.permit_writes = 0
+        ipc.heartbeat_ms = clock()
+        if hotkeys:
+            hotkeys.pending = None
+            hotkeys.armed = False
+        reasons["context_transport_retry"] = reasons.get("context_transport_retry", 0) + 1
+        return None
+
+
+def final_acknowledgement(view, ipc, last_id):
+    sequence = ipc.report_sequence
+    copy = IPC.from_buffer_copy(C.string_at(view, C.sizeof(IPC)))
+    if (
+        sequence & 1
+        or copy.report_sequence != ipc.report_sequence
+        or copy.report_sequence != sequence
+        or copy.completed_id <= last_id
+    ):
+        return None
+    row = as_dict(copy.report)
+    row.update(
+        id=copy.completed_id, physical_field_write_attempts=copy.physical_field_write_attempts
+    )
+    return row
 
 
 def run(args):
@@ -238,15 +274,18 @@ def run(args):
         ):
             while time.monotonic() < deadline and ipc.status == 2 and native.poll() is None:
                 started = KERNEL.GetTickCount64()
-                before = get_json("/navigation/state")["state"]
-                game = get_json("/rest/sessions/GetGameState")
+                observation = context_attempt(ipc, hotkeys, reasons)
+                if observation is None:
+                    prepared_at = 0.0
+                    time.sleep(0.05)
+                    continue
+                before, game, after = observation
                 tail += incoming.read()
                 lines = tail.split("\n")
                 tail = lines.pop()
                 for line in lines:
                     if line:
                         telemetry = json.loads(line)
-                after = get_json("/navigation/state")["state"]
                 now = KERNEL.GetTickCount64()
                 decision = assess_player_observation(
                     before, after, game, telemetry, now, started, observation_build=14200
@@ -354,6 +393,14 @@ def run(args):
                 if ipc.status in (3, 4, 5):
                     break
                 time.sleep(0.02)
+            # A native command can complete while HTTP is timing out or while
+            # shutdown drains the callback. Preserve its final acknowledgement.
+            row = final_acknowledgement(view, ipc, reports[-1]["id"] if reports else 0)
+            if row is not None:
+                reports.append(row)
+                with Path(str(prefix) + ".reports.jsonl").open("a") as output:
+                    output.write(json.dumps(row, allow_nan=False) + "\n")
+                print(json.dumps(row, allow_nan=False), flush=True)
             restored = {}
             for address, raw, name in originals:
                 try:
@@ -391,7 +438,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 10), default=2)
+    parser.add_argument("--revision", type=int, choices=range(1, 10), default=6)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--owner-thread", type=int, required=True)
     parser.add_argument("--seconds", type=int, default=180)

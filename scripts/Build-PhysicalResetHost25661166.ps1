@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$ZigPath,
     [string]$FrameDirectory,
-    [ValidateRange(1, 9)][int]$Revision = 2
+    [ValidateRange(1, 9)][int]$Revision = 6
 )
 
 $ErrorActionPreference = 'Stop'
@@ -59,7 +59,8 @@ $manifest = [ordered]@{
     dll_sha256 = (Get-FileHash $dll -Algorithm SHA256).Hash.ToLowerInvariant()
     targets = $targets
     experimental = $true
-    maximum_speed_ms = 0.5
+    maximum_speed_ms = $null
+    maximum_displacement_m = $null
     writes_require_command = $true
 }
 [IO.File]::WriteAllText((Join-Path $projectRoot "compatibility/steam-25661166-physical-reset-v$Revision.json"),

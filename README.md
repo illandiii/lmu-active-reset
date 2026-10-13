@@ -12,8 +12,8 @@ are connected to this host. See the [host evidence](docs/PHYSICAL_RESET_HOST.md)
 
 ## Try the local build
 
-Open a healthy vehicle in offline Practice without EAC, enter driving mode, stay
-nearly stationary in neutral and hold the brake. Run `Start-Reset.cmd`, then return
+Open a healthy vehicle in offline Practice without EAC and enter driving mode.
+Run `Start-Reset.cmd`, then return
 focus to LMU and release both function keys before using them:
 
 - **F6** saves the checkpoint.
@@ -21,11 +21,13 @@ focus to LMU and release both function keys before using them:
 - **Ctrl+C in the console** stops the tool; it also stops automatically after four minutes.
 
 A system sound and console message report save/restore success or rejection.
-The first-experiment limits remain 0.5 m/s and 0.25 m displacement from the saved
-position. The keys are observed, not swallowed: select unused game bindings.
+The v6 host has no speed or checkpoint-distance limit. Moving and long-distance
+restores pass isolated model tests; live validation of that expanded behavior is
+still pending. Identity, lifecycle, coherent physical state and valid contact
+reconstruction remain required. The keys are observed, not swallowed: select unused game bindings.
 For different keys run `scripts/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
 The launcher discovers the process and worker, chooses an unused locally built
-host revision, and never replaces a resident DLL. Restart LMU if no revision is
+v6 host, and never replaces a resident DLL or falls back to the old limited builds. Restart LMU if no revision is
 available. Generated binaries and the local Python runtime are required; a fresh
 clone must be built before this launcher can be used.
 

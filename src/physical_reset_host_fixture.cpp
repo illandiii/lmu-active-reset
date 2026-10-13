@@ -7,6 +7,7 @@
 static int host_owner;
 static double host_time = 42;
 static volatile LONG original_boundaries, lifecycle_calls;
+static int mismatched_reads;
 extern "C" __declspec(dllexport) uintptr_t FixtureWorkerLock() {
     return reinterpret_cast<uintptr_t>(&game_lock);
 }
@@ -28,6 +29,14 @@ extern "C" __declspec(dllexport) bool FixtureHostRoots(uintptr_t *owner, uintptr
 extern "C" __declspec(dllexport) bool FixtureHostRead(uintptr_t a, uintptr_t b, uint64_t epoch,
                                                       double time, SnapshotFrame *frame,
                                                       RestoreBindings *bindings) {
+    if (mismatched_reads) {
+        if (mismatched_reads > 0)
+            --mismatched_reads;
+        *frame = {};
+        frame->binding_status = 90205;
+        *bindings = {};
+        return false;
+    }
     return fixture_read(a, b, epoch, time, frame, bindings);
 }
 extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI
@@ -107,8 +116,7 @@ static ResetHostReport request(ResetHostIPC *ipc, uint64_t id, unsigned action) 
 int main(int argc, char **argv) {
     assert(argc == 3);
     load_frame(argv[2]);
-    for (double &v : source_frame.bodies[0].velocity_world)
-        v = 0;
+    source_frame.bodies[0].velocity_world[0] = 80;
     auto memory = std::make_unique<unsigned char[]>(108 * 0x5000 + 2592 * 0x110);
     for (unsigned i = 0; i < RESTORE_OBJECT_COUNT; ++i)
         source_bindings.address[i] = reinterpret_cast<uintptr_t>(memory.get()) +
@@ -153,8 +161,14 @@ int main(int argc, char **argv) {
     std::printf("host saved result=%llu saves=%llu readable=%llu\n", saved.result, saved.saves,
                 saved.readable);
     assert(saved.result == CONTROL_OK && saved.saves == 1 && !saved.forward_writes);
+    assert(saved.speed >= 80);
+    for (size_t i = 0; i < source_frame.total_count; ++i)
+        source_frame.bodies[i].position_world[0] += 1000;
+    source_frame.bodies[0].velocity_world[0] = -100;
+    mismatched_reads = 3;
     auto plan = request(ipc, 2, HOST_PREPARE);
     assert(plan.result == 0 && plan.fields == 10077 && !plan.forward_writes);
+    assert(mismatched_reads == 0 && plan.pins >= 5);
     auto denied = request(ipc, 3, HOST_RESTORE);
     assert(denied.result == CONTROL_REJECTED && denied.loads == 0 && !denied.forward_writes);
     ipc->permit_writes = 1;
@@ -164,18 +178,25 @@ int main(int argc, char **argv) {
     assert(restored.result == CONTROL_OK && restored.loads == 1 &&
            restored.forward_writes == 10077 && restored.contact_mask == 15);
     assert(restored.verified_fields == 10077 && restored.mismatched_fields == 0);
+    assert(restored.speed >= 100 && restored.before_position[0] - saved.saved_position[0] == 1000);
     assert(ipc->physical_field_write_attempts == 10077);
     for (unsigned i = 0; i < 3; ++i)
         assert(restored.after_position[i] == saved.saved_position[i]);
+    mismatched_reads = -1;
+    auto mismatch = request(ipc, 5, HOST_PREPARE);
+    assert(mismatch.result == CONTROL_REJECTED && mismatch.cause == 90205 &&
+           ipc->physical_field_write_attempts == 10077);
+    mismatched_reads = 0;
     void(WINAPI *volatile reconstruct)(void *) = FixtureReconstruct;
     reconstruct(reinterpret_cast<void *>(source_bindings.address[104]));
-    auto stale = request(ipc, 5, HOST_PREPARE);
+    auto stale = request(ipc, 6, HOST_PREPARE);
     assert(stale.result == 1001 && stale.loads == 1);
     ipc->stop = 1;
     for (unsigned i = 0; i < 500 && ipc->status == 2; ++i)
         Sleep(10);
     assert(ipc->status == 3 && !ipc->error && original_boundaries > 0);
-    puts("PASS loaded physical host: save, prepare, write opt-in, full 10077-field restore, four "
+    puts("PASS loaded physical host: moving save/restore at 80/100 m/s over 1000 m, bounded "
+         "inertia retry/refusal, write opt-in, full 10077-field restore, four "
          "contacts, native lock release before update, lifecycle invalidation and clean stop. "
          "Owned fixture memory only.");
 }

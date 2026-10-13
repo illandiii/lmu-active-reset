@@ -224,6 +224,17 @@ static void WINAPI boundary(uint64_t input) {
                 read_vehicle(base, physics_root, 1, last_time, diagnostic, &diagnostic_bindings);
             if (!report.readable)
                 report.cause = pinned(nullptr, &context) ? diagnostic->binding_status : 90004;
+            if (!report.readable && report.cause == 90205 && now - issued < 1200) {
+                // Native inertia caches may disagree at a particular boundary.
+                // Retry this SAME request on a later boundary, without weakening
+                // the reader or writing anything. The existing TTL still applies.
+                release_scope();
+                if (!fatal)
+                    outer_original(input);
+                --boundary_depth;
+                InterlockedDecrement(&active_boundaries);
+                return;
+            }
             if (report.readable && vehicle_restore_adapter_bind(adapter, &context)) {
                 std::memcpy(report.before_position, diagnostic->bodies[0].position_world,
                             sizeof(report.before_position));
@@ -238,14 +249,9 @@ static void WINAPI boundary(uint64_t input) {
                     report.fields = runtime->plan.count;
                 } else if (action == HOST_SAVE ||
                            (action == HOST_RESTORE && ipc->permit_writes == 1)) {
-                    // First live experiment is restricted to a grounded, nearly
-                    // stationary checkpoint. Moving-reset qualification is separate.
-                    double displacement2 = 0;
-                    for (unsigned i = 0; i < 3; ++i) {
-                        const double delta = report.before_position[i] - report.saved_position[i];
-                        displacement2 += delta * delta;
-                    }
-                    if (report.speed <= .5 && (action == HOST_SAVE || displacement2 <= .0625)) {
+                    // Distance and speed do not define checkpoint validity.
+                    // Full state, lifetime and contact checks remain mandatory.
+                    {
                         const ResetRequest request{id, issued, context.identity,
                                                    action == HOST_SAVE ? RESET_SAVE : RESET_LOAD};
                         const auto result = active_reset_boundary_dispatch(
@@ -276,7 +282,6 @@ static void WINAPI boundary(uint64_t input) {
                         InterlockedDecrement(&active_boundaries);
                         return;
                     }
-                    report.result = 1002; // Wait for a stationary first experiment.
                 }
             }
             release_scope();

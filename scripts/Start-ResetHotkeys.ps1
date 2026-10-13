@@ -12,7 +12,7 @@ if (-not $PythonPath) {
 }
 $game = @(Get-Process | Where-Object { $_.ProcessName -eq 'Le Mans Ultimate' })
 if ($game.Count -ne 1) { throw 'Apri una sola istanza di LMU in Practice offline senza EAC e premi GUIDA.' }
-Write-Host 'Test sperimentale: vettura sana quasi ferma, spostamento massimo 25 cm.'
+Write-Host 'Test sperimentale: nessun limite di distanza o velocita; reset in movimento ancora da validare in LMU.'
 Write-Host "$SaveKey salva; $RestoreKey ripristina. Torna su LMU e rilascia entrambi i tasti prima di usarli."
 Push-Location $projectRoot
 try {

@@ -35,8 +35,8 @@ requires `--allow-writes`. Publish command files atomically with increasing IDs:
 | 3 | Restore after a successful preparation within 60 seconds |
 
 `{"stop": true}` requests clean shutdown. The native lease expires without an
-external heartbeat. Save/restore require speed at most 0.5 m/s; this first restore
-also limits displacement to 0.25 m. Terminal failures remain rejected. A read-only
+external heartbeat. Versions 1–5 required speed at most 0.5 m/s and limited
+displacement to 0.25 m. Version 6 removes those two limits. Terminal failures remain rejected. A read-only
 runner precheck rejects existing failures before loading another host; the pinned
 reader repeats the authoritative check inside the callback.
 
@@ -119,8 +119,8 @@ prepare/restore. The controller requires a clean key release in the foreground
 game window, ignores chords/modifiers and does not repeat held keys. Restore
 requires an acknowledged successful save and a matching 10,077-field preparation;
 focus/context loss or an acknowledgement older than two seconds cancels the
-pending preparation. Native speed, displacement, lifecycle and lease checks are
-unchanged. Ctrl+C stops and drains the native host before terminating its own
+pending preparation. Lifecycle and lease checks remain mandatory. Ctrl+C stops
+and drains the native host before terminating its own
 read-only telemetry child. The game process is never terminated.
 
 Six focused-controller tests pass for acknowledgement sequencing, held keys,
@@ -129,3 +129,38 @@ The v5 host passed the loaded 10,077-field fixture. Read-only live checks resolv
 worker 9756 and queried the foreground/key state successfully. Actual physical
 keyboard presses through this new frontend have not yet been exercised in LMU;
 the earlier successful live reset used explicit commands.
+
+## V6: user hotkey failure and unrestricted-distance model
+
+The user's v5 run (`20261013T205124393195Z_physical_reset_host_v5`) confirmed real
+hotkey saves, but exposed intermittent reader cause 90205 (mechanical body inertia
+mismatch), an HTTP timeout and a missing final native acknowledgement. Its shutdown
+summary showed 20,154 write attempts although the last displayed acknowledgement
+preceded those writes. That count alone cannot establish whether the unseen command
+recovered successfully; the historical missing result cannot be reconstructed from
+that summary. All hooks did stop cleanly.
+
+V6 changes:
+
+- A mechanical body mismatch can defer the same request to a later outer boundary
+  for up to 1.2 seconds, inside the existing 1.5-second request lifetime. Each retry
+  runs the full unchanged reader. Persistent mismatches remain rejected without
+  writes; no tolerance is relaxed and inconsistent state is never accepted.
+- HTTP timeout/connection failures revoke the lease and write permission, cancel
+  pending hotkey preparation and retry transport instead of exiting immediately.
+  Successfully fetching data alone does not grant admission; normal context checks
+  must pass again. A new key press is needed after cancellation.
+- Shutdown collects any stable acknowledgement completed after the last regular
+  poll, including forward/recovery counters, before unmapping shared memory.
+- Speed and checkpoint-distance restrictions are removed. The launcher selects
+  v6 only, so it cannot silently fall back to a limited old binary.
+
+The loaded-host fixture now saves at 80 m/s, moves its modeled bodies 1,000 m,
+changes current speed to 100 m/s and verifies the complete 10,077-field restoration
+and four contact calls. It additionally exercises three transient mismatches and
+a persistent mismatch, with the latter rejected after bounded retries and no new
+writes. Three transport/report regression tests (timeouts at each HTTP stage,
+connection failures, late recovery report and duplicate/incomplete reports) and
+six hotkey tests pass. These are isolated tests; live moving/long-distance reset
+validation still requires reopening LMU. In particular they do not prove that
+native track/contact caches work for every distant checkpoint or airborne state.

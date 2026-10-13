@@ -48,7 +48,7 @@ if __name__ == "__main__":
     args.revision = next(
         (
             v
-            for v in (5, 4, 3, 2, 1)
+            for v in (6,)
             if f"lmu-physical-reset-v{v}-25661166.dll" not in resident
             and (
                 Path(__file__).resolve().parents[1] / f"bin/lmu-physical-reset-v{v}-25661166.dll"

@@ -17,6 +17,7 @@
 #include <cstdio>
 
 static ResetHostIPC *ipc;
+static HINSTANCE own_module;
 static uintptr_t base, owner_root, physics_root, scoring_root, tires[4];
 static uintptr_t worker_lock, control_lock, gate_lock;
 static DWORD physics_thread;
@@ -316,9 +317,18 @@ static void WINAPI boundary(uint64_t input) {
 }
 
 static DWORD WINAPI worker(void *) {
-    wchar_t name[96];
+    wchar_t name[512];
+#if LMU_RESET_HOST_REVISION >= 9
+    wchar_t path[MAX_PATH];
+    if (!GetModuleFileNameW(own_module, path, MAX_PATH))
+        return 0;
+    const wchar_t *filename = wcsrchr(path, L'\\');
+    swprintf(name, 512, L"Local\\LMU_PhysicalReset_%ls_%lu", filename ? filename + 1 : path,
+             GetCurrentProcessId());
+#else
     swprintf(name, 96, L"Local\\LMU_PhysicalReset25661166_v%u_%lu",
              static_cast<unsigned>(LMU_RESET_HOST_REVISION), GetCurrentProcessId());
+#endif
     HANDLE mapping = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, name);
     if (!mapping)
         return 0;
@@ -513,6 +523,7 @@ static DWORD WINAPI worker(void *) {
 }
 BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID) {
     if (reason == DLL_PROCESS_ATTACH) {
+        own_module = module;
         DisableThreadLibraryCalls(module);
         HANDLE thread = CreateThread(nullptr, 0, worker, nullptr, 0, nullptr);
         if (thread)

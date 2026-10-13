@@ -3,6 +3,10 @@
 Experimental checkpoint and physical-state restoration for Le Mans Ultimate,
 developed for offline Practice on Windows x64.
 
+**Known issue: a high-speed reset can launch the car into the air.** A live v8
+recording confirms the instability after the native update resumes, despite
+successful field readback. The cause is still under investigation.
+
 **The first near-stationary physical reset succeeded in offline Practice.** The
 experimental host restored and verified all 10,077 planned fields, rebuilt four
 native tire contacts and resumed simulation without transaction recovery. Its
@@ -12,23 +16,26 @@ are connected to this host. See the [host evidence](docs/PHYSICAL_RESET_HOST.md)
 
 ## Try the local build
 
-Open a healthy vehicle in offline Practice without EAC and enter driving mode.
-Run `Start-Reset.cmd`, then return
+Open LMU without EAC and run `Start-Reset.cmd`. The launcher waits for the player
+to enter driving mode in offline Practice. Then return
 focus to LMU and release both function keys before using them:
 
 - **F6** saves the checkpoint.
 - **F7** prepares and restores it after successful native acknowledgement.
 - **Ctrl+C in the console** stops the tool; it also stops automatically after four minutes.
+- Closing the console stops listening and requests native shutdown. Reopening the
+  launcher starts a fresh instance and checkpoint after the previous hooks stop.
 
 A system sound and console message report save/restore success or rejection.
-The v8 host has no speed or checkpoint-distance limit. Moving and long-distance
+The v9 host has no speed or checkpoint-distance limit. Moving and long-distance
 restores pass isolated model tests; live validation of that expanded behavior is
 still pending. Identity, lifecycle, coherent physical state and valid contact
 reconstruction remain required. The keys are observed, not swallowed: select unused game bindings.
 For different keys run `scripts/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
 The launcher discovers the process and worker, chooses an unused locally built
-v8 host, and never replaces a resident DLL or falls back to older builds. Restart LMU if no revision is
-available. Generated binaries and the local Python runtime are required; a fresh
+v9 host under a unique instance filename, and never replaces a resident DLL or
+falls back to older builds. Stopped modules remain resident until LMU exits.
+Generated binaries and the local Python runtime are required; a fresh
 clone must be built before this launcher can be used.
 
 ## Repository layout

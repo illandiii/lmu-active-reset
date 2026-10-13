@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$ZigPath,
     [string]$FrameDirectory,
-    [ValidateRange(1, 9)][int]$Revision = 8
+    [ValidateRange(1, 9)][int]$Revision = 9
 )
 
 $ErrorActionPreference = 'Stop'
@@ -52,6 +52,10 @@ if ($FrameDirectory) {
     if ($LASTEXITCODE -ne 0) { throw 'Physical host fixture failed' }
     & $fixtureExe $fixtureDll (Join-Path $FrameDirectory 'saved.frame') 'no-player-callback'
     if ($LASTEXITCODE -ne 0) { throw 'Physical host discovery refusal fixture failed' }
+    if ($Revision -ge 9) {
+        & $fixtureExe $fixtureDll (Join-Path $FrameDirectory 'saved.frame') 'restart'
+        if ($LASTEXITCODE -ne 0) { throw 'Physical host restart fixture failed' }
+    }
 }
 & $ZigPath c++ @options -shared -I (Join-Path $minhook 'include') @core @native @hostSources -ladvapi32 -o $dll
 if ($LASTEXITCODE -ne 0) { throw 'Physical reset host build failed' }

@@ -115,9 +115,9 @@ static ResetHostReport request(ResetHostIPC *ipc, uint64_t id, unsigned action) 
     assert(ipc->completed_id == static_cast<LONG64>(id));
     return ipc->report;
 }
-int main(int argc, char **argv) {
+static int run_fixture(int argc, char **argv) {
     assert(argc == 3 || argc == 4);
-    suppress_player_callback = argc == 4;
+    suppress_player_callback = argc == 4 && std::strcmp(argv[3], "no-player-callback") == 0;
     load_frame(argv[2]);
     // Reproduce the reader bug: sectors have advanced but applied body caches
     // have not. The original validator rejects it; the cache-aware one accepts
@@ -165,9 +165,20 @@ int main(int argc, char **argv) {
     InitializeCriticalSection(&game_lock);
     InitializeCriticalSection(&control_lock);
     InitializeCriticalSection(&gate_lock);
-    wchar_t name[96];
+    wchar_t name[512];
+#if LMU_RESET_HOST_REVISION >= 9
+    wchar_t path[MAX_PATH];
+    assert(MultiByteToWideChar(CP_UTF8, 0, argv[1], -1, path, MAX_PATH));
+    const wchar_t *back = wcsrchr(path, L'\\'), *forward = wcsrchr(path, L'/');
+    const wchar_t *filename = back;
+    if (!filename || (forward && forward > filename))
+        filename = forward;
+    swprintf(name, 512, L"Local\\LMU_PhysicalReset_%ls_%lu", filename ? filename + 1 : path,
+             GetCurrentProcessId());
+#else
     swprintf(name, 96, L"Local\\LMU_PhysicalReset25661166_v%u_%lu",
              static_cast<unsigned>(LMU_RESET_HOST_REVISION), GetCurrentProcessId());
+#endif
     HANDLE map = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,
                                     sizeof(ResetHostIPC), name);
     assert(map && GetLastError() != ERROR_ALREADY_EXISTS);
@@ -237,9 +248,24 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < 500 && ipc->status == 2; ++i)
         Sleep(10);
     assert(ipc->status == 3 && !ipc->error && original_boundaries > 0);
+    if (argc == 4 && !suppress_player_callback) {
+        char second[MAX_PATH];
+        std::snprintf(second, sizeof(second), "%s.restart.dll", argv[1]);
+        assert(CopyFileA(argv[1], second, FALSE));
+        DeleteCriticalSection(&game_lock);
+        DeleteCriticalSection(&control_lock);
+        DeleteCriticalSection(&gate_lock);
+        char *next[]{argv[0], second, argv[2]};
+        const int result = run_fixture(3, next);
+        assert(!result);
+        puts("PASS restart: two distinct host instances in the same process, each cleanly stopped.");
+        return result;
+    }
     puts("PASS loaded physical host: moving save/restore at 80/100 m/s over 1000 m, bounded "
          "cache-aware inertia validation and immediate corruption refusal, write opt-in, full "
          "10077-field restore, four "
          "contacts, native lock release before update, lifecycle invalidation and clean stop. "
          "Owned fixture memory only.");
+    return 0;
 }
+int main(int argc, char **argv) { return run_fixture(argc, argv); }

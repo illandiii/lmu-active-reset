@@ -15,6 +15,7 @@ from pathlib import Path
 import subprocess
 import struct
 import time
+import uuid
 from urllib.error import URLError
 
 from capture_context import PROJECT, KERNEL, get_json
@@ -173,6 +174,11 @@ def run(args):
     )
     if hashlib.sha256(dll.read_bytes()).hexdigest() != profile["dll_sha256"]:
         raise ValueError("Host DLL hash mismatch")
+    if args.revision >= 9:
+        unique = dll.with_name(dll.stem + "-" + uuid.uuid4().hex + ".dll")
+        with unique.open("xb") as target:
+            target.write(dll.read_bytes())
+        dll = unique
     image = next(m for m in listed if m["name"].lower() == "le mans ultimate.exe")
     handle = k.OpenProcess(0x43A, False, args.pid)
     if not handle:
@@ -190,6 +196,26 @@ def run(args):
     failure = None
     reports = []
     reasons = {}
+    closing = False
+
+    @C.WINFUNCTYPE(C.c_int, C.c_uint)
+    def console_close(event):
+        nonlocal closing
+        if event not in (2, 5, 6):
+            return 0
+        closing = True
+        if ipc is not None:
+            ipc.allow = 0
+            ipc.permit_writes = 0
+            ipc.stop = 1
+            until = time.monotonic() + 3
+            while ipc.status in (1, 2) and time.monotonic() < until:
+                time.sleep(0.01)
+        return 1
+
+    close_api = C.WinDLL("kernel32").SetConsoleCtrlHandler
+    close_api.argtypes = [C.c_void_p, C.c_int]
+    close_api(console_close, 1)
     try:
         # Asynchronous rejection only; the authoritative check runs again
         # inside the pinned native reader before any checkpoint operation.
@@ -226,7 +252,11 @@ def run(args):
             4,
             0,
             C.sizeof(IPC),
-            f"Local\\LMU_PhysicalReset25661166_v{args.revision}_{args.pid}",
+            (
+                f"Local\\LMU_PhysicalReset_{dll.name}_{args.pid}"
+                if args.revision >= 9
+                else f"Local\\LMU_PhysicalReset25661166_v{args.revision}_{args.pid}"
+            ),
         )
         if not mapping or C.get_last_error() == 183:
             raise ValueError("Host mapping already exists or is unavailable")
@@ -272,7 +302,12 @@ def run(args):
             native_path.open() as incoming,
             Path(str(prefix) + ".reports.jsonl").open("w") as output,
         ):
-            while time.monotonic() < deadline and ipc.status == 2 and native.poll() is None:
+            while (
+                not closing
+                and time.monotonic() < deadline
+                and ipc.status == 2
+                and native.poll() is None
+            ):
                 started = KERNEL.GetTickCount64()
                 observation = context_attempt(ipc, hotkeys, reasons)
                 if observation is None:
@@ -427,6 +462,7 @@ def run(args):
             native.wait(timeout=5)
         if console:
             console.close()
+        close_api(console_close, 0)
         if view:
             k.UnmapViewOfFile(view)
         if mapping:
@@ -438,7 +474,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 10), default=8)
+    parser.add_argument("--revision", type=int, choices=range(1, 10), default=9)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--owner-thread", type=int, default=0)
     parser.add_argument("--seconds", type=int, default=180)

@@ -114,3 +114,20 @@ Run `python src/run_boundary_observer_v4_25661166.py --pid <pid> --load
 DLL name and compatibility manifest are distinct from v3. The shutdown audit
 recognizes v4 and checks all three original hook targets. A new live result has
 not been collected: LMU was closed during this implementation.
+
+## Live admission verified, 13 October 2026
+
+The v4 probe ran in offline Practice on PID 31512. Three persisted frames show
+cumulative successful pins of 2, 4 and 5; every acquired pin was valid and was
+released. Physics, scoring and outer update all ran on thread 9756, while the
+control lock normally belonged to thread 31716. All frames had depth one, worker
+ownership, zero overlap and zero thread changes. This resolves the previously
+unusable admission window for this execution.
+
+The probe stopped with status 3/error 0 and restored all three hook targets.
+No physics writes occurred. Local evidence:
+`20261013T201044641426Z_boundary_observer_v4.{frames.jsonl,summary.json}`.
+A subsequent v31 capture produced 12 frames, with 11 complete 10,074-field
+physical plans and positive four-wheel contact preflight in those 11 frames.
+It also stopped cleanly without writes. The lifecycle epoch and first actual
+restore remain separate requirements; admission alone does not satisfy them.

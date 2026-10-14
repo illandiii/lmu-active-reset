@@ -214,3 +214,43 @@ hash matches its local profile. These tests do not simulate native LMU collision
 
 V12 has not yet run in LMU. The deferred live procedure is in
 [TEST_RESET_COLLISIONI.md](TEST_RESET_COLLISIONI.md). The live defect remains open.
+
+### Native teleport analysis completed
+
+The second REA batch completed successfully in the local directory
+`analysis/rea-25661166/native-teleport-20261015/`, covering `FEDFA0`, `F73900`,
+`3D0DE0` and `CD2930`. It confirms the pair-removal loop and teleport ordering.
+The pair vector's resize helper `3D0DE0` performs element cleanup before moving
+the end pointer; this is not equivalent to editing the vector length or copying
+raw pair bytes. `FEDFA0` itself does not acquire a critical section, so its native
+call sites must supply the required exclusion. Direct-call references were found
+in the teleport path and at `F4442E`; this does not exclude indirect calls.
+
+`F73900` also converts its requested position using vehicle geometry and can adjust
+height/suspension against the track. Passing the saved root-body position directly
+would therefore not preserve the checkpoint reference point. `F702E0` refreshes
+a spatial lookup using exported position; its cached pointer at vehicle `17B28`
+is explicitly invalidated by the teleport path before the call. The full teleport
+routine must not be substituted for snapshot restoration without modeling those
+differences.
+
+`CD2930` calls collision generation `FF0150` on native counter modulo eight equal
+to zero. Along with the earlier `CC8210`/`FEFC60` result, this shows that collision
+work has its own cadence, separate from each individual Dynamics callback. Its
+enclosing lock context remains to be proven before changing shared collision data.
+
+The next trace distinguishes two mechanisms that need different ordering fixes:
+
+* A pending correction survives across restore and changes bodies before the next
+  collision-proxy preparation. Compare the saved, pre-restore and applied collision
+  states, then phases 11/12 against the next 13/14.
+* A new collision sweep spans the old and restored locations because previous
+  collision geometry was not rebased. Look for a preparation across that gap and
+  a later correction, rather than assuming the original pending flag caused it.
+
+The current data cannot select between these mechanisms. Neither is repaired by
+overwriting only linear velocity: the captured velocity was already restored
+correctly before the common pose transformation. The pending implementation work
+is coherent aggregate/exported pose synchronization, collision history rebasing
+and native invalidation of obsolete pairs at a proven boundary. No unverified
+candidate for those writes has been enabled in v12.

@@ -126,3 +126,33 @@ terminated process. The v11 native fixture passed full restore,
 all added trace phases, absent-player refusal and two-instance restart. These
 fixtures do not model LMU's transform/collision pipeline or establish that its
 high-speed instability is fixed.
+
+## Offline follow-up: candidate collision correction path
+
+The hash-verified live-code image contains a concrete path capable of the common
+rigid transform seen in the trace:
+
+* `CC8210` calls `FEFC60` when the native step counter is divisible by eight.
+* `FEFC60` is identified by its native profiling string as
+  `CollObjectManager::PostInputDyn`; it calls `F4EAC0` on vehicle collision entries.
+* `F4EAC0` checks vehicle-relative byte `16CFA`, compares collision-body position
+  at `16D40` with exported position at `15A0C`, constructs a pose correction and
+  calls `ECFFC0` at `F4EF63`.
+* `ECFFC0` calls `ED02C0`, which transforms the body-vector entries and four tire
+  bodies. Its chained unwind fragment at `ED03E0` contains the body loop.
+* `F4E7B0` prepares the separate collision body at vehicle-relative `16D00` from
+  exported vehicle state and clears `16CFA`; `FF0150` contains writes setting that
+  flag. These are separate from the tire contact nodes inspected during restore.
+
+The instruction evidence is retained locally under
+`work/reset-incident-disassembly/`, including direct-call references and decoded
+field references. The frame's numerical evidence is consistent with this path,
+but does not record its execution or establish which collision data became stale.
+Do not clear the flag or replay a collision update as a speculative fix: its
+ownership, timing and effect on pending collision pairs must be established.
+
+REA/Ghidra analysis of `F47B30`, `F59B50`, `CC7D90`, `F48F20`, and `F49FC0` completed
+successfully in `analysis/rea-25661166/reset-transform-20261014-configured/`.
+`F59B50` reads the HDV pose and updates exported vehicle values, helping distinguish
+that output path from collision feedback. Raw game code and decompilation remain
+local and are not distributed with the repository.

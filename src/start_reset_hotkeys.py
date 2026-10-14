@@ -1,6 +1,7 @@
 """Discover the current worker owner, then run the bounded hotkey host."""
 
 import argparse
+from pathlib import Path
 import time
 from urllib.error import URLError
 from capture_context import get_json
@@ -41,7 +42,7 @@ if __name__ == "__main__":
         parser.error("Offline launch confirmation and write opt-in required")
     args.owner_thread = 0  # Native callback discovery, never sampled lock ownership.
     wait_for_driving()
-    args.revision = 9
+    args.revision = 10
     # A just-closed console may still be draining its native callback.
     from audit_snapshot_25661166 import audit
 

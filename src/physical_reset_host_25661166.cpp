@@ -4,6 +4,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include "physical_reset_host_25661166.h"
+#include "physical_reset_trace.h"
 #include "vehicle_restore_adapter_25661166.h"
 #include "active_reset_boundary.h"
 #include "native_lifetime_handoff.h"
@@ -43,6 +44,10 @@ static void(WINAPI *dynamics_original)(void *, double);
 static void(WINAPI *scoring_original)(void *, float);
 static void(WINAPI *contacts_original)(void *, double, double, void *, double);
 static VehicleContactSample samples[4];
+static ResetTrace *trace;
+static unsigned trace_steps;
+static uint64_t trace_request;
+static uintptr_t trace_body;
 
 static LONG64 number(volatile LONG64 *p) {
     return InterlockedCompareExchange64(p, 0, 0);
@@ -81,6 +86,67 @@ static bool roots_match() {
     return true;
 #endif
 }
+static void trace_sample(uint64_t phase) {
+    if (!trace || GetCurrentThreadId() != physics_thread ||
+        !native_lock_witness(worker_lock).held_by_caller || !roots_match())
+        return;
+    const auto index = InterlockedCompareExchange64(&trace->count, 0, 0);
+    if (index >= 512)
+        return;
+    ResetTraceRecord sample{};
+    sample.phase = phase;
+    sample.request = trace_request;
+    sample.tick = GetTickCount64();
+    sample.step = trace_steps;
+    for (unsigned i = 0; i < 5; ++i) {
+        uintptr_t body = i ? tires[i - 1] + 0xac0 : trace_body;
+        SIZE_T got = 0;
+        const unsigned offsets[]{0x40, 0x28, 0x90, 0x110};
+        const unsigned counts[]{3, 3, 9, 3};
+        unsigned cursor = 0;
+        bool valid = body != 0;
+        for (unsigned j = 0; j < 4; ++j) {
+            valid =
+                valid &&
+                ReadProcessMemory(GetCurrentProcess(), reinterpret_cast<void *>(body + offsets[j]),
+                                  sample.bodies[i] + cursor, counts[j] * 8, &got) &&
+                got == counts[j] * 8;
+            cursor += counts[j];
+        }
+        if (valid)
+            sample.valid |= 1ULL << i;
+    }
+    for (unsigned w = 0; w < 4; ++w) {
+        uintptr_t v[3]{};
+        if (!field(tires[w] + 0x9f0, v) || v[1] < v[0] || v[2] < v[1] || (v[1] - v[0]) % 8 ||
+            (v[1] - v[0]) / 8 > 512)
+            continue;
+        auto &c = sample.contacts[w];
+        c[0] = static_cast<double>((v[1] - v[0]) / 8);
+        c[1] = 1e300;
+        c[2] = -1e300;
+        bool valid = true;
+        for (uintptr_t p = v[0]; p < v[1]; p += 8) {
+            uintptr_t node = 0;
+            double values[4]{};
+            if (!field(p, node) || !field(node + 0xd0, values)) {
+                valid = false;
+                break;
+            }
+            if (values[0] < c[1])
+                c[1] = values[0];
+            if (values[0] > c[2]) {
+                c[2] = values[0];
+                std::memcpy(c + 3, values + 1, 24);
+            }
+        }
+        if (valid)
+            sample.valid |= 1ULL << (5 + w);
+    }
+    trace->records[index] = sample;
+    MemoryBarrier();
+    InterlockedIncrement64(&trace->count);
+}
 static bool read_vehicle(uintptr_t module, uintptr_t physics, uint64_t epoch, double time,
                          SnapshotFrame *frame, RestoreBindings *bindings) {
 #ifdef LMU_RESET_HOST_FIXTURE
@@ -106,6 +172,10 @@ static void release_scope() {
         InterlockedExchange(&fatal, 1);
 }
 static void WINAPI resume_outer(uint64_t input) {
+    if (scope_active && report.action == HOST_RESTORE) {
+        trace_steps = 20;
+        trace_sample(3); // Typed restore and contact rebuild completed, before native update.
+    }
     if (scope_active && report.action == HOST_RESTORE && runtime->report.result == FLOW_OK &&
         runtime->report.forward.attempted) {
         unsigned char actual[RESTORE_FIELD_BYTES];
@@ -132,6 +202,8 @@ static void WINAPI resume_outer(uint64_t input) {
     release_scope();
     if (!fatal)
         outer_original(input);
+    if (trace_steps)
+        trace_sample(4);
 }
 static void publish(uint64_t id) {
     report.callbacks = callbacks;
@@ -163,8 +235,16 @@ static void WINAPI dynamics(void *object, double time) {
         last_time = time;
         seen_time = true;
     }
+    const bool tracing = trace_steps && reinterpret_cast<uintptr_t>(object) == physics_root &&
+                         GetCurrentThreadId() == physics_thread;
+    if (tracing)
+        trace_sample(5);
     if (!fatal)
         dynamics_original(object, time);
+    if (tracing) {
+        trace_sample(6);
+        --trace_steps;
+    }
 }
 static void WINAPI scoring(void *object, float dt) {
     if (!InterlockedCompareExchange(&ready, 0, 0)) {
@@ -252,6 +332,10 @@ static void WINAPI boundary(uint64_t input) {
             if (!report.readable)
                 report.cause = pinned(nullptr, &context) ? diagnostic->binding_status : 90004;
             if (report.readable && vehicle_restore_adapter_bind(adapter, &context)) {
+                trace_body = diagnostic_bindings.address[0];
+                trace_request = id;
+                if (action == HOST_SAVE || action == HOST_RESTORE)
+                    trace_sample(action == HOST_SAVE ? 1 : 2);
                 std::memcpy(report.before_position, diagnostic->bodies[0].position_world,
                             sizeof(report.before_position));
                 double speed2 = 0;
@@ -338,6 +422,13 @@ static DWORD WINAPI worker(void *) {
         ipc->pid != GetCurrentProcessId())
         return 0;
     ipc->status = 1;
+    wchar_t trace_name[520];
+    swprintf(trace_name, 520, L"%ls_trace", name);
+    HANDLE trace_mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,
+                                              sizeof(ResetTrace), trace_name);
+    if (trace_mapping && GetLastError() != ERROR_ALREADY_EXISTS)
+        trace = static_cast<ResetTrace *>(
+            MapViewOfFile(trace_mapping, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(ResetTrace)));
     base = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
     physics_thread = static_cast<DWORD>(ipc->owner_thread);
 #ifdef LMU_RESET_HOST_FIXTURE

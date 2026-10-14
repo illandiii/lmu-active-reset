@@ -3,6 +3,7 @@
 #include "vehicle_restore_adapter_fixture.cpp"
 #undef main
 #include "physical_reset_host_25661166.h"
+#include "physical_reset_trace.h"
 
 static int host_owner;
 static double host_time = 42;
@@ -230,6 +231,22 @@ static int run_fixture(int argc, char **argv) {
     assert(restored.result == CONTROL_OK && restored.loads == 1 &&
            restored.forward_writes == 10077 && restored.contact_mask == 15);
     assert(restored.verified_fields == 10077 && restored.mismatched_fields == 0);
+#if LMU_RESET_HOST_REVISION >= 10
+    wchar_t trace_name[520];
+    swprintf(trace_name, 520, L"%ls_trace", name);
+    HANDLE trace_map = OpenFileMappingW(FILE_MAP_READ, FALSE, trace_name);
+    assert(trace_map);
+    auto *trace = static_cast<const ResetTrace *>(MapViewOfFile(trace_map, FILE_MAP_READ, 0, 0, sizeof(ResetTrace)));
+    assert(trace && trace->count >= 5);
+    unsigned phases = 0;
+    for (LONG64 i = 0; i < trace->count; ++i) {
+        phases |= 1u << trace->records[i].phase;
+        if (trace->records[i].phase == 3)
+            assert(trace->records[i].bodies[0][3] == 80);
+    }
+    assert((phases & ((1u << 3) | (1u << 5) | (1u << 6))) == ((1u << 3) | (1u << 5) | (1u << 6)));
+    UnmapViewOfFile(trace); CloseHandle(trace_map);
+#endif
     assert(restored.speed >= 100 && restored.before_position[0] - saved.saved_position[0] == 1000);
     assert(ipc->physical_field_write_attempts == 10077);
     for (unsigned i = 0; i < 3; ++i)

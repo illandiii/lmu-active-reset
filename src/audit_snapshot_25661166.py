@@ -300,12 +300,12 @@ def audit(pid):
     api("OpenFileMappingW", [W.DWORD, W.BOOL, W.LPCWSTR], W.HANDLE)
     for entry in listed:
         name = entry["name"].lower()
-        if re.fullmatch(r"lmu-physical-reset-v9-25661166-[0-9a-f]{32}\.dll", name):
+        if re.fullmatch(r"lmu-physical-reset-v(?:9|10)-25661166-[0-9a-f]{32}\.dll", name):
             registry[name] = (
                 "run_physical_reset_host_25661166",
-                "steam-25661166-physical-reset-v9.json",
+                f"steam-25661166-physical-reset-v{name.split('-v')[1].split('-')[0]}.json",
                 f"LMU_PhysicalReset_{name}_",
-                0x4C4D555253543039,
+                0x4C4D555253543030 + int(name.split("-v")[1].split("-")[0]),
             )
         if not name.startswith("lmu-"):
             continue
@@ -364,9 +364,10 @@ def audit(pid):
     if not handle:
         raise OSError("Cannot verify restored code")
     try:
-        for revision in (1, 2, 3, 4, 5, 6, 7, 8, 9):
+        for revision in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10):
             if f"lmu-physical-reset-v{revision}-25661166.dll" not in reports and not (
-                revision == 9 and any(n.startswith("lmu-physical-reset-v9-") for n in reports)
+                revision >= 9
+                and any(n.startswith(f"lmu-physical-reset-v{revision}-") for n in reports)
             ):
                 continue
             profile = json.loads(

@@ -195,6 +195,7 @@ def run(args):
     originals = []
     failure = None
     reports = []
+    physical_trace = None
     reasons = {}
     closing = False
 
@@ -276,6 +277,13 @@ def run(args):
             time.sleep(0.05)
         if ipc.status != 2:
             raise RuntimeError(f"Host refused: {ipc.status}/{ipc.error}")
+        if args.revision >= 10:
+            from physical_trace import TraceReader
+
+            physical_trace = TraceReader(
+                f"Local\\LMU_PhysicalReset_{dll.name}_{args.pid}",
+                Path(str(prefix) + ".physical.jsonl"),
+            )
         native_path = Path(str(prefix) + ".native.jsonl")
         native_path.touch(exist_ok=False)
         console = Path(str(prefix) + ".native-result.txt").open("w")
@@ -309,6 +317,8 @@ def run(args):
                 and native.poll() is None
             ):
                 started = KERNEL.GetTickCount64()
+                if physical_trace:
+                    physical_trace.drain()
                 observation = context_attempt(ipc, hotkeys, reasons)
                 if observation is None:
                     prepared_at = 0.0
@@ -462,6 +472,8 @@ def run(args):
             native.wait(timeout=5)
         if console:
             console.close()
+        if physical_trace:
+            physical_trace.close()
         close_api(console_close, 0)
         if view:
             k.UnmapViewOfFile(view)
@@ -474,7 +486,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 10), default=9)
+    parser.add_argument("--revision", type=int, choices=range(1, 100), default=10)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--owner-thread", type=int, default=0)
     parser.add_argument("--seconds", type=int, default=180)

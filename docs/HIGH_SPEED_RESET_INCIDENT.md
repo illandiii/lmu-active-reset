@@ -47,3 +47,21 @@ Tests passed: menu/monitor-to-driving wait, interruptible wait, native discovery
 missing-callback shutdown, and two successive independent host instances in the
 same fixture process with a full restore and clean stop in each. Console-window
 close and reopening against live LMU remain to be confirmed by a user session.
+
+## V10 physical trace
+
+The capture adds a separate append-only shared buffer, limited to 512 records.
+No disk I/O occurs on the physics thread. The external runner drains records into
+`*.physical.jsonl`. Each record contains the chassis and four tire-body positions,
+linear velocities, orientation matrices and angular momentum; tire contact counts,
+minimum/maximum depth and the normal of the deepest contact are also recorded.
+Validity bits distinguish unavailable body/contact reads. Raw solver impulses are
+not included in this capture.
+
+Phases: 1 before SAVE, 2 before RESTORE, 3 after restore/contact reconstruction but
+before resuming the original update, 4 after the outer update, 5 before Dynamics,
+6 after Dynamics. Phases 5/6 cover the first 20 player Dynamics calls after reset.
+Ticks and request IDs associate samples with the command. The fixture verifies
+that phase 3 contains saved velocity (80 m/s) and phases 5/6 are captured; clean
+shutdown and two-instance restart tests also pass. The launcher Path import needed
+when leaving its wait loop is restored.

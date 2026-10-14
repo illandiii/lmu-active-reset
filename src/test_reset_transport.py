@@ -1,12 +1,43 @@
 import ctypes as C
+import subprocess
+import sys
 import unittest
 from urllib.error import URLError
 
 from physical_reset_hotkeys import HotkeyCommands
-from run_physical_reset_host_25661166 import IPC, context_attempt, final_acknowledgement
+from run_physical_reset_host_25661166 import (
+    IPC,
+    context_attempt,
+    final_acknowledgement,
+    shutdown_failure,
+    process_exit_code,
+    k,
+)
 
 
 class TransportTests(unittest.TestCase):
+    def test_process_exit_is_distinct_from_hook_failure(self):
+        message = shutdown_failure(None, 0xC0000005, 2, {"OuterUpdate": None})
+        self.assertIn("LMU process exited", message)
+        self.assertIn("C0000005", message)
+        self.assertNotIn("quarantine", message)
+        self.assertIn("00000000", shutdown_failure(None, 0, 2, {}))
+        self.assertIsNone(shutdown_failure(None, None, 3, {"OuterUpdate": True}))
+        self.assertIn("hook shutdown", shutdown_failure(None, None, 2, {"OuterUpdate": False}))
+        self.assertEqual(shutdown_failure("previous", None, 3, {"OuterUpdate": True}), "previous")
+
+    def test_current_process_is_active(self):
+        k.GetCurrentProcess.restype = C.c_void_p
+        self.assertIsNone(process_exit_code(k.GetCurrentProcess()))
+
+    def test_terminated_child_retains_its_exit_code(self):
+        with subprocess.Popen(
+            [sys.executable, "-c", "raise SystemExit(23)"],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        ) as child:
+            child.wait(timeout=5)
+            self.assertEqual(process_exit_code(int(child._handle)), 23)
+
     def test_timeout_at_each_http_stage_revokes_and_can_retry(self):
         for stage in range(3):
             for error in (TimeoutError(), URLError("connection lost"), ConnectionError()):

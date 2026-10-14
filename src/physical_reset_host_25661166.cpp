@@ -171,6 +171,14 @@ static void release_scope() {
     if (!epoch_released || !native_released)
         InterlockedExchange(&fatal, 1);
 }
+static void forward_outer(uint64_t input) {
+    const bool tracing = GetCurrentThreadId() == physics_thread && trace_steps;
+    if (tracing)
+        trace_sample(7);
+    outer_original(input);
+    if (tracing)
+        trace_sample(8);
+}
 static void WINAPI resume_outer(uint64_t input) {
     if (scope_active && report.action == HOST_RESTORE) {
         trace_steps = 20;
@@ -201,7 +209,7 @@ static void WINAPI resume_outer(uint64_t input) {
     // The native update must not inherit additional locks acquired for reset.
     release_scope();
     if (!fatal)
-        outer_original(input);
+        forward_outer(input);
     if (trace_steps)
         trace_sample(4);
 }
@@ -255,8 +263,14 @@ static void WINAPI scoring(void *object, float dt) {
     if (!simulation_fence_callback_enter(&fence, FENCE_SCORING, reinterpret_cast<uintptr_t>(object),
                                          &ticket))
         return;
+    const bool tracing = GetCurrentThreadId() == physics_thread && trace_steps &&
+                         reinterpret_cast<uintptr_t>(object) == scoring_root;
+    if (tracing)
+        trace_sample(9);
     if (simulation_fence_may_advance(&ticket))
         scoring_original(object, dt);
+    if (tracing)
+        trace_sample(10);
     simulation_fence_callback_leave(&ticket);
 }
 static void WINAPI contacts(void *object, double dt, double horizon, void *world, double angular) {
@@ -333,9 +347,11 @@ static void WINAPI boundary(uint64_t input) {
                 report.cause = pinned(nullptr, &context) ? diagnostic->binding_status : 90004;
             if (report.readable && vehicle_restore_adapter_bind(adapter, &context)) {
                 trace_body = diagnostic_bindings.address[0];
-                trace_request = id;
-                if (action == HOST_SAVE || action == HOST_RESTORE)
+                if (action == HOST_SAVE || action == HOST_RESTORE) {
+                    trace_request = id;
+                    trace_steps = 0;
                     trace_sample(action == HOST_SAVE ? 1 : 2);
+                }
                 std::memcpy(report.before_position, diagnostic->bodies[0].position_world,
                             sizeof(report.before_position));
                 double speed2 = 0;
@@ -395,7 +411,7 @@ static void WINAPI boundary(uint64_t input) {
         publish(id);
     }
     if (!fatal)
-        outer_original(input);
+        forward_outer(input);
     --boundary_depth;
     InterlockedDecrement(&active_boundaries);
 }

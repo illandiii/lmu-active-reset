@@ -65,3 +65,64 @@ Ticks and request IDs associate samples with the command. The fixture verifies
 that phase 3 contains saved velocity (80 m/s) and phases 5/6 are captured; clean
 shutdown and two-instance restart tests also pass. The launcher Path import needed
 when leaving its wait loop is restored.
+
+## Live reproduction, 14 October 2026
+
+Local capture `20261014T213818947304Z_physical_reset_host_v10` recorded SAVE 1,
+PREPARE 2 and RESTORE 3. Saved speed was 46.634505 m/s (167.88 km/h); restore was
+requested at 57.681654 m/s (207.65 km/h). All 10,077 fields matched before native
+execution resumed, four contact calls completed, and no recovery ran.
+
+The physical trace contains 33 records with all nine validity bits set. At phase 3,
+all 18 captured components of each of the five bodies exactly equal phase 1.
+In particular the saved velocity is restored; current velocity retention does not
+explain this reproduction. Initial maximum contact depths remain near the saved
+values: 0.0230, 0.0235, 0.0294 and 0.0295 metres.
+
+Four Dynamics calls return without the large launch. Between exit of call four
+(phase 6, remaining step 17) and entry of call five (phase 5, step 16), the chassis
+moves approximately 10.89 metres and its orientation changes. Its velocity becomes
+`[-4.1083, -28.7502, -36.2084]` m/s while its speed magnitude remains 46.416569 m/s.
+One common rigid transformation, fitted from the root orientation and position,
+also reproduces the four tire positions, all five velocities and angular momenta
+to numerical precision (maximum residuals below 7e-14 m, 6e-13 m/s and 2e-13
+angular-momentum units respectively). This is evidence of a common pose/vector
+transformation outside the captured Dynamics interval, preceding the subsequent
+divergence. It does not identify the writer, caller, or stale input responsible.
+
+The following Dynamics calls diverge. Chassis vertical velocity reaches +156.58
+m/s, then becomes strongly negative; a recorded contact depth reaches 116.95 m.
+The last record is an entry into Dynamics without its matching exit. LMU's own
+trace independently logs the initial 241.94 m teleport, a second 11.02 m teleport
+(different exported position reference), and `Crash submitted to bugsplat`.
+LMU was no longer running when inspected. No crash exception/stack was obtained;
+the terminating instruction is not established by these records.
+
+The old summary's `Host quarantine or hook shutdown failure` is not evidence of
+quarantine: host status stayed at 2 with error 0 when the game exited. The runner
+now queries its original process handle and records process exit separately,
+including the exit code and null hook-restoration results when the process is gone.
+It drains the shared physical trace after exit. A successful write acknowledgement
+now explicitly says physical stability has not yet been verified.
+
+`analyze_physical_reset_trace.py` reproduces the saved/applied comparison, per-call
+changes, between-call changes and common rigid-transform residuals. Its tests cover
+an exact common rotation, an independent impulse, invalid bodies and incomplete
+call pairs. The physical reset defect is still unresolved; no guessed cache write,
+extra reset, speed clamp or automatic retry has been added.
+
+## V11 diagnostic boundaries
+
+The same existing hooks now also capture before/after every outer update (phases
+7/8) and before/after player scoring (9/10) during the 20-step post-reset window.
+Sampling still requires the physics thread, its worker lock and matching roots.
+No additional hook targets or physics writes were introduced. PREPARE no longer
+changes the request ID of an ongoing physical trace. These boundaries are intended
+to locate the observed between-call transformation more precisely in a future
+capture; they have not yet been exercised in live LMU.
+
+Validation: 16 Python tests passed, including exit-code detection on an owned
+terminated process. The v11 native fixture passed full restore,
+all added trace phases, absent-player refusal and two-instance restart. These
+fixtures do not model LMU's transform/collision pipeline or establish that its
+high-speed instability is fixed.

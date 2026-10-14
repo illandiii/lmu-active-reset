@@ -236,7 +236,8 @@ static int run_fixture(int argc, char **argv) {
     swprintf(trace_name, 520, L"%ls_trace", name);
     HANDLE trace_map = OpenFileMappingW(FILE_MAP_READ, FALSE, trace_name);
     assert(trace_map);
-    auto *trace = static_cast<const ResetTrace *>(MapViewOfFile(trace_map, FILE_MAP_READ, 0, 0, sizeof(ResetTrace)));
+    auto *trace = static_cast<const ResetTrace *>(
+        MapViewOfFile(trace_map, FILE_MAP_READ, 0, 0, sizeof(ResetTrace)));
     assert(trace && trace->count >= 5);
     unsigned phases = 0;
     for (LONG64 i = 0; i < trace->count; ++i) {
@@ -245,7 +246,12 @@ static int run_fixture(int argc, char **argv) {
             assert(trace->records[i].bodies[0][3] == 80);
     }
     assert((phases & ((1u << 3) | (1u << 5) | (1u << 6))) == ((1u << 3) | (1u << 5) | (1u << 6)));
-    UnmapViewOfFile(trace); CloseHandle(trace_map);
+#if LMU_RESET_HOST_REVISION >= 11
+    const unsigned boundaries = (1u << 7) | (1u << 8) | (1u << 9) | (1u << 10);
+    assert((phases & boundaries) == boundaries);
+#endif
+    UnmapViewOfFile(trace);
+    CloseHandle(trace_map);
 #endif
     assert(restored.speed >= 100 && restored.before_position[0] - saved.saved_position[0] == 1000);
     assert(ipc->physical_field_write_attempts == 10077);
@@ -275,7 +281,8 @@ static int run_fixture(int argc, char **argv) {
         char *next[]{argv[0], second, argv[2]};
         const int result = run_fixture(3, next);
         assert(!result);
-        puts("PASS restart: two distinct host instances in the same process, each cleanly stopped.");
+        puts(
+            "PASS restart: two distinct host instances in the same process, each cleanly stopped.");
         return result;
     }
     puts("PASS loaded physical host: moving save/restore at 80/100 m/s over 1000 m, bounded "
@@ -285,4 +292,6 @@ static int run_fixture(int argc, char **argv) {
          "Owned fixture memory only.");
     return 0;
 }
-int main(int argc, char **argv) { return run_fixture(argc, argv); }
+int main(int argc, char **argv) {
+    return run_fixture(argc, argv);
+}

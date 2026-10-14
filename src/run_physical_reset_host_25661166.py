@@ -1,7 +1,7 @@
 """Bounded, explicitly commanded offline physical-reset experiment.
 
 The observation gate supplies context evidence only. Native admission, lifecycle
-epoch, stationary limits, typed plan preflight and contact reconstruction are
+epoch, typed plan preflight and contact reconstruction are
 separate requirements inside the host. A restore additionally requires --allow-writes
 and a successful preparation reported by this same running module.
 """
@@ -139,6 +139,25 @@ def final_acknowledgement(view, ipc, last_id):
         id=copy.completed_id, physical_field_write_attempts=copy.physical_field_write_attempts
     )
     return row
+
+
+def process_exit_code(handle):
+    """Query the original process handle, even after its PID has been reused."""
+    query = k.GetExitCodeProcess
+    query.argtypes = [C.c_void_p, C.POINTER(C.c_uint32)]
+    query.restype = C.c_int
+    code = C.c_uint32()
+    if not query(handle, C.byref(code)):
+        raise C.WinError(C.get_last_error())
+    return None if code.value == 259 else code.value  # STILL_ACTIVE
+
+
+def shutdown_failure(previous, exit_code, status, restored):
+    if exit_code is not None:
+        return f"LMU process exited (code 0x{exit_code:08X}); hook restoration is unavailable"
+    if status != 3 or not all(value is True for value in restored.values()):
+        return previous or "Host quarantine or hook shutdown failure"
+    return previous
 
 
 def run(args):
@@ -319,6 +338,8 @@ def run(args):
                 started = KERNEL.GetTickCount64()
                 if physical_trace:
                     physical_trace.drain()
+                if process_exit_code(handle) is not None:
+                    break
                 observation = context_attempt(ipc, hotkeys, reasons)
                 if observation is None:
                     prepared_at = 0.0
@@ -366,7 +387,7 @@ def run(args):
                                 message = (
                                     "Checkpoint salvato."
                                     if row["action"] == 1
-                                    else "Ripristino completato."
+                                    else "Stato salvato applicato; stabilità fisica non ancora verificata."
                                 )
                             else:
                                 message = f"Comando rifiutato: risultato {row['result']}, causa {row['cause']}."
@@ -433,9 +454,10 @@ def run(args):
     finally:
         if ipc is not None:
             ipc.allow = 0
+            ipc.permit_writes = 0
             ipc.stop = 1
             for _ in range(350):
-                if ipc.status in (3, 4, 5):
+                if process_exit_code(handle) is not None or ipc.status in (3, 4, 5):
                     break
                 time.sleep(0.02)
             # A native command can complete while HTTP is timing out or while
@@ -447,16 +469,24 @@ def run(args):
                     output.write(json.dumps(row, allow_nan=False) + "\n")
                 print(json.dumps(row, allow_nan=False), flush=True)
             restored = {}
+            exit_code = process_exit_code(handle)
             for address, raw, name in originals:
+                if exit_code is not None:
+                    restored[name] = None
+                    continue
                 try:
                     restored[name] = read_process(handle, address, 32) == raw
                 except Exception:
                     restored[name] = False
-            if ipc.status != 3 or not all(restored.values()):
-                failure = failure or "Host quarantine or hook shutdown failure"
+            # The process can exit while its original prologues are being read.
+            exit_code = process_exit_code(handle)
+            if exit_code is not None:
+                restored = dict.fromkeys(restored)
+            failure = shutdown_failure(failure, exit_code, ipc.status, restored)
             summary = dict(
                 status=ipc.status,
                 error=ipc.error,
+                process_exit_code=exit_code,
                 failure=failure,
                 restored=restored,
                 reports=reports,
@@ -486,7 +516,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 100), default=10)
+    parser.add_argument("--revision", type=int, choices=range(1, 100), default=11)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--owner-thread", type=int, default=0)
     parser.add_argument("--seconds", type=int, default=180)

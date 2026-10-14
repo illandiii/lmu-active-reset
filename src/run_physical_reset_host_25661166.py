@@ -302,6 +302,7 @@ def run(args):
             physical_trace = TraceReader(
                 f"Local\\LMU_PhysicalReset_{dll.name}_{args.pid}",
                 Path(str(prefix) + ".physical.jsonl"),
+                revision=args.revision,
             )
         native_path = Path(str(prefix) + ".native.jsonl")
         native_path.touch(exist_ok=False)
@@ -516,7 +517,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 100), default=11)
+    parser.add_argument("--revision", type=int, choices=range(1, 100), default=12)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--owner-thread", type=int, default=0)
     parser.add_argument("--seconds", type=int, default=180)

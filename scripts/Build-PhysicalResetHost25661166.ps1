@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$ZigPath,
     [string]$FrameDirectory,
-    [ValidateRange(1, 99)][int]$Revision = 11
+    [ValidateRange(1, 99)][int]$Revision = 12
 )
 
 $ErrorActionPreference = 'Stop'
@@ -60,6 +60,7 @@ if ($FrameDirectory) {
 & $ZigPath c++ @options -shared -I (Join-Path $minhook 'include') @core @native @hostSources -ladvapi32 -o $dll
 if ($LASTEXITCODE -ne 0) { throw 'Physical reset host build failed' }
 $targets = Get-Content (Join-Path $sourceRoot 'physical_reset_targets_25661166.json') -Raw | ConvertFrom-Json
+$targets = @($targets | Where-Object { !$_.minimum_revision -or $_.minimum_revision -le $Revision })
 $manifest = [ordered]@{
     build = 14200
     dll_sha256 = (Get-FileHash $dll -Algorithm SHA256).Hash.ToLowerInvariant()

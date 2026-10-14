@@ -42,7 +42,7 @@ if __name__ == "__main__":
         parser.error("Offline launch confirmation and write opt-in required")
     args.owner_thread = 0  # Native callback discovery, never sampled lock ownership.
     wait_for_driving()
-    args.revision = 11
+    args.revision = 12
     # A just-closed console may still be draining its native callback.
     from audit_snapshot_25661166 import audit
 

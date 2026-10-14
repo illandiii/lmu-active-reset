@@ -156,3 +156,61 @@ successfully in `analysis/rea-25661166/reset-transform-20261014-configured/`.
 `F59B50` reads the HDV pose and updates exported vehicle values, helping distinguish
 that output path from collision feedback. Raw game code and decompilation remain
 local and are not distributed with the repository.
+
+## V12 collision instrumentation and offline findings (15 October)
+
+REA/Ghidra completed the collision-path batch under the local directory
+`analysis/rea-25661166/collision-sync-20261014/`. Its decompilation agrees with
+the instruction evidence above. `F4EAC0` applies a pose correction and writes
+six force/torque feedback values at HDV `4BC8..4BF0`. `FF0150` first resets that
+feedback for player vehicles, prepares collision shapes through `F4DB30`, builds
+collision pairs, marks affected vehicles and runs collision resolution.
+
+`F4DB30` retains shape geometry from the old collision proxy before calling
+`F4E7B0` to prepare the new proxy and geometry. Consequently, changing physical
+bodies alone does not establish coherent previous/current collision geometry.
+This is a concrete missing dependency, not yet proof that it caused the incident.
+
+The native teleport path `F73900` contains the following relevant sequence:
+
+1. Call `F702E0`, then `F4E7B0` with the vehicle pointer.
+2. Call `FEDFA0` with the vehicle in RDX. This walks the global collision-pair
+   vector at RVA `3B8AC40/3B8AC48`, stride `398`, and removes pairs whose endpoint
+   is a type-6 entry referring to that vehicle. Both endpoints are checked.
+3. Clear vehicle byte `16CF9`; for player control, call `ED00D0` to move the
+   physical state, then set vehicle byte `18F4D`.
+
+This is evidence that native teleportation invalidates pending collision work.
+It is not a drop-in reset API: it uses exported pose, has other state changes,
+and the selective pair removal changes a shared vector. Before integrating any
+of it, establish the correct projection of restored state to exported pose,
+the enclosing ownership of every relevant caller, and handling of collision
+history/feedback. Simply clearing `16CFA` would hide a pending correction without
+repairing these dependencies. No such clearing or native teleport call was added.
+
+V12 adds two observational hooks at `F4EAC0` (phases 11/12) and `F4E7B0`
+(13/14). They forward each original call exactly once. Only the player's existing
+physics thread samples, with the worker lock held and roots matching. During the
+20-step post-reset window, records now include the separate collision body,
+exported pose/velocities, aggregate HDV pose, pending correction byte and six
+feedback values. The buffer remains bounded at 512 records. These hooks add no
+state repair, collision suppression or game-state writes.
+
+The trace ABI is 1368 bytes for v12; v10/v11 remain 952 bytes. Readability bits
+9 through 13 respectively identify collision body, exported state, correction
+byte, HDV pose and feedback. A set bit means the read succeeded, not that the
+values are finite or physically valid. The Python decoder selects by host
+revision. The analyzer keeps incomplete calls and non-finite-body evidence,
+and only compares readable, finite collision groups. Proxy/exported disagreement
+can reflect normal advancement and is not by itself a failure classification.
+
+Validation: the native v12 fixture passed the 10,077-field restore, absent-player
+refusal and two-instance restart. An injected 11 m displacement inside the
+fixture's correction callback was correctly bracketed by phases 11/12; original
+call counts were unchanged. Twenty Python tests passed, including trace layouts,
+world/local velocity discrimination, missing data and crash-truncated callbacks.
+All 13 target signatures match the previously captured code; the generated DLL
+hash matches its local profile. These tests do not simulate native LMU collisions.
+
+V12 has not yet run in LMU. The deferred live procedure is in
+[TEST_RESET_COLLISIONI.md](TEST_RESET_COLLISIONI.md). The live defect remains open.

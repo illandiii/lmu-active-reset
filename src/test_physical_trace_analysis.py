@@ -1,6 +1,10 @@
 import unittest
+import ctypes as C
+import struct
+import json
 
-from analyze_physical_reset_trace import analyze, rigid_transform_fit
+from analyze_physical_reset_trace import analyze, collision_state, rigid_transform_fit
+from physical_trace import Record, RecordV12, record_dict
 
 
 def record(phase, step, position=0, velocity=20, request=3, valid=511):
@@ -16,6 +20,57 @@ def record(phase, step, position=0, velocity=20, request=3, valid=511):
 
 
 class TraceAnalysisTests(unittest.TestCase):
+    def test_proxy_disagreement_uses_exported_world_velocity(self):
+        row = record(11, 17, valid=(1 << 14) - 1)
+        row["collision_body"] = row["bodies"][0][:]
+        row["collision_body"][:3] = [4, 3, 0]
+        row["exported_vehicle"] = [1, 0, 0, 0, 1, 0, 0, 0, 1] + [0] * 15
+        row["exported_vehicle"][15:18] = [20, 0, 0]
+        row["exported_vehicle"][18:21] = [900, 0, 0]  # local velocity is a different field
+        state = collision_state(row)
+        self.assertEqual(state["proxy_vs_exported"]["position_m"], 5)
+        self.assertEqual(state["proxy_vs_exported"]["velocity_ms"], 0)
+        row["valid"] &= ~(1 << 10)
+        self.assertIsNone(collision_state(row)["proxy_vs_exported"])
+
+    def test_crash_inside_correction_keeps_unpaired_entry_and_nonfinite_evidence(self):
+        rows = [record(3, 20), record(11, 17), record(5, 17)]
+        rows[-1]["bodies"][0][0] = float("nan")
+        result = analyze(rows)
+        self.assertEqual(result["restores"][0]["unpaired_collision_entries"], {11: 17})
+        self.assertEqual(result["nonfinite_body_records"][0]["body"], 0)
+        json.dumps(result, allow_nan=False)
+
+    def test_native_layout_and_legacy_decoder(self):
+        self.assertEqual(C.sizeof(Record), 952)
+        raw = bytearray(1368)
+        struct.pack_into("Q", raw, 0, 11)
+        struct.pack_into("Q", raw, 952, 1)
+        struct.pack_into("d", raw, 960, 314)
+        struct.pack_into("f", raw, 1104 + 9 * 4, 271)
+        struct.pack_into("d", raw, 1200, 42)
+        struct.pack_into("d", raw, 1320, 17)
+        decoded = record_dict(RecordV12.from_buffer_copy(raw))
+        self.assertEqual(decoded["phase"], 11)
+        self.assertEqual(decoded["collision_flags"], 1)
+        self.assertEqual(decoded["collision_body"][0], 314)
+        self.assertEqual(decoded["exported_vehicle"][9], 271)
+        self.assertEqual(decoded["hdv_pose"][0], 42)
+        self.assertEqual(decoded["collision_feedback"][0], 17)
+        self.assertNotIn("collision_body", record_dict(Record.from_buffer_copy(raw[:952])))
+
+    def test_correction_is_attributed_to_its_own_callback(self):
+        rows = [
+            record(3, 20),
+            record(11, 17),
+            record(12, 17, position=11),
+            record(13, 16, position=11),
+            record(14, 16, position=11),
+        ]
+        result = analyze(rows)["restores"][0]
+        self.assertEqual(result["collision_corrections"][0]["bodies"][0]["position_m"], 11)
+        self.assertEqual(result["collision_preparations"][0]["bodies"][0]["position_m"], 0)
+
     def test_common_rotation_is_distinct_from_an_independent_impulse(self):
         before = record(6, 17)
         after = record(5, 16)

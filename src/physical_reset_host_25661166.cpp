@@ -43,6 +43,10 @@ static void(WINAPI *outer_original)(uint64_t);
 static void(WINAPI *dynamics_original)(void *, double);
 static void(WINAPI *scoring_original)(void *, float);
 static void(WINAPI *contacts_original)(void *, double, double, void *, double);
+#if LMU_RESET_HOST_REVISION >= 12
+static void(WINAPI *collision_correct_original)(void *);
+static void(WINAPI *collision_prepare_original)(void *);
+#endif
 static VehicleContactSample samples[4];
 static ResetTrace *trace;
 static unsigned trace_steps;
@@ -86,6 +90,21 @@ static bool roots_match() {
     return true;
 #endif
 }
+static bool trace_read_body(uintptr_t body, double *out) {
+    const unsigned offsets[]{0x40, 0x28, 0x90, 0x110};
+    const unsigned counts[]{3, 3, 9, 3};
+    unsigned cursor = 0;
+    for (unsigned j = 0; j < 4; ++j) {
+        SIZE_T got = 0;
+        if (!body ||
+            !ReadProcessMemory(GetCurrentProcess(), reinterpret_cast<void *>(body + offsets[j]),
+                               out + cursor, counts[j] * 8, &got) ||
+            got != counts[j] * 8)
+            return false;
+        cursor += counts[j];
+    }
+    return true;
+}
 static void trace_sample(uint64_t phase) {
     if (!trace || GetCurrentThreadId() != physics_thread ||
         !native_lock_witness(worker_lock).held_by_caller || !roots_match())
@@ -100,20 +119,7 @@ static void trace_sample(uint64_t phase) {
     sample.step = trace_steps;
     for (unsigned i = 0; i < 5; ++i) {
         uintptr_t body = i ? tires[i - 1] + 0xac0 : trace_body;
-        SIZE_T got = 0;
-        const unsigned offsets[]{0x40, 0x28, 0x90, 0x110};
-        const unsigned counts[]{3, 3, 9, 3};
-        unsigned cursor = 0;
-        bool valid = body != 0;
-        for (unsigned j = 0; j < 4; ++j) {
-            valid =
-                valid &&
-                ReadProcessMemory(GetCurrentProcess(), reinterpret_cast<void *>(body + offsets[j]),
-                                  sample.bodies[i] + cursor, counts[j] * 8, &got) &&
-                got == counts[j] * 8;
-            cursor += counts[j];
-        }
-        if (valid)
+        if (trace_read_body(body, sample.bodies[i]))
             sample.valid |= 1ULL << i;
     }
     for (unsigned w = 0; w < 4; ++w) {
@@ -143,10 +149,54 @@ static void trace_sample(uint64_t phase) {
         if (valid)
             sample.valid |= 1ULL << (5 + w);
     }
+#if LMU_RESET_HOST_REVISION >= 12
+    const auto vehicle = owner_root + 8;
+    if (trace_read_body(vehicle + 0x16d00, sample.collision_body))
+        sample.valid |= 1ULL << 9;
+    if (field(vehicle + 0x159e8, sample.exported_vehicle))
+        sample.valid |= 1ULL << 10;
+    unsigned char flags = 0;
+    if (field(vehicle + 0x16cfa, flags)) {
+        sample.collision_flags = flags;
+        sample.valid |= 1ULL << 11;
+    }
+    double position[3], orientation[9], reference[3];
+    if (field(physics_root + 0x24b0, position) && field(physics_root + 0x2500, orientation) &&
+        field(physics_root + 0x2610, reference)) {
+        std::memcpy(sample.hdv_pose, position, sizeof(position));
+        std::memcpy(sample.hdv_pose + 3, orientation, sizeof(orientation));
+        std::memcpy(sample.hdv_pose + 12, reference, sizeof(reference));
+        sample.valid |= 1ULL << 12;
+    }
+    if (field(physics_root + 0x4bc8, sample.collision_feedback))
+        sample.valid |= 1ULL << 13;
+#endif
     trace->records[index] = sample;
     MemoryBarrier();
     InterlockedIncrement64(&trace->count);
 }
+#if LMU_RESET_HOST_REVISION >= 12
+static bool trace_collision(void *object) {
+    return InterlockedCompareExchange(&ready, 0, 0) && GetCurrentThreadId() == physics_thread &&
+           trace_steps && reinterpret_cast<uintptr_t>(object) == owner_root + 8;
+}
+static void WINAPI collision_correct(void *object) {
+    const bool tracing = trace_collision(object);
+    if (tracing)
+        trace_sample(11);
+    collision_correct_original(object);
+    if (tracing)
+        trace_sample(12);
+}
+static void WINAPI collision_prepare(void *object) {
+    const bool tracing = trace_collision(object);
+    if (tracing)
+        trace_sample(13);
+    collision_prepare_original(object);
+    if (tracing)
+        trace_sample(14);
+}
+#endif
 static bool read_vehicle(uintptr_t module, uintptr_t physics, uint64_t epoch, double time,
                          SnapshotFrame *frame, RestoreBindings *bindings) {
 #ifdef LMU_RESET_HOST_FIXTURE
@@ -529,6 +579,27 @@ static DWORD WINAPI worker(void *) {
             return 0;
         }
     }
+#if LMU_RESET_HOST_REVISION >= 12
+    void *collision_targets[2];
+#ifdef LMU_RESET_HOST_FIXTURE
+    collision_targets[0] = reinterpret_cast<void *>(
+        GetProcAddress(reinterpret_cast<HMODULE>(base), "FixtureCollisionCorrect"));
+    collision_targets[1] = reinterpret_cast<void *>(
+        GetProcAddress(reinterpret_cast<HMODULE>(base), "FixtureCollisionPrepare"));
+#else
+    collision_targets[0] = reinterpret_cast<void *>(base + 0xf4eac0);
+    collision_targets[1] = reinterpret_cast<void *>(base + 0xf4e7b0);
+#endif
+    if (!collision_targets[0] || !collision_targets[1] ||
+        MH_CreateHook(collision_targets[0], reinterpret_cast<void *>(collision_correct),
+                      reinterpret_cast<void **>(&collision_correct_original)) != MH_OK ||
+        MH_CreateHook(collision_targets[1], reinterpret_cast<void *>(collision_prepare),
+                      reinterpret_cast<void **>(&collision_prepare_original)) != MH_OK) {
+        ipc->error = 113;
+        ipc->status = 4;
+        return 0;
+    }
+#endif
     if (!native_lifecycle_hooks_create(base, &lifecycle)) {
         ipc->error = 105;
         ipc->status = 4;

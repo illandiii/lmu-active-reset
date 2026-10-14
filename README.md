@@ -33,10 +33,15 @@ still pending. Identity, lifecycle, coherent physical state and valid contact
 reconstruction remain required. The keys are observed, not swallowed: select unused game bindings.
 For different keys run `scripts/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
 The launcher discovers the process and worker, chooses an unused locally built
-v9 host under a unique instance filename, and never replaces a resident DLL or
+v12 host under a unique instance filename, and never replaces a resident DLL or
 falls back to older builds. Stopped modules remain resident until LMU exits.
 Generated binaries and the local Python runtime are required; a fresh
 clone must be built before this launcher can be used.
+
+The v12 diagnostic build records collision preparation/correction around the
+restore. The next live test is documented in Italian in
+[the collision test procedure](docs/TEST_RESET_COLLISIONI.md). This instrumentation
+has passed local fixtures; it has not yet established or fixed the live cause.
 
 ## Repository layout
 

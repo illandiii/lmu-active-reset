@@ -10,8 +10,32 @@ class Record(C.Structure):
     ]
 
 
+class RecordV12(C.Structure):
+    _fields_ = Record._fields_ + [
+        ("collision_flags", C.c_uint64),
+        ("collision_body", C.c_double * 18),
+        ("exported_vehicle", C.c_float * 24),
+        ("hdv_pose", C.c_double * 15),
+        ("collision_feedback", C.c_double * 6),
+    ]
+
+
+assert C.sizeof(Record) == 952 and C.sizeof(RecordV12) == 1368
+
+
+def record_dict(r):
+    row = {n: getattr(r, n) for n in ("phase", "request", "tick", "step", "valid")}
+    row.update(bodies=[list(b) for b in r.bodies], contacts=[list(c) for c in r.contacts])
+    if isinstance(r, RecordV12):
+        row["collision_flags"] = r.collision_flags
+        for name in ("collision_body", "exported_vehicle", "hdv_pose", "collision_feedback"):
+            row[name] = list(getattr(r, name))
+    return row
+
+
 class TraceReader:
-    def __init__(self, name, path):
+    def __init__(self, name, path, revision=10):
+        self.record = RecordV12 if revision >= 12 else Record
         self.k = C.WinDLL("kernel32", use_last_error=True)
         self.k.OpenFileMappingW.argtypes = [W.DWORD, W.BOOL, W.LPCWSTR]
         self.k.OpenFileMappingW.restype = W.HANDLE
@@ -21,7 +45,7 @@ class TraceReader:
         self.k.CloseHandle.argtypes = [W.HANDLE]
         self.handle = self.k.OpenFileMappingW(4, False, name + "_trace")
         self.view = (
-            self.k.MapViewOfFile(self.handle, 4, 0, 0, 8 + 512 * C.sizeof(Record))
+            self.k.MapViewOfFile(self.handle, 4, 0, 0, 8 + 512 * C.sizeof(self.record))
             if self.handle
             else None
         )
@@ -35,12 +59,12 @@ class TraceReader:
     def drain(self):
         count = min(C.c_int64.from_address(self.view).value, 512)
         while self.count < count:
-            r = Record.from_buffer_copy(
-                C.string_at(self.view + 8 + self.count * C.sizeof(Record), C.sizeof(Record))
+            r = self.record.from_buffer_copy(
+                C.string_at(
+                    self.view + 8 + self.count * C.sizeof(self.record), C.sizeof(self.record)
+                )
             )
-            row = {n: getattr(r, n) for n in ("phase", "request", "tick", "step", "valid")}
-            row.update(bodies=[list(b) for b in r.bodies], contacts=[list(c) for c in r.contacts])
-            self.output.write(json.dumps(row) + "\n")
+            self.output.write(json.dumps(record_dict(r)) + "\n")
             self.count += 1
         self.output.flush()
 

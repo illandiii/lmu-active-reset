@@ -5,11 +5,13 @@
 #include "physical_reset_host_25661166.h"
 #include "physical_reset_trace.h"
 
-static int host_owner;
+static unsigned char host_owner[0x18000];
 static double host_time = 42;
 static volatile LONG original_boundaries, lifecycle_calls;
 static int mismatched_reads;
 static bool suppress_player_callback;
+static bool inject_collision_jump;
+static unsigned correction_calls, collision_prepare_calls;
 extern "C" __declspec(dllexport) uintptr_t FixtureWorkerLock() {
     return reinterpret_cast<uintptr_t>(&game_lock);
 }
@@ -50,6 +52,21 @@ FixtureContacts(void *p, double dt, double horizon, void *world, double angular)
 extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureScore(void *p, float dt) {
     assert(p == score && dt == .0025f);
 }
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureCollisionCorrect(void *p) {
+    assert(p == host_owner + 8);
+    ++correction_calls;
+    if (inject_collision_jump &&
+        *reinterpret_cast<double *>(source_bindings.address[0] + 0x28) == 80) {
+        inject_collision_jump = false;
+        auto *position = reinterpret_cast<double *>(source_bindings.address[0] + 0x40);
+        *position += 11;
+    }
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureCollisionPrepare(void *p) {
+    assert(p == host_owner + 8);
+    ++collision_prepare_calls;
+    host_owner[8 + 0x16cfa] = 0;
+}
 extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureDynamics(void *p,
                                                                                   double time) {
     assert(reinterpret_cast<uintptr_t>(p) == source_bindings.address[104] && time == host_time);
@@ -65,11 +82,16 @@ extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureBoundar
     // The host must drop its additional lifetime scopes before the native update.
     assert(!native_lock_witness(reinterpret_cast<uintptr_t>(&control_lock)).held_by_caller);
     InterlockedIncrement(&original_boundaries);
+    void(WINAPI *volatile correct_fn)(void *) = FixtureCollisionCorrect;
+    void(WINAPI *volatile prepare_fn)(void *) = FixtureCollisionPrepare;
+    host_owner[8 + 0x16cfa] = 1;
+    correct_fn(host_owner + 8);
     void(WINAPI *volatile score_fn)(void *, float) = FixtureScore;
     void(WINAPI *volatile dynamics_fn)(void *, double) = FixtureDynamics;
     score_fn(score, .0025f);
     if (!suppress_player_callback)
         dynamics_fn(reinterpret_cast<void *>(source_bindings.address[104]), host_time);
+    prepare_fn(host_owner + 8);
     host_time += .0025;
 }
 extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureClear(void *,
@@ -225,6 +247,12 @@ static int run_fixture(int argc, char **argv) {
     auto denied = request(ipc, 3, HOST_RESTORE);
     assert(denied.result == CONTROL_REJECTED && denied.loads == 0 && !denied.forward_writes);
     ipc->permit_writes = 1;
+#if LMU_RESET_HOST_REVISION >= 12
+    inject_collision_jump = true;
+    host_owner[8 + 0x16cfa] = 1;
+    put(host_owner + 8 + 0x16d40, double{314});
+    put(host_owner + 8 + 0x15a0c, float{271});
+#endif
     auto restored = request(ipc, 4, HOST_RESTORE);
     std::printf("host restore result=%llu writes=%llu fields=%llu contacts=%llu\n", restored.result,
                 restored.forward_writes, restored.fields, restored.contact_calls);
@@ -240,15 +268,36 @@ static int run_fixture(int argc, char **argv) {
         MapViewOfFile(trace_map, FILE_MAP_READ, 0, 0, sizeof(ResetTrace)));
     assert(trace && trace->count >= 5);
     unsigned phases = 0;
+#if LMU_RESET_HOST_REVISION >= 12
+    double before_correction = 0, after_correction = 0;
+#endif
     for (LONG64 i = 0; i < trace->count; ++i) {
         phases |= 1u << trace->records[i].phase;
         if (trace->records[i].phase == 3)
             assert(trace->records[i].bodies[0][3] == 80);
+#if LMU_RESET_HOST_REVISION >= 12
+        const auto &sample = trace->records[i];
+        if (sample.phase == 11) {
+            assert((sample.valid & (7u << 9)) == (7u << 9));
+            assert(sample.collision_flags == 1 && sample.collision_body[0] == 314 &&
+                   sample.exported_vehicle[9] == 271);
+            before_correction = sample.bodies[0][0];
+        }
+        if (sample.phase == 12)
+            after_correction = sample.bodies[0][0];
+#endif
     }
     assert((phases & ((1u << 3) | (1u << 5) | (1u << 6))) == ((1u << 3) | (1u << 5) | (1u << 6)));
 #if LMU_RESET_HOST_REVISION >= 11
     const unsigned boundaries = (1u << 7) | (1u << 8) | (1u << 9) | (1u << 10);
     assert((phases & boundaries) == boundaries);
+#endif
+#if LMU_RESET_HOST_REVISION >= 12
+    const unsigned collision_phases = (1u << 11) | (1u << 12) | (1u << 13) | (1u << 14);
+    assert((phases & collision_phases) == collision_phases);
+    assert(after_correction - before_correction == 11);
+    assert(correction_calls == static_cast<unsigned>(original_boundaries) &&
+           collision_prepare_calls == static_cast<unsigned>(original_boundaries));
 #endif
     UnmapViewOfFile(trace);
     CloseHandle(trace_map);

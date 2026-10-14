@@ -53,5 +53,17 @@
     "rva": 16203232,
     "prolog": "488bc448895808488970184889782055",
     "name": "SetControl"
+  },
+  {
+    "rva": 16050880,
+    "prolog": "488bc45553488da8f8feffff4881ecf8",
+    "name": "CollisionCorrect",
+    "minimum_revision": 12
+  },
+  {
+    "rva": 16050096,
+    "prolog": "488bc448895808574881ec000100000f",
+    "name": "CollisionPrepare",
+    "minimum_revision": 12
   }
 ]

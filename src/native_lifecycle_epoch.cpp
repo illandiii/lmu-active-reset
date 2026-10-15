@@ -46,3 +46,10 @@ bool native_lifecycle_release(NativeLifecyclePin *pin) {
     *pin = {};
     return true;
 }
+bool native_lifecycle_changed(NativeLifecycleEpoch *epoch, uint64_t expected) {
+    if (!epoch || !TryEnterCriticalSection(&epoch->lock))
+        return false; // The mutation owner will publish the new epoch on release.
+    const bool changed = epoch->generation != expected;
+    LeaveCriticalSection(&epoch->lock);
+    return changed;
+}

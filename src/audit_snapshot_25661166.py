@@ -300,7 +300,7 @@ def audit(pid):
     api("OpenFileMappingW", [W.DWORD, W.BOOL, W.LPCWSTR], W.HANDLE)
     for entry in listed:
         name = entry["name"].lower()
-        if re.fullmatch(r"lmu-physical-reset-v(?:9|10|11|12)-25661166-[0-9a-f]{32}\.dll", name):
+        if re.fullmatch(r"lmu-physical-reset-v(?:9|10|11|12|13)-25661166-[0-9a-f]{32}\.dll", name):
             registry[name] = (
                 "run_physical_reset_host_25661166",
                 f"steam-25661166-physical-reset-v{name.split('-v')[1].split('-')[0]}.json",
@@ -364,7 +364,7 @@ def audit(pid):
     if not handle:
         raise OSError("Cannot verify restored code")
     try:
-        for revision in range(1, 13):
+        for revision in range(1, 14):
             if f"lmu-physical-reset-v{revision}-25661166.dll" not in reports and not (
                 revision >= 9
                 and any(n.startswith(f"lmu-physical-reset-v{revision}-") for n in reports)

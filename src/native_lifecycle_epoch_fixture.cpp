@@ -19,6 +19,7 @@ static DWORD WINAPI mutate(void *) {
 }
 int main() {
     native_lifecycle_init(&epoch);
+    assert(!native_lifecycle_changed(&epoch, 1));
     NativeLifecyclePin pin{};
     assert(native_lifecycle_try_pin(&epoch, 1, &pin));
     assert(native_lifecycle_valid(&pin));
@@ -34,6 +35,8 @@ int main() {
     assert(!native_lifecycle_try_pin(&epoch, 1, &pin));
     SetEvent(resume);
     assert(WaitForSingleObject(thread, 5000) == WAIT_OBJECT_0);
+    assert(native_lifecycle_changed(&epoch, 1));
+    assert(!native_lifecycle_changed(&epoch, 2));
     assert(!native_lifecycle_try_pin(&epoch, 1, &pin));
     assert(native_lifecycle_try_pin(&epoch, 2, &pin));
     // Reentrant teardown invalidates even though the lock remains recursive.

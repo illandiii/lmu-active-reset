@@ -20,4 +20,5 @@ void native_lifecycle_mutation_leave(NativeLifecycleEpoch *);
 bool native_lifecycle_try_pin(NativeLifecycleEpoch *, uint64_t expected, NativeLifecyclePin *);
 bool native_lifecycle_valid(const NativeLifecyclePin *);
 bool native_lifecycle_release(NativeLifecyclePin *);
+bool native_lifecycle_changed(NativeLifecycleEpoch *, uint64_t expected);
 #endif

@@ -7,6 +7,7 @@
 #endif
 constexpr uint64_t RESET_HOST_MAGIC = 0x4c4d555253543030ULL + LMU_RESET_HOST_REVISION;
 enum HostAction { HOST_SAVE = 1, HOST_PREPARE = 2, HOST_RESTORE = 3 };
+enum HostStopReason { HOST_STOP_REQUESTED = 0, HOST_STOP_LIFECYCLE = 1 };
 struct ResetHostReport {
     uint64_t action, result, fields, forward_writes, recovery_writes, flow_result, cause,
         contact_mask, contact_calls, saves, loads, callbacks, pins, epoch, readable,

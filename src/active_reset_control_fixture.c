@@ -67,8 +67,11 @@ int main(void) {
     assert(active_reset_process(&state, 7, 100, &id, 1, &request, &actions) == CONTROL_REJECTED);
     request.id++;
     request.issued_ms = 100;
-    assert(active_reset_process(&state, 7, 100, &id, 1, &request, &actions) == CONTROL_OK &&
+    // A fresh load request can use yesterday's checkpoint; only requests expire.
+    request.issued_ms = 86400100;
+    assert(active_reset_process(&state, 7, 86400100, &id, 1, &request, &actions) == CONTROL_OK &&
            restores == 1);
+    request.issued_ms = 100;
     request.id++;
     flow_result = FLOW_COMPENSATED;
     assert(active_reset_process(&state, 7, 100, &id, 1, &request, &actions) ==

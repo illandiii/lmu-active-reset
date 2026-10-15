@@ -314,12 +314,12 @@ static int run_fixture(int argc, char **argv) {
     mismatched_reads = 0;
     void(WINAPI *volatile reconstruct)(void *) = FixtureReconstruct;
     reconstruct(reinterpret_cast<void *>(source_bindings.address[104]));
-    auto stale = request(ipc, 6, HOST_PREPARE);
-    assert(stale.result == 1001 && stale.loads == 1);
-    ipc->stop = 1;
+    // A pit reconstruction invalidates the checkpoint even without another key.
+    // The old host stops before a fresh instance can be admitted.
     for (unsigned i = 0; i < 500 && ipc->status == 2; ++i)
         Sleep(10);
-    assert(ipc->status == 3 && !ipc->error && original_boundaries > 0);
+    assert(ipc->status == 3 && !ipc->error && ipc->reserved == HOST_STOP_LIFECYCLE &&
+           original_boundaries > 0 && ipc->physical_field_write_attempts == 10077);
     if (argc == 4 && !suppress_player_callback) {
         char second[MAX_PATH];
         std::snprintf(second, sizeof(second), "%s.restart.dll", argv[1]);

@@ -227,7 +227,8 @@ int main(int argc, char **argv) {
     if (argc == 2 && !strcmp(argv[1], "--self-test"))
         return selftest();
     if (argc != 4) {
-        fprintf(stderr, "Usage: diagnostic.exe PID SECONDS LOG.jsonl | --schema | --self-test\n");
+        fprintf(stderr, "Usage: diagnostic.exe PID SECONDS LOG.jsonl | --schema | --self-test\n"
+                        "SECONDS=0 observes until the game exits or the controller stops it.\n");
         return 2;
     }
     char *end = nullptr;
@@ -235,7 +236,7 @@ int main(int argc, char **argv) {
     if (!pid || *end)
         return 2;
     unsigned long seconds = strtoul(argv[2], &end, 10);
-    if (!seconds || seconds > 3600 || *end)
+    if (!*argv[2] || seconds > 3600 || *end)
         return 2;
     Handle parent{OpenProcess(SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid)};
     if (!parent.h) {
@@ -280,7 +281,7 @@ int main(int argc, char **argv) {
     for (;;) {
         QueryPerformanceCounter(&now);
         double elapsed = double(now.QuadPart - begin.QuadPart) / freq.QuadPart;
-        if (elapsed >= seconds || WaitForSingleObject(parent.h, 0) != WAIT_TIMEOUT)
+        if ((seconds && elapsed >= seconds) || WaitForSingleObject(parent.h, 0) != WAIT_TIMEOUT)
             break;
         Snapshot s{}; // allocation and zeroing outside the producer lock
         bool copied = false;

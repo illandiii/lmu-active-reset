@@ -5,6 +5,7 @@
 #define NOMINMAX
 #include "physical_reset_host_25661166.h"
 #include "physical_reset_trace.h"
+#include "reset_host_policy.h"
 #include "vehicle_restore_adapter_25661166.h"
 #include "active_reset_boundary.h"
 #include "native_lifetime_handoff.h"
@@ -646,13 +647,16 @@ static DWORD WINAPI worker(void *) {
     }
     InterlockedExchange(&ready, 1);
     ipc->status = 2;
-    const auto start = GetTickCount64();
     uint64_t next_request = 0;
     while (!ipc->stop && !fatal) {
         const auto now = GetTickCount64();
         const auto heartbeat = static_cast<uint64_t>(number(&ipc->heartbeat_ms));
-        if (heartbeat > now || now - heartbeat > 2000 || now - start > 300000)
+        if (!reset_host_controller_alive(now, heartbeat))
             break;
+        if (native_lifecycle_changed(&lifecycle, 1)) {
+            ipc->reserved = HOST_STOP_LIFECYCLE;
+            break;
+        }
         if (!lease())
             native_handoff_cancel(handoff);
         else if (number(&ipc->request_id) > number(&ipc->completed_id) && now >= next_request) {

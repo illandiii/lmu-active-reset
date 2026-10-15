@@ -7,6 +7,14 @@ class HotkeyCommands:
         self.saved = False
         self.pending = None
         self.next_id = 0
+        self.notice = None
+
+    def rebind(self):
+        """Require a fresh release without discarding an existing checkpoint."""
+        if self.pending:
+            return False
+        self.armed = False
+        return True
 
     def issue(self, action, now):
         self.next_id += 1
@@ -14,6 +22,7 @@ class HotkeyCommands:
         return {"id": self.next_id, "action": action}
 
     def poll(self, focused, allowed, save, restore, modifiers, now, report=None):
+        self.notice = None
         eligible = focused and allowed and not modifiers
         edge = 0
         if not eligible or (save and restore):
@@ -26,6 +35,11 @@ class HotkeyCommands:
 
         if self.pending:
             request_id, action, issued = self.pending
+            # A save acknowledgement remains valid if focus moved meanwhile.
+            if report and report["id"] == request_id and action == 1:
+                self.pending = None
+                self.saved = self.saved or report["result"] == 0
+                return {}
             # A preparation never survives focus/context loss or a slow ack.
             if not eligible or now - issued > 2:
                 self.pending = None
@@ -33,15 +47,16 @@ class HotkeyCommands:
             if report and report["id"] == request_id:
                 self.pending = None
                 if action == 1:
-                    self.saved = report["result"] == 0
+                    self.saved = self.saved or report["result"] == 0
                 elif action == 2 and report["result"] == 0 and report["fields"] == 10077:
                     return self.issue(3, now)
             return {}
         if edge == 1:
-            self.saved = False
             return self.issue(1, now)
         if edge == 2 and self.saved:
             return self.issue(2, now)
+        if edge == 2:
+            self.notice = "Save a checkpoint before restoring."
         return {}
 
 

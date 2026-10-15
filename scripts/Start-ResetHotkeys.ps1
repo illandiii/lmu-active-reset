@@ -11,12 +11,11 @@ if (-not $PythonPath) {
     else { $PythonPath = (Get-Command python -ErrorAction Stop).Source }
 }
 $game = @(Get-Process | Where-Object { $_.ProcessName -eq 'Le Mans Ultimate' })
-if ($game.Count -ne 1) { throw 'Apri una sola istanza di LMU in Practice offline senza EAC e premi GUIDA.' }
-Write-Host 'Test sperimentale: nessun limite di distanza o velocita; reset in movimento ancora da validare in LMU.'
-Write-Host "$SaveKey salva; $RestoreKey ripristina. Torna su LMU e rilascia entrambi i tasti prima di usarli."
+if ($game.Count -ne 1) { throw 'Open one LMU instance in offline Practice without EAC.' }
+Write-Host "$SaveKey saves; $RestoreKey restores. Release both keys before using them."
 Push-Location $projectRoot
 try {
     & $PythonPath src/start_reset_hotkeys.py --pid $game[0].Id --save-key $SaveKey --restore-key $RestoreKey --offline-launch-confirmed --allow-writes
-    if ($LASTEXITCODE -ne 0) { throw 'Avvio o test rifiutato: leggi il motivo sopra.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Connection refused; see the reason above.' }
 }
 finally { Pop-Location }

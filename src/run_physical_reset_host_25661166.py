@@ -1,4 +1,4 @@
-"""Bounded, explicitly commanded offline physical-reset experiment.
+"""Explicitly commanded offline physical reset with no session expiry.
 
 The observation gate supplies context evidence only. Native admission, lifecycle
 epoch, typed plan preflight and contact reconstruction are
@@ -162,8 +162,14 @@ def shutdown_failure(previous, exit_code, status, restored):
 
 def run(args):
     from physical_reset_hotkeys import HotkeyCommands, WindowsKeys, function_key
+    from reset_desktop_session import DesktopSession
+    from reset_feedback import Feedback, report_feedback
 
+    desktop = getattr(args, "desktop", None) or DesktopSession(None)
     hotkeys = HotkeyCommands() if getattr(args, "hotkeys", False) else None
+    feedback = Feedback(
+        PROJECT / "work/ui-audio", muted=getattr(args, "mute", False) or not hotkeys
+    )
     keyboard = None
     if hotkeys:
         save_vk, restore_vk = function_key(args.save_key), function_key(args.restore_key)
@@ -172,11 +178,20 @@ def run(args):
         keyboard = WindowsKeys(args.pid, save_vk, restore_vk)
     if not args.offline_launch_confirmed:
         raise ValueError("Offline launch without EAC must be explicitly confirmed")
+    if desktop.stopped():
+        return
     binary, _, _ = verify_telemetry(args.pid)
+    telemetry_profile = json.loads(
+        (PROJECT / "compatibility/steam-25661166-telemetry.json").read_text()
+    )
+    if telemetry_profile.get("continuous_capture") is not True:
+        raise ValueError(
+            "Rebuild with scripts/Build-ResetDesktop.ps1 to enable continuous capture."
+        )
     context()
     game = get_json("/rest/sessions/GetGameState")
     if game.get("inControlOfVehicle") is not True or game.get("inMonitor") is not False:
-        raise ValueError("GUIDA is required")
+        raise ValueError("Enter driving mode in offline Practice.")
     listed = modules(args.pid)
     if any(
         "easyanticheat" in m["name"].lower() or m["name"].lower().startswith("eac") for m in listed
@@ -210,6 +225,7 @@ def run(args):
             + f"_physical_reset_host_v{args.revision}"
         )
     )
+    prefix.parent.mkdir(parents=True, exist_ok=True)
     mapping = view = ipc = native = console = None
     originals = []
     failure = None
@@ -217,6 +233,7 @@ def run(args):
     physical_trace = None
     reasons = {}
     closing = False
+    outcome = "stopped"
 
     @C.WINFUNCTYPE(C.c_int, C.c_uint)
     def console_close(event):
@@ -256,6 +273,8 @@ def run(args):
             if not raw.startswith(bytes.fromhex(target["prolog"])):
                 raise ValueError("Changed target: " + target["name"])
             originals.append((address, raw, target["name"]))
+        if desktop.stopped():
+            return
         metadata = dict(
             pid=args.pid,
             owner_thread=args.owner_thread,
@@ -308,7 +327,7 @@ def run(args):
         native_path.touch(exist_ok=False)
         console = Path(str(prefix) + ".native-result.txt").open("w")
         native = subprocess.Popen(
-            [str(binary), str(args.pid), str(args.seconds + 2), str(native_path)],
+            [str(binary), str(args.pid), "0", str(native_path)],
             stdout=console,
             stderr=console,
         )
@@ -318,11 +337,15 @@ def run(args):
         )
         if hotkeys:
             print(
-                f"{args.save_key}: SALVA | {args.restore_key}: RIPRISTINA | Ctrl+C: ARRESTA. "
-                "Solo con LMU in primo piano. Durata massima: " + str(args.seconds) + " s.",
+                f"{args.save_key}: SAVE | {args.restore_key}: RESTORE | Ctrl+C: STOP.",
                 flush=True,
             )
-        deadline = time.monotonic() + args.seconds
+        desktop.publish(
+            phase="active",
+            message="Ready to save a checkpoint.",
+            checkpoint=False,
+            log_prefix=prefix.name,
+        )
         tail, telemetry = "", None
         last_completed = sent_id = 0
         prepared_at = 0.0
@@ -330,19 +353,17 @@ def run(args):
             native_path.open() as incoming,
             Path(str(prefix) + ".reports.jsonl").open("w") as output,
         ):
-            while (
-                not closing
-                and time.monotonic() < deadline
-                and ipc.status == 2
-                and native.poll() is None
-            ):
+            while not closing and ipc.status == 2 and native.poll() is None:
                 started = KERNEL.GetTickCount64()
                 if physical_trace:
                     physical_trace.drain()
                 if process_exit_code(handle) is not None:
                     break
+                if desktop.stopped():
+                    break
                 observation = context_attempt(ipc, hotkeys, reasons)
                 if observation is None:
+                    desktop.publish(phase="paused", readiness="Waiting for game data")
                     prepared_at = 0.0
                     time.sleep(0.05)
                     continue
@@ -361,7 +382,18 @@ def run(args):
                 ipc.heartbeat_ms = now
                 reasons[decision["reason"]] = reasons.get(decision["reason"], 0) + 1
                 if decision["context_decision"] == "forbidden":
-                    raise ValueError("Offline Practice context ended")
+                    if decision["reason"] in ("monitor_or_not_realtime", "player_not_in_control"):
+                        # Monitor/focus transitions alone do not age or erase a checkpoint.
+                        ipc.permit_writes = 0
+                        if hotkeys:
+                            hotkeys.pending = None
+                            hotkeys.armed = False
+                        desktop.publish(phase="paused", readiness="Waiting for driving")
+                        time.sleep(0.05)
+                        continue
+                    outcome = "context_changed"
+                    desktop.publish(checkpoint=False, message="Waiting for offline Practice.")
+                    break
                 acknowledged = None
                 completed = ipc.completed_id
                 sequence = ipc.report_sequence
@@ -378,24 +410,16 @@ def run(args):
                         )
                         reports.append(row)
                         acknowledged = row
+                        if hotkeys and row["action"] == 1 and row["result"] == 0:
+                            hotkeys.saved = True
                         output.write(json.dumps(row, allow_nan=False) + "\n")
                         output.flush()
                         print(json.dumps(row, allow_nan=False), flush=True)
-                        if hotkeys and (row["action"] != 2 or row["result"] != 0):
-                            import winsound
-
-                            if row["result"] == 0:
-                                message = (
-                                    "Checkpoint salvato."
-                                    if row["action"] == 1
-                                    else "Stato salvato applicato; stabilità fisica non ancora verificata."
-                                )
-                            else:
-                                message = f"Comando rifiutato: risultato {row['result']}, causa {row['cause']}."
-                            print(message, flush=True)
-                            winsound.MessageBeep(
-                                winsound.MB_OK if row["result"] == 0 else winsound.MB_ICONHAND
-                            )
+                        desktop.report(row)
+                        event = report_feedback(row)
+                        if hotkeys and event:
+                            print(event[1], flush=True)
+                            feedback.play(event[0])
                         last_completed = completed
                         prepared_at = (
                             time.monotonic()
@@ -403,7 +427,23 @@ def run(args):
                             else 0.0
                         )
                 if hotkeys:
+                    settings = desktop.settings()
+                    if settings and ipc.completed_id == sent_id:
+                        save_key, restore_key, sound = settings
+                        feedback.muted = not sound
+                        if (args.save_key, args.restore_key) != (
+                            save_key,
+                            restore_key,
+                        ) and hotkeys.rebind():
+                            keyboard.save_vk = function_key(save_key)
+                            keyboard.restore_vk = function_key(restore_key)
+                            args.save_key, args.restore_key = save_key, restore_key
+                            desktop.publish(save_key=save_key, restore_key=restore_key)
                     focused, save, restore, modifiers = keyboard.read()
+                    desktop.publish(
+                        phase="active" if ipc.allow else "paused",
+                        readiness="Connected to LMU" if ipc.allow else "Waiting for driving",
+                    )
                     command = hotkeys.poll(
                         focused,
                         bool(ipc.allow),
@@ -413,6 +453,9 @@ def run(args):
                         time.monotonic(),
                         acknowledged,
                     )
+                    if hotkeys.notice:
+                        desktop.publish(message=hotkeys.notice, last_event="rejected")
+                        feedback.play("rejected")
                     # Do not queue input while a previous native request is in flight.
                     if command and ipc.completed_id != sent_id:
                         hotkeys.pending = None
@@ -447,12 +490,14 @@ def run(args):
                     ipc.request_tick = now
                     ipc.request_id = request_id  # Publish last.
                     sent_id = request_id
+                    desktop.command(action)
                 time.sleep(0.05)
     except KeyboardInterrupt:
-        print("Arresto richiesto; ripristino degli agganci in corso.", flush=True)
+        print("Stopping; restoring original hooks.", flush=True)
     except Exception as error:
         failure = f"{type(error).__name__}: {error}"
     finally:
+        desktop.publish(phase="stopping", readiness="Disconnecting")
         if ipc is not None:
             ipc.allow = 0
             ipc.permit_writes = 0
@@ -466,6 +511,7 @@ def run(args):
             row = final_acknowledgement(view, ipc, reports[-1]["id"] if reports else 0)
             if row is not None:
                 reports.append(row)
+                desktop.report(row)
                 with Path(str(prefix) + ".reports.jsonl").open("a") as output:
                     output.write(json.dumps(row, allow_nan=False) + "\n")
                 print(json.dumps(row, allow_nan=False), flush=True)
@@ -484,11 +530,15 @@ def run(args):
             if exit_code is not None:
                 restored = dict.fromkeys(restored)
             failure = shutdown_failure(failure, exit_code, ipc.status, restored)
+            if ipc.reserved == 1 and not failure:
+                outcome = "vehicle_reset"
+                desktop.publish(checkpoint=False, message="Vehicle reset. Save a new checkpoint.")
             summary = dict(
                 status=ipc.status,
                 error=ipc.error,
                 process_exit_code=exit_code,
                 failure=failure,
+                stop_reason=outcome,
                 restored=restored,
                 reports=reports,
                 context_reasons=reasons,
@@ -513,21 +563,22 @@ def run(args):
         k.CloseHandle(handle)
     if failure:
         raise RuntimeError(failure)
+    return outcome
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 100), default=12)
+    parser.add_argument("--revision", type=int, choices=range(1, 100), default=13)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--owner-thread", type=int, default=0)
-    parser.add_argument("--seconds", type=int, default=180)
     parser.add_argument("--request-file", type=Path, required=True)
     parser.add_argument("--offline-launch-confirmed", action="store_true")
     parser.add_argument("--allow-writes", action="store_true")
     parser.add_argument("--hotkeys", action="store_true")
     parser.add_argument("--save-key", default="F6")
     parser.add_argument("--restore-key", default="F7")
+    parser.add_argument("--mute", action="store_true")
     args = parser.parse_args()
-    if not 5 <= args.seconds <= 240 or args.owner_thread < 0:
-        parser.error("Duration must be 5..240 seconds; owner thread 0 selects native discovery")
+    if args.owner_thread < 0:
+        parser.error("Owner thread 0 selects native discovery")
     run(args)

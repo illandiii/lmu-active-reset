@@ -1,60 +1,119 @@
-"""Discover the current worker owner, then run the bounded hotkey host."""
+"""Wait for driving and supervise a checkpoint host without a session time limit."""
 
 import argparse
 from pathlib import Path
 import time
 from urllib.error import URLError
-from capture_context import get_json
-
-from run_physical_reset_host_25661166 import run
 
 
-def wait_for_driving():
-    print("In attesa che il player entri in GUIDA in Practice offline...", flush=True)
-    while True:
+def get_json(path):
+    from capture_context import get_json as fetch
+
+    return fetch(path)
+
+
+def driving_ready(state, game):
+    return (
+        state.get("appBuild") == 14200
+        and state.get("settingMode") == "SETTING_GRANDPRIX"
+        and state.get("gameSession") in ("PRACTICE1", "PRACTICE2", "PRACTICE3", "PRACTICE4")
+        and game.get("inControlOfVehicle") is True
+        and game.get("inMonitor") is False
+        and game.get("playerVehicleLoaded") is True
+        and game.get("isReplayActive") is False
+    )
+
+
+def wait_for_driving(stop_requested=lambda: False, stable_samples=1):
+    print("Waiting for driving in offline Practice…", flush=True)
+    consecutive = 0
+    while not stop_requested():
         try:
             state = get_json("/navigation/state")["state"]
             game = get_json("/rest/sessions/GetGameState")
-            if (
-                state.get("appBuild") == 14200
-                and state.get("settingMode") == "SETTING_GRANDPRIX"
-                and state.get("gameSession") in ("PRACTICE1", "PRACTICE2", "PRACTICE3", "PRACTICE4")
-                and game.get("inControlOfVehicle") is True
-                and game.get("inMonitor") is False
-                and game.get("playerVehicleLoaded") is True
-                and game.get("isReplayActive") is False
-            ):
-                break
+            consecutive = consecutive + 1 if driving_ready(state, game) else 0
+            if consecutive >= stable_samples:
+                return True
         except (TimeoutError, URLError, ConnectionError):
-            pass
+            consecutive = 0
         time.sleep(0.5)
+    return False
 
 
-if __name__ == "__main__":
+def supervise(args, run_host, audit_host, alive, wait=wait_for_driving, sleep=time.sleep):
+    """Only a clean lifecycle/context exit can trigger automatic re-admission."""
+
+    def stopped():
+        return args.desktop.stopped() or not alive()
+
+    args.owner_thread = 0
+    args.revision = 13
+    args.hotkeys = True
+    args.request_file = Path("work/unused-hotkey-command.json")
+    while not stopped():
+        args.desktop.publish(phase="waiting", checkpoint=False, readiness="Waiting for driving")
+        if not wait(stopped, stable_samples=2):
+            break
+        args.desktop.publish(phase="starting", message="Connecting to LMU…")
+        for attempt in range(20):
+            if stopped():
+                return
+            try:
+                audit_host(args.pid)
+                break
+            except ValueError as error:
+                if str(error) != "Snapshot module not cleanly stopped" or attempt == 19:
+                    raise
+                sleep(0.2)
+        if stopped():
+            break
+        outcome = run_host(args)
+        if stopped():
+            break
+        if outcome not in ("vehicle_reset", "context_changed"):
+            raise RuntimeError("Connection stopped unexpectedly. Reopen Active Reset to reconnect.")
+        args.desktop.publish(checkpoint=False, message="Vehicle changed. Save a new checkpoint.")
+        sleep(0.5)
+
+
+def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--save-key", default="F6")
     parser.add_argument("--restore-key", default="F7")
+    parser.add_argument("--mute", action="store_true")
+    parser.add_argument("--gui-session", type=Path)
+    parser.add_argument("--settings-file", type=Path)
     parser.add_argument("--offline-launch-confirmed", action="store_true")
     parser.add_argument("--allow-writes", action="store_true")
     args = parser.parse_args()
     if not args.offline_launch_confirmed or not args.allow_writes:
         parser.error("Offline launch confirmation and write opt-in required")
-    args.owner_thread = 0  # Native callback discovery, never sampled lock ownership.
-    wait_for_driving()
-    args.revision = 12
-    # A just-closed console may still be draining its native callback.
-    from audit_snapshot_25661166 import audit
+    from reset_desktop_session import DesktopSession
+    from physical_reset_hotkeys import function_key
 
-    for attempt in range(20):
-        try:
-            audit(args.pid)
-            break
-        except ValueError as error:
-            if str(error) != "Snapshot module not cleanly stopped" or attempt == 19:
-                raise
-            time.sleep(0.2)
-    args.seconds = 240
-    args.hotkeys = True
-    args.request_file = Path("work/unused-hotkey-command.json")
-    run(args)
+    args.desktop = DesktopSession(args.gui_session, settings_file=args.settings_file)
+    handle = None
+    try:
+        if function_key(args.save_key) == function_key(args.restore_key):
+            raise ValueError("Choose different keys for save and restore.")
+        from audit_snapshot_25661166 import audit
+        from run_physical_reset_host_25661166 import run, process_exit_code, k
+
+        handle = k.OpenProcess(0x1000, False, args.pid)
+        if not handle:
+            raise OSError("LMU process is unavailable.")
+        supervise(args, run, audit, lambda: process_exit_code(handle) is None)
+        args.desktop.publish(phase="stopped", checkpoint=False, message="Waiting for LMU.")
+    except KeyboardInterrupt:
+        args.desktop.publish(phase="stopped", checkpoint=False, message="Disconnected.")
+    except Exception as error:
+        args.desktop.publish(phase="error", checkpoint=False, message=str(error))
+        raise
+    finally:
+        if handle:
+            k.CloseHandle(handle)
+
+
+if __name__ == "__main__":
+    main()

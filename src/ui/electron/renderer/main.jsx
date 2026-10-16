@@ -6,13 +6,13 @@ import { Icon } from "@iconify/react";
 import restart from "@iconify-icons/solar/restart-linear";
 import layers from "@iconify-icons/solar/layers-linear";
 import keyboard from "@iconify-icons/solar/keyboard-linear";
-import volume from "@iconify-icons/solar/volume-loud-linear";
-import play from "@iconify-icons/solar/play-linear";
 import save from "@iconify-icons/solar/diskette-linear";
 import arrow from "@iconify-icons/solar/arrow-right-linear";
 import check from "@iconify-icons/solar/check-circle-linear";
 import close from "@iconify-icons/solar/close-circle-linear";
 import monitor from "@iconify-icons/solar/monitor-linear";
+import gear from "@iconify-icons/solar/settings-linear";
+import { Preferences } from "./preferences.jsx";
 import "@fontsource/manrope/latin-400.css";
 import "@fontsource/manrope/latin-500.css";
 import "@fontsource/manrope/latin-600.css";
@@ -49,6 +49,12 @@ function App() {
   const captureBusy = useRef(false);
   const audio = useRef(null);
   const view = statusView(status);
+
+  useEffect(() => {
+    document.documentElement.dataset.reduceMotion = String(
+      settings?.reduce_motion === true,
+    );
+  }, [settings?.reduce_motion]);
 
   useEffect(() => {
     if (status.phase === "error") setQuitting(false);
@@ -186,12 +192,7 @@ function App() {
   return (
     <>
       <div className="titlebar">
-        <span>
-          SECTOR{" "}
-          <span className="titlebar-note">
-            {preview ? "DESIGN PREVIEW" : "DESKTOP"}
-          </span>
-        </span>
+        <span>sector</span>
         <div className="window-controls">
           <button aria-label="Minimize" onClick={() => api.minimize()}>
             <svg viewBox="0 0 16 16">
@@ -236,16 +237,20 @@ function App() {
             </Tabs.Tab>
             <Tabs.Indicator className="tab-indicator" />
           </Tabs.List>
-          <div className={`connection ${view.tone}`} role="status">
-            <span className="dot" />
-            {view.title}
-          </div>
+          <button
+            className="settings-button"
+            aria-label="Settings"
+            title="Settings"
+            disabled={!settings || quitting}
+            onClick={() => setModal("settings")}
+          >
+            <Glyph icon={gear} />
+          </button>
         </header>
         <main className="scroll-area">
           <Tabs.Panel value="reset" className="page">
             <div className="page-heading">
               <div>
-                <p className="eyebrow">Practice, on your terms</p>
                 <h1>
                   Active Reset<span className="accent">.</span>
                 </h1>
@@ -266,12 +271,9 @@ function App() {
                     {view.saved ? "Saved" : "Empty"}
                   </span>
                 </div>
-                <div className="checkpoint-value">
-                  <span className="speed">{view.speed}</span>
-                  <div className="speed-unit">
-                    KM/H<span>Saved speed</span>
-                  </div>
-                </div>
+                <h2 className="checkpoint-title">
+                  {view.saved ? "Checkpoint ready" : "No checkpoint"}
+                </h2>
                 <p className="checkpoint-help">
                   {view.saved ? (
                     <>
@@ -299,18 +301,8 @@ function App() {
                   <span className="eyebrow">Saved at</span>
                   <strong className="time">{view.time}</strong>
                 </div>
-                <span className="session-mode">
-                  <Glyph icon={monitor} />
-                  Offline Practice
-                </span>
               </div>
             </section>
-            <div className={`session-message ${view.tone}`} role="status">
-              <span className="dot" />
-              <span>
-                {view.message || "Open LMU in offline Practice without EAC."}
-              </span>
-            </div>
             <div className="settings-grid">
               <section
                 className="settings-section"
@@ -359,59 +351,11 @@ function App() {
                   Click a key to reassign. Use keys not bound in LMU.
                 </p>
               </section>
-              <section
-                className="settings-section sound-section"
-                aria-labelledby="sound-title"
-              >
-                <div className="section-heading">
-                  <Glyph icon={volume} />
-                  <h2 id="sound-title">Audio feedback</h2>
-                  <span className="eyebrow">02</span>
-                </div>
-                <div className="setting-row sound-row">
-                  <div className="setting-label">
-                    <h3>Confirmation sounds</h3>
-                    <p>Save, restore and rejection.</p>
-                  </div>
-                  <button
-                    role="switch"
-                    aria-label="Confirmation sounds"
-                    aria-checked={settings?.sound || false}
-                    className="switch"
-                    disabled={!settings || pending || quitting}
-                    onClick={() =>
-                      updateSettings({ ...settings, sound: !settings.sound })
-                    }
-                  >
-                    <span />
-                  </button>
-                </div>
-                <div className="sound-previews">
-                  <button
-                    disabled={!settings?.sound}
-                    onClick={() => sound("save")}
-                  >
-                    <Glyph icon={play} />
-                    Preview save
-                  </button>
-                  <button
-                    disabled={!settings?.sound}
-                    onClick={() => sound("restore")}
-                  >
-                    <Glyph icon={play} />
-                    Preview restore
-                  </button>
-                </div>
-                <p className="footnote">
-                  Only confirmed actions play a success sound.
-                </p>
-              </section>
             </div>
           </Tabs.Panel>
           <Tabs.Panel value="overlay" className="page overlay-page">
             <div className="page-heading">
               <div>
-                <p className="eyebrow">A wider view</p>
                 <h1>
                   Overlay<span className="accent">.</span>
                 </h1>
@@ -453,15 +397,15 @@ function App() {
               )}
             </div>
           )}
-          <footer>
-            <span>
-              <span className="footer-square" />
-              LE MANS ULTIMATE
-            </span>
-            <span>OFFLINE PRACTICE · EAC OFF</span>
-            <span>SECTOR / 0.2</span>
-          </footer>
         </main>
+        <div className={`statusbar ${view.tone}`} role="status">
+          <span className="connection">
+            <span className="dot" />
+            {view.title}
+          </span>
+          <span className="status-detail">{view.message}</span>
+          {preview && <span className="preview-label">Preview</span>}
+        </div>
       </Tabs.Root>
       <Dialog.Root
         open={modal !== null}
@@ -478,21 +422,47 @@ function App() {
               initialFocus={modalRef}
             >
               <div className="modal-icon">
-                <Glyph icon={shownModal === "close" ? monitor : keyboard} />
+                <Glyph
+                  icon={
+                    shownModal === "settings"
+                      ? gear
+                      : shownModal === "close"
+                        ? monitor
+                        : keyboard
+                  }
+                />
               </div>
               <Dialog.Title>
-                {shownModal === "close"
-                  ? "Keep Sector running?"
-                  : shownModal === "save_key"
-                    ? "Set save shortcut"
-                    : "Set restore shortcut"}
+                {shownModal === "settings"
+                  ? "Settings"
+                  : shownModal === "close"
+                    ? "Keep Sector running?"
+                    : shownModal === "save_key"
+                      ? "Set save shortcut"
+                      : "Set restore shortcut"}
               </Dialog.Title>
-              <Dialog.Description>
-                {shownModal === "close"
-                  ? "Keep your shortcuts active in the background, or quit Sector."
-                  : captureHint}
+              <Dialog.Description
+                className={shownModal === "settings" ? "sr-only" : undefined}
+              >
+                {shownModal === "settings"
+                  ? "Audio and appearance preferences."
+                  : shownModal === "close"
+                    ? "Keep your shortcuts active in the background, or quit Sector."
+                    : captureHint}
               </Dialog.Description>
-              {shownModal === "close" ? (
+              {shownModal === "settings" ? (
+                <>
+                  <Preferences
+                    settings={settings}
+                    pending={pending}
+                    updateSettings={updateSettings}
+                    sound={sound}
+                  />
+                  <Dialog.Close className="secondary settings-done">
+                    Done
+                  </Dialog.Close>
+                </>
+              ) : shownModal === "close" ? (
                 <div className="close-actions">
                   <button
                     className="primary"

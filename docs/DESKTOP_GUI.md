@@ -34,8 +34,15 @@ run `scripts/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`.
 
 ## Window and settings
 
-- Active Reset shows acknowledged saved speed, timestamp, successful restore
-  count, connection phase and the latest command result.
+- Active Reset shows acknowledged checkpoint availability, timestamp and
+  successful restore count. Saved speed is not displayed.
+- The header gear opens an embedded Settings dialog with confirmation sounds,
+  sound previews and Reduce motion. The latter is stored with existing settings;
+  old files default to normal motion, while the OS reduced-motion setting is
+  always respected.
+- Connection phase and the latest command result live in the bottom status bar
+  on both tabs. Page eyebrows, the old product footer and the blue card's
+  Offline Practice label have been removed; the title bar only says sector.
 - Overlay is a clearly labeled future feature, with no invented live data.
 - Click a shortcut to capture one key. Escape or window focus loss cancels.
   Duplicates, held repeats and modifier combinations are rejected. Tab navigates

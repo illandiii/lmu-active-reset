@@ -31,7 +31,9 @@ start/stop buttons or session countdown. Release both keys before using them:
   Letters, digits, function keys, navigation and numpad keys are supported.
   Escape cancels capture; modifiers and combinations are not assigned.
 - Distinct sounds confirm save, restore and rejection; preview or mute them in the GUI.
-- The checkpoint card shows the acknowledged saved speed and successful restore count.
+- The checkpoint card shows availability, save time and successful restore count.
+- The gear button opens audio preferences and a persistent Reduce motion option.
+- Connection status and the latest result remain visible in the bottom status bar.
 - Closing the window offers **Run in background**, **Quit Sector** or **Cancel**
   in a popup inside the app.
 - In the background, shortcuts remain active. Reopen from the tray or launcher.

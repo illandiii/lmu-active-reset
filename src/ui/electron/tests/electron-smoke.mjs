@@ -77,14 +77,20 @@ try {
       .count(),
     1,
   );
-  await page.getByRole("switch").click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
+  await settle();
+  await page.screenshot({ path: path.join(output, "settings.png") });
+  await page.getByRole("switch", { name: "Confirmation sounds" }).click();
   await page.waitForFunction(
     () =>
       document.querySelector('[role="switch"]').getAttribute("aria-checked") ===
       "false",
   );
   assert.equal(
-    await page.getByRole("switch").getAttribute("aria-checked"),
+    await page
+      .getByRole("switch", { name: "Confirmation sounds" })
+      .getAttribute("aria-checked"),
     "false",
   );
   assert.equal(
@@ -93,7 +99,7 @@ try {
       .isDisabled(),
     true,
   );
-  await page.getByRole("switch").click();
+  await page.getByRole("switch", { name: "Confirmation sounds" }).click();
   await page.waitForFunction(
     () =>
       document.querySelector('[role="switch"]').getAttribute("aria-checked") ===
@@ -110,6 +116,21 @@ try {
     }),
   );
   assert.equal(invalid.ok, false);
+  await page.getByRole("switch", { name: "Reduce motion" }).click();
+  await page.waitForFunction(
+    () => document.documentElement.dataset.reduceMotion === "true",
+  );
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  assert.equal(
+    await page
+      .getByRole("switch", { name: "Reduce motion" })
+      .getAttribute("aria-checked"),
+    "true",
+  );
+  await page.keyboard.press("Escape");
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
   await app.evaluate(() =>
     global.sectorTest.publish({
       phase: "active",
@@ -121,7 +142,10 @@ try {
     }),
   );
   await page.getByText("Checkpoint applied.", { exact: true }).waitFor();
-  assert.equal(await page.locator(".speed").innerText(), "80");
+  assert.equal(
+    await page.locator(".checkpoint-title").innerText(),
+    "Checkpoint ready",
+  );
   await page.screenshot({ path: path.join(output, "checkpoint.png") });
   await app.evaluate(() =>
     global.sectorTest.publish({
@@ -131,7 +155,10 @@ try {
     }),
   );
   await page.getByText("Vehicle changed. Waiting for driving.").waitFor();
-  assert.equal(await page.locator(".speed").innerText(), "—");
+  assert.equal(
+    await page.locator(".checkpoint-title").innerText(),
+    "No checkpoint",
+  );
   await page.getByRole("button", { name: "Close window", exact: true }).click();
   await page.getByRole("heading", { name: "Keep Sector running?" }).waitFor();
   await settle();

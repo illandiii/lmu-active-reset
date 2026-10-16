@@ -6,6 +6,7 @@ const defaults = Object.freeze({
   save_key: "F6",
   restore_key: "F7",
   sound: true,
+  reduce_motion: false,
 });
 
 function validateSettings(value) {
@@ -22,7 +23,18 @@ function validateSettings(value) {
   ) {
     throw new Error("Choose two different keys without modifiers.");
   }
-  return { save_key: save.name, restore_key: restore.name, sound: value.sound };
+  if (
+    value.reduce_motion !== undefined &&
+    typeof value.reduce_motion !== "boolean"
+  ) {
+    throw new Error("Reduce motion must be enabled or disabled.");
+  }
+  return {
+    save_key: save.name,
+    restore_key: restore.name,
+    sound: value.sound,
+    reduce_motion: value.reduce_motion ?? false,
+  };
 }
 
 function readSettings(filename) {

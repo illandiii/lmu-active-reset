@@ -61,12 +61,15 @@ test("migrates existing BOM preferences and atomically persists canonical keys",
     save_key: "G",
     restore_key: "F7",
     sound: false,
+    reduce_motion: false,
   });
   writeSettings(file, {
     save_key: "NumPad3",
     restore_key: "Space",
     sound: true,
+    reduce_motion: true,
   });
+  assert.equal(readSettings(file).reduce_motion, true);
   assert.equal(readSettings(file).save_key, "NumPad3");
   assert.equal(
     fs.readdirSync(root).filter((name) => name.endsWith(".tmp")).length,
@@ -84,6 +87,7 @@ test("rejects unsupported keys, duplicate assignments and nonboolean sound", () 
     { ...defaults, save_key: "Escape" },
     { ...defaults, restore_key: "f6" },
     { ...defaults, sound: "true" },
+    { ...defaults, reduce_motion: "false" },
     { ...defaults, save_key: "F6 & calc.exe" },
   ])
     assert.throws(() => validateSettings(value));

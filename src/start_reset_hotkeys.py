@@ -68,7 +68,7 @@ def supervise(args, run_host, audit_host, alive, wait=wait_for_driving, sleep=ti
         if stopped():
             break
         outcome = run_host(args)
-        if stopped():
+        if stopped() or outcome == "user_stopped":
             break
         if outcome not in ("vehicle_reset", "context_changed"):
             raise RuntimeError("Connection stopped unexpectedly. Reopen Active Reset to reconnect.")
@@ -104,7 +104,7 @@ def main():
         if not handle:
             raise OSError("LMU process is unavailable.")
         supervise(args, run, audit, lambda: process_exit_code(handle) is None)
-        args.desktop.publish(phase="stopped", checkpoint=False, message="Waiting for LMU.")
+        args.desktop.publish(phase="stopped", checkpoint=False, message="Disconnected.")
     except KeyboardInterrupt:
         args.desktop.publish(phase="stopped", checkpoint=False, message="Disconnected.")
     except Exception as error:

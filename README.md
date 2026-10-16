@@ -3,9 +3,12 @@
 Experimental checkpoint and physical-state restoration for Le Mans Ultimate,
 developed for offline Practice on Windows x64.
 
-**Known issue: a high-speed reset can launch the car into the air.** A live v8
-recording confirms the instability after the native update resumes, despite
-successful field readback. The cause is still under investigation.
+**V15 fixes the collision sweep that launched the car after moving resets.**
+Seven live restores on 16 October verified all 10,084 fields, with current speeds
+up to 242.6 km/h and distances up to 797 metres from the checkpoint. The user
+confirmed successful teleports, including while cornering. The detailed traces
+show no collision-induced jump in the first 20 physics steps after each restore;
+broader stability and lifecycle qualification remain ongoing.
 
 **The first near-stationary physical reset succeeded in offline Practice.** The
 experimental host restored and verified all 10,077 planned fields, rebuilt four
@@ -33,8 +36,8 @@ Pausing driving or moving focus alone does not discard a checkpoint. Existing
 identity/lifecycle checks can also invalidate it when the underlying vehicle changes.
 
 The host has no speed or checkpoint-distance limit. Moving and long-distance
-restores pass isolated model tests; live validation of that expanded behavior is
-still pending. Identity, lifecycle, coherent physical state and valid contact
+restores pass isolated model tests and the seven live v15 trials described above.
+Identity, lifecycle, coherent physical state and valid contact
 reconstruction remain required. The keys are observed, not swallowed: select unused game bindings.
 For different keys run `scripts/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
 The launcher discovers the process and worker, chooses an unused locally built
@@ -48,11 +51,12 @@ to rebuild v15 and the continuous telemetry reader. See
 
 The current host records collision preparation/correction around the restore,
 using the diagnostics introduced in v12 and a continuous ring in v14.
-The next live test is documented in Italian in
+Further live tests are documented in Italian in
 [the collision test procedure](docs/TEST_RESET_COLLISIONI.md). The 16 October capture identified a collision sweep across the pre-reset and saved
 locations. V15 restores the aggregate/exported kinematics and rebuilds collision
 state before physics resumes. Local regression and compensation tests pass;
-live validation of this correction is still pending.
+the subsequent live results are recorded in the
+[collision incident history](docs/HIGH_SPEED_RESET_INCIDENT.md).
 
 ## Repository layout
 
@@ -90,9 +94,9 @@ Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 
 ## Current work
 
-1. Validate the focused hotkey workflow with user input in LMU.
-2. Qualify lifecycle transitions and physical stability beyond the initial experiment.
-3. Validate moving resets, lap validity and hotkeys.
+1. Qualify lifecycle transitions and physical stability across more cars and tracks.
+2. Validate lap validity and longer sessions with repeated moving resets.
+3. Validate the desktop UI workflow; the live v15 trials used the hotkey launcher.
 
 The desktop UI is implemented; native Windows visual and live validation remain pending.
 See [physics thread findings](docs/PHYSICS_THREAD_2026-10-13.md)

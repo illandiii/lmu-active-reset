@@ -3,8 +3,11 @@
 Aggiornata il 16 ottobre 2026 dopo la cattura dello sbalzo. La v15 corregge
 il volume delle collisioni che attraversava la posizione precedente e quella
 salvata: ripristina anche le cache cinematiche, aggiorna la geometria con le
-routine native e rimuove le coppie di collisione obsolete. I test locali passano;
-la correzione deve ancora essere verificata in LMU.
+routine native e rimuove le coppie di collisione obsolete. I test locali e sette
+ripristini reali sono riusciti: tutti i 10.084 campi verificati, velocità attuale
+fino a 242,6 km/h e distanza fino a 797 metri. L'utente conferma il teletrasporto
+anche in curva. Le finestre dettagliate dei primi 20 passi fisici non mostrano
+salti da collisione. La procedura seguente serve ad ampliare la verifica.
 
 ## Preparazione
 

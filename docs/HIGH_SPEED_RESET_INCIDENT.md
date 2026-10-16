@@ -343,7 +343,7 @@ Adapter cases cover success, contact compensation, failed recovery quarantine an
 collision-rebuild failure followed by compensation, including rejected replacement
 of a checkpoint by a singular rotation. The core Windows suites and Python tests
 also pass. These fixtures model native collision helpers and do not replace a
-live test. No v15 live reset has yet been recorded.
+live test. At this stage no v15 live reset had yet been recorded.
 
 ### First v15 attempt: launcher blocked before restore
 
@@ -359,4 +359,33 @@ uses one predicate for both hotkey advancement and the recent-preparation lease.
 Tests exercise v14 and v15 save/prepare/restore sequences, reject the other plan
 size and reject unknown revisions. A mismatched preparation now reports an explicit
 reason instead of silently abandoning F7. No fallback or reduced field validation
-was introduced. A new live attempt remains required.
+was introduced. The next recording exercised the corrected launcher.
+
+### Seven successful v15 restores and intentional shutdown
+
+Recording `20261016T151235731244Z_physical_reset_host_v15` contains 696 physical
+records without gaps or nonfinite body values. One checkpoint saved at 178.67 km/h
+was restored seven times, from current speeds of 191.37–242.61 km/h and distances
+of 67.11–797.36 metres. Every restore verified all 10,084 fields with zero
+mismatches, four rebuilt contacts and no compensation. All five traced bodies
+matched their saved position, orientation, velocity and angular momentum exactly
+at the immediate post-restore boundary.
+
+All seven collision rebuilds left the restored physical root unchanged. The
+17 subsequent recorded collision-correction calls also left its position,
+velocity, orientation and angular momentum unchanged. Across 140 Dynamics steps,
+the largest root position increment was 0.124446 metres and the largest velocity
+vector increment was 0.063205 m/s. No root change occurred between consecutive
+Dynamics calls. These detailed windows cover 20 steps (about 50 ms) per restore;
+they establish absence of the previous immediate collision jump in these trials,
+not universal stability under every condition.
+
+The user confirmed successful teleports, including while cornering. The listener
+was then stopped deliberately by the operator after collecting enough evidence.
+Native shutdown completed with status 3, error 0, no failure, LMU still running,
+and original bytes verified at all 15 target addresses. The supervisor incorrectly
+reported this intentional Ctrl+C as an unexpected disconnection because the host
+returned the generic `stopped` outcome. Intentional console, desktop and command
+stops now use `user_stopped`, which exits supervision without an error or automatic
+reconnection. Unexpected shutdowns remain errors, and failed native cleanup still
+raises. A regression test checks that intentional shutdown admits only one host.

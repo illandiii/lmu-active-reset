@@ -244,10 +244,11 @@ def run(args):
 
     @C.WINFUNCTYPE(C.c_int, C.c_uint)
     def console_close(event):
-        nonlocal closing
+        nonlocal closing, outcome
         if event not in (2, 5, 6):
             return 0
         closing = True
+        outcome = "user_stopped"
         if ipc is not None:
             ipc.allow = 0
             ipc.permit_writes = 0
@@ -367,6 +368,7 @@ def run(args):
                 if process_exit_code(handle) is not None:
                     break
                 if desktop.stopped():
+                    outcome = "user_stopped"
                     break
                 observation = context_attempt(ipc, hotkeys, reasons)
                 if observation is None:
@@ -473,6 +475,7 @@ def run(args):
                         else {}
                     )
                 if command.get("stop") is True:
+                    outcome = "user_stopped"
                     break
                 request_id, action = command.get("id", 0), command.get("action", 0)
                 if type(request_id) is not int or type(action) is not int:
@@ -499,6 +502,7 @@ def run(args):
                     desktop.command(action)
                 time.sleep(0.05)
     except KeyboardInterrupt:
+        outcome = "user_stopped"
         print("Stopping; restoring original hooks.", flush=True)
     except Exception as error:
         failure = f"{type(error).__name__}: {error}"
@@ -536,7 +540,7 @@ def run(args):
             if exit_code is not None:
                 restored = dict.fromkeys(restored)
             failure = shutdown_failure(failure, exit_code, ipc.status, restored)
-            if ipc.reserved == 1 and not failure:
+            if ipc.reserved == 1 and not failure and outcome != "user_stopped":
                 outcome = "vehicle_reset"
                 desktop.publish(checkpoint=False, message="Vehicle reset. Save a new checkpoint.")
             summary = dict(

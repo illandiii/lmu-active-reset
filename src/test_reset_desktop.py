@@ -122,6 +122,16 @@ class DesktopTests(unittest.TestCase):
             supervise(args, run, Mock(), lambda: True, wait=Mock(return_value=True))
         self.assertEqual(run.call_count, 1)
 
+    def test_user_shutdown_does_not_error_or_autorestart(self):
+        args = SimpleNamespace(pid=7, desktop=self.session)
+        run = Mock(return_value="user_stopped")
+        audit = Mock()
+        wait = Mock(return_value=True)
+        supervise(args, run, audit, lambda: True, wait=wait)
+        run.assert_called_once_with(args)
+        audit.assert_called_once_with(7)
+        self.assertEqual(wait.call_count, 1)
+
     def test_stop_while_waiting_never_loads_host(self):
         (self.path / "stop").touch()
         run = Mock()

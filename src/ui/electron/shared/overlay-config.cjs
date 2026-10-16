@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { randomUUID } = require("node:crypto");
+const layout = require("./overlay-layout.cjs");
 const definitions = require("./overlay-definitions.json");
 function defaults() {
   return {
@@ -11,6 +12,7 @@ function defaults() {
         id,
         {
           enabled: ["inputs", "delta"].includes(id),
+          columns: {},
           x: 30 + (i % 3) * 460,
           y: 30 + Math.floor(i / 3) * 330,
           scale: 1,
@@ -70,6 +72,12 @@ function validate(value) {
     if (!/^#[0-9a-f]{6}$/i.test(w.accent))
       throw new Error("Invalid accent color.");
     result.widgets[id].accent = w.accent;
+    for (const [key] of layout.columns[id]) {
+      const value = w.columns?.[key];
+      if (value !== undefined && typeof value !== "boolean")
+        throw new Error("Invalid column visibility.");
+      result.widgets[id].columns[key] = value !== false;
+    }
   }
   return result;
 }
@@ -93,8 +101,8 @@ function write(file, value) {
   }
   return config;
 }
-function bounds(id, widget, display) {
-  const def = definitions[id];
+function bounds(id, widget, display, values) {
+  const def = layout.dimensions(id, widget, values);
   // Limit scale to the available display; never strand a widget off-screen.
   const scale = Math.min(
     widget.scale,

@@ -1,5 +1,6 @@
 const { BrowserWindow, ipcMain, screen } = require("electron");
 const path = require("node:path");
+const model = require("../shared/overlay-model.cjs");
 const store = require("../shared/overlay-config.cjs");
 const { OverlayTelemetry } = require("./overlay-telemetry.cjs");
 class Overlays {
@@ -72,7 +73,14 @@ class Overlays {
     const display =
       screen.getAllDisplays().find((d) => d.id === this.config.displayId) ||
       screen.getPrimaryDisplay();
-    return store.bounds(id, this.config.widgets[id], display.bounds);
+    return store.bounds(
+      id,
+      this.config.widgets[id],
+      display.bounds,
+      this.telemetry.frame
+        ? model.valuesFor(id, this.telemetry.frame, this.config.widgets[id])
+        : undefined,
+    );
   }
   create(id) {
     const b = this.windowBounds(id);
@@ -158,7 +166,10 @@ class Overlays {
       if (
         !win.webContents.isLoading() &&
         (this.editing ||
-          (this.config.enabled && frame?.driving && frame.foreground))
+          (this.config.enabled &&
+            frame?.connected &&
+            frame.cars?.length > 0 &&
+            frame.foreground))
       ) {
         if (!win.isVisible()) win.showInactive();
       } else if (win.isVisible()) win.hide();

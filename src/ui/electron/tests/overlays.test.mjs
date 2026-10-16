@@ -242,3 +242,29 @@ test("lap timing waits for delayed scoring and excludes the zero-numbered pit la
   assert.equal(frame.laps[0].clean, false);
   assert.equal(frame.laps[0].tag, "PIT");
 });
+
+test("hidden columns persist and shrink the native window, absent classes stay absent", () => {
+  const value = config.defaults();
+  value.widgets.leaderboard.columns = { number: false };
+  value.widgets.leaderboard.showLogos = false;
+  const saved = config.validate(value);
+  const bounds = config.bounds("leaderboard", saved.widgets.leaderboard, {
+    x: 0,
+    y: 0,
+    width: 1920,
+    height: 1080,
+  });
+  assert.equal(bounds.width, 440 - 42 - 36);
+  const live = model.valuesFor("leaderboard", raw(), saved.widgets.leaderboard);
+  assert.deepEqual(
+    live.classes.map((c) => c.badge),
+    ["GT3"],
+  );
+  assert.equal(live.classes[0].rows[0].name, "Driver");
+  const legacy = config.defaults();
+  delete legacy.widgets.leaderboard.columns;
+  assert.equal(
+    config.validate(legacy).widgets.leaderboard.columns.driver,
+    true,
+  );
+});

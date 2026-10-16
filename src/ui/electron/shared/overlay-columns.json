@@ -1,0 +1,53 @@
+{
+  "leaderboard": [
+    ["position", "Position", 32],
+    ["number", "Number", 42],
+    ["logo", "Logo", 36],
+    ["driver", "Driver", 116],
+    ["last", "Last lap", 78],
+    ["gap", "Gap", 72]
+  ],
+  "relative": [
+    ["class", "Class", 42],
+    ["position", "Position", 38],
+    ["number", "Number", 44],
+    ["logo", "Logo", 36],
+    ["driver", "Driver", 92],
+    ["laps", "Laps", 54],
+    ["gap", "Gap", 78]
+  ],
+  "laps": [
+    ["lap", "Lap", 62],
+    ["time", "Time", 104],
+    ["energy", "Energy", 78],
+    ["fuel", "Fuel", 88],
+    ["pb", "Delta PB", 88],
+    ["best", "Delta best", 88]
+  ],
+  "weather": [
+    ["air", "Air", 0],
+    ["track", "Track", 0],
+    ["humidity", "Humidity", 0],
+    ["forecast", "Forecast", 0]
+  ],
+  "delta": [
+    ["reference", "Reference", 0],
+    ["delta", "Delta", 0],
+    ["prediction", "Prediction", 0],
+    ["bar", "Bar", 0]
+  ],
+  "session-summary": [
+    ["position", "Position", 0],
+    ["history", "Lap chart", 0],
+    ["best", "Best", 0],
+    ["average", "Average", 0],
+    ["spread", "Spread", 0],
+    ["laps", "Laps", 0],
+    ["pits", "Pit stops", 0],
+    ["limits", "Track limits", 0]
+  ],
+  "inputs": [
+    ["throttle", "Throttle", 0],
+    ["brake", "Brake", 0]
+  ]
+}

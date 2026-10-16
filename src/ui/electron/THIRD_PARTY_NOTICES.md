@@ -17,6 +17,6 @@ remain with their npm packages. No reference-site imagery or code is copied.
 ## User-supplied overlay designs and logos
 
 Widget layouts and artwork come from the supplied LMU Overlay.html and loghi_LMU.png.
-Manufacturer names and marks belong to their respective owners. The sheet is bundled unchanged.
+Manufacturer names and marks belong to their respective owners. The original sheet is retained; the HUD uses a background-removal variant.
 The bundled Barlow Semi Condensed and JetBrains Mono font files retain the original
 license in renderer/overlays/fonts/LICENSE.txt. No remote page runtime is bundled.

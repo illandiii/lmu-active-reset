@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import layout from "../../shared/overlay-layout.cjs";
 import { Widget } from "./widget.jsx";
 import { sampleValues } from "./sample-values.js";
 import model from "../../shared/overlay-model.cjs";
@@ -97,17 +98,18 @@ export function OverlayEditor() {
   }
   if (!state) return error ? <p role="alert">{error}</p> : null;
   const { config, definitions, frame } = state,
-    setting = config.widgets[selected],
-    def = definitions[selected];
+    setting = config.widgets[selected];
   const update = (patch) =>
     save({
       ...config,
       widgets: { ...config.widgets, [selected]: { ...setting, ...patch } },
     });
-  const scale = Math.min(1, (width - 32) / def.width);
+
   const values = frame?.connected
     ? model.valuesFor(selected, frame, setting)
     : sampleValues(selected, setting);
+  const def = layout.dimensions(selected, setting, values);
+  const scale = Math.min(1, (width - 32) / def.width);
   return (
     <div className="overlay-editor" data-tour="overlay-editor">
       <div className="overlay-toolbar">
@@ -198,6 +200,46 @@ export function OverlayEditor() {
               </div>
             </div>
           </div>
+          <div className="overlay-parts" aria-label="Widget columns">
+            {layout.columns[selected].map(([key, label]) => (
+              <label key={key}>
+                <input
+                  type="checkbox"
+                  aria-label={`Column ${label}`}
+                  checked={layout.visible(setting, key)}
+                  onChange={(e) =>
+                    update({
+                      columns: { ...setting.columns, [key]: e.target.checked },
+                      ...(key === "logo"
+                        ? { showLogos: e.target.checked }
+                        : {}),
+                    })
+                  }
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+          <div className="overlay-parts">
+            {(selected === "inputs"
+              ? [
+                  ["showClutch", "Clutch"],
+                  ["showTrace", "Trace"],
+                  ["showWheel", "Steering wheel"],
+                  ["showGear", "Gear / speed"],
+                ]
+              : []
+            ).map(([key, label]) => (
+              <label key={key}>
+                <input
+                  type="checkbox"
+                  checked={setting[key]}
+                  onChange={(e) => update({ [key]: e.target.checked })}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
           <div className="overlay-controls">
             <NumberField
               label="X"
@@ -262,28 +304,6 @@ export function OverlayEditor() {
                 suffix="°"
               />
             )}
-          </div>
-          <div className="overlay-parts">
-            {(selected === "inputs"
-              ? [
-                  ["showClutch", "Clutch"],
-                  ["showTrace", "Trace"],
-                  ["showWheel", "Steering wheel"],
-                  ["showGear", "Gear / speed"],
-                ]
-              : ["leaderboard", "relative"].includes(selected)
-                ? [["showLogos", "Logos"]]
-                : []
-            ).map(([key, label]) => (
-              <label key={key}>
-                <input
-                  type="checkbox"
-                  checked={setting[key]}
-                  onChange={(e) => update({ [key]: e.target.checked })}
-                />
-                {label}
-              </label>
-            ))}
           </div>
         </div>
       </div>

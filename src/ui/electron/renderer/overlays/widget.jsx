@@ -1,5 +1,6 @@
 import React from "react";
-import logoSheet from "./logos.png";
+import logoSheet from "./logos-transparent.png";
+import layout from "../../shared/overlay-layout.cjs";
 import "./fonts.css";
 import "./widgets.css";
 const sources = import.meta.glob("./designs/*.html", {
@@ -10,10 +11,47 @@ const sources = import.meta.glob("./designs/*.html", {
 const templates = Object.fromEntries(
   Object.entries(sources).map(([name, source]) => {
     const doc = new DOMParser().parseFromString(source, "text/html");
-    return [
-      name.split("/").at(-1).replace(".html", ""),
-      doc.body.firstElementChild,
-    ];
+    const id = name.split("/").at(-1).replace(".html", "");
+    const root = doc.body.firstElementChild;
+    root.dataset.widgetRoot = "true";
+    const grids = [...root.querySelectorAll("[style]")].filter(
+      (n) => n.style.gridTemplateColumns,
+    );
+    const tag = (node, key) => {
+      if (node) node.dataset.column = key;
+    };
+    if (["leaderboard", "relative", "laps"].includes(id)) {
+      for (const grid of grids) {
+        grid.dataset.columnGrid = "true";
+        [...grid.children].forEach((node, i) =>
+          tag(node, layout.columns[id][i]?.[0]),
+        );
+      }
+      if (id === "laps") {
+        tag(root.children[0].children[1].children[0], "energy");
+        tag(root.children[0].children[1].children[1], "fuel");
+      }
+    } else if (id === "weather") {
+      [...grids[0].children].forEach((node, i) =>
+        tag(node, ["air", "track", "humidity"][i]),
+      );
+      grids[0].dataset.fluidGrid = "true";
+      tag(grids[1], "forecast");
+      tag(root.lastElementChild, "forecast");
+    } else if (id === "delta") {
+      tag(root.children[0].children[0], "reference");
+      tag(root.children[0].children[1].children[0], "delta");
+      tag(root.children[0].children[1].children[1], "prediction");
+      tag(root.children[1], "bar");
+    } else if (id === "session-summary") {
+      tag(root.children[2].children[0], "position");
+      tag(root.children[2].children[1], "history");
+      [...grids[0].children].forEach((node, i) =>
+        tag(node, ["best", "average", "spread", "laps", "pits", "limits"][i]),
+      );
+      grids[0].dataset.fluidGrid = "true";
+    }
+    return [id, root];
   }),
 );
 const makes = [
@@ -68,6 +106,11 @@ function renderNode(node, context, key) {
   if (node.nodeType === 3) return bind(node.textContent, context);
   if (node.nodeType !== 1) return null;
   const tag = node.localName;
+  if (
+    node.dataset?.column &&
+    !layout.visible(context.settings, node.dataset.column)
+  )
+    return null;
   if (tag === "sc-if") {
     const name = node.getAttribute("value").replace(/[{}]/g, "");
     return lookup(context, name)
@@ -123,11 +166,36 @@ function renderNode(node, context, key) {
             ? "viewBox"
             : name === "sc-camel-preserve-aspect-ratio"
               ? "preserveAspectRatio"
-              : name.startsWith("aria-")
+              : name.startsWith("aria-") || name.startsWith("data-")
                 ? name
                 : camel(name);
       props[attr] = bind(value, context);
     }
+  }
+  if (node.dataset.widgetRoot)
+    props.style = {
+      ...props.style,
+      width: context.dimensions.width,
+      height: context.dimensions.height,
+    };
+  if (node.dataset.columnGrid) {
+    const tracks = node.style.gridTemplateColumns.match(
+      /minmax\([^)]+\)|[^\s]+/g,
+    );
+    props.style.gridTemplateColumns = tracks
+      .filter((_, i) =>
+        layout.visible(
+          context.settings,
+          layout.columns[context.widgetId][i][0],
+        ),
+      )
+      .join(" ");
+  }
+  if (node.dataset.fluidGrid) {
+    const count = [...node.children].filter((n) =>
+      layout.visible(context.settings, n.dataset.column),
+    ).length;
+    props.style.gridTemplateColumns = `repeat(${Math.max(1, Math.min(3, count))}, minmax(0,1fr))`;
   }
   if (tag === "svg")
     props.style = {
@@ -156,6 +224,9 @@ export function Widget({ id, values, settings }) {
         templates[id],
         {
           ...values,
+          settings,
+          widgetId: id,
+          dimensions: layout.dimensions(id, settings, values),
           showLogos: settings.showLogos,
           rootClass: "clear",
           panelAlpha: settings.opacity,

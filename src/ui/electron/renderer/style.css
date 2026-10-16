@@ -940,7 +940,7 @@ html[data-reduce-motion="true"] button:active:not(:disabled) {
 }
 .tour-actions .text-button {
   margin-right: auto;
-  padding-left: 0;
+  padding-left: 16px;
 }
 .tour-actions .secondary {
   display: grid;
@@ -985,4 +985,64 @@ html[data-reduce-motion="true"] .tour-popup[data-ending-style] {
   [data-tour-active="true"] {
     outline-color: Highlight;
   }
+}
+
+/* Keep desktop interactions crisp and prevent accidental text selections. */
+html,
+body,
+button,
+label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.header-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.header-tools .guide-button {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+.titlebar {
+  justify-content: flex-end;
+}
+.window-controls svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.5;
+  shape-rendering: geometricPrecision;
+}
+.tour-actions .text-button {
+  padding: 10px 16px;
+  text-align: center;
+}
+.quit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+}
+.quit-button:hover {
+  background: #5b2935;
+  color: #ffd8df;
+  border-color: #af5367;
+}
+.modal-dismiss {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  padding: 8px;
+  border-radius: 8px;
+  background: transparent;
+}
+.modal-dismiss:hover {
+  background: #ffffff15;
 }

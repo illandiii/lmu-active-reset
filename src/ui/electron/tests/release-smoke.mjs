@@ -4,7 +4,8 @@ import path from "node:path";
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 const root = path.resolve("../../..");
-const release = path.join(root, "releases/Sector-0.1.0-win-x64");
+const version = JSON.parse(fs.readFileSync("package.json", "utf8")).version;
+const release = path.join(root, `releases/Sector-${version}-win-x64`);
 const payload = path.join(release, "resources/runtime");
 const env = { ...process.env, PYTHONDONTWRITEBYTECODE: "1" };
 delete env.ELECTRON_RUN_AS_NODE;
@@ -38,7 +39,7 @@ try {
   await page
     .getByRole("button", { name: "Change save shortcut, F6", exact: true })
     .waitFor();
-  assert.equal(await app.evaluate(({ app }) => app.getVersion()), "0.1.0");
+  assert.equal(await app.evaluate(({ app }) => app.getVersion()), version);
   assert.equal(await app.evaluate(({ app }) => app.isPackaged), true);
   assert.equal(
     await app.evaluate(() => global.sectorTest.hasListener()),
@@ -52,10 +53,10 @@ try {
     .waitFor();
   fs.mkdirSync(path.join(root, "work/release-tests"), { recursive: true });
   await page.screenshot({
-    path: path.join(root, "work/release-tests/sector-0.1.0.png"),
+    path: path.join(root, "work/release-tests/sector-release.png"),
   });
   console.log(
-    "PASS packaged Sector.exe 0.1.0, isolated preview, bundled Python imports, UI and overlays",
+    "PASS packaged Sector.exe, isolated preview, bundled Python imports, UI and overlays",
   );
 } finally {
   await app.close();

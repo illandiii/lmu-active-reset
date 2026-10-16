@@ -167,3 +167,53 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+.widget-list > div:hover {
+  background: #2c3b52;
+}
+.widget-list > div:hover .widget-choice {
+  background: transparent;
+}
+.overlay-editor input[type="checkbox"] {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 2px solid #697b97;
+  border-radius: 6px;
+  background: #111a27;
+  display: grid;
+  place-content: center;
+  margin: 0;
+}
+.overlay-editor input[type="checkbox"]:checked {
+  background: #8db7ff;
+  border-color: #8db7ff;
+}
+.overlay-editor input[type="checkbox"]:checked::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 3px solid #102039;
+  border-bottom: 3px solid #102039;
+  transform: rotate(-45deg) translateY(-1px);
+}
+.overlay-parts {
+  gap: 8px;
+  margin: 16px 0;
+}
+.overlay-parts label {
+  padding: 10px 12px;
+  border: 1px solid #ffffff18;
+  border-radius: 8px;
+  background: #192333;
+  cursor: pointer;
+  font-size: 12px;
+}
+.overlay-parts label:has(:checked) {
+  border-color: #7299d6;
+  background: #243854;
+}
+.overlay-parts label:hover {
+  background: #304867;
+}

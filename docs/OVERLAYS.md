@@ -3,8 +3,8 @@
 The seven widgets reproduce the supplied `LMU Overlay.html`: Leaderboard,
 Relative, Weather, Delta, Inputs, Laps and Session. The original inline layout,
 font files, SVG artwork and colors are preserved in `renderer/overlays/designs`.
-`logos.png` is the supplied sheet, shown through SVG viewports without redrawing
-or modifying the brand artwork. The font license accompanies the bundled files.
+`logos.png` preserves the supplied sheet. The HUD uses a transparent-background
+variant (`logos-transparent.png`), displayed through SVG viewports. The font license accompanies the bundled files.
 The exported page's runtime and remote resources are not executed or required.
 
 ## Use
@@ -22,7 +22,7 @@ mouse input to LMU. Background mode also locks the layout. Editor examples carry
 
 Each widget is a transparent, frameless, topmost Electron window. Locked windows
 are non-focusable and ignore mouse input. Live widgets appear only while telemetry
-is fresh, the player is driving and LMU is the foreground process. Disabled widgets
+is fresh, a session contains cars and LMU is the foreground process. Disabled widgets
 release their windows. Display changes clamp geometry to accessible bounds.
 Use LMU in windowed/borderless mode: an external desktop window is not an injected
 exclusive-fullscreen overlay. This behavior still needs a live-game check on the
@@ -75,3 +75,15 @@ all widget designs, logo assets, controls, clutch removal, independent sandboxed
 windows, movement persistence, locking, foreground gating and compact layouts.
 Native `--self-test` checks array bounds and scoring/telemetry player identity.
 These are fixture and desktop tests, not a live-game qualification.
+
+## 0.1.1
+
+Each widget exposes column/section toggles. Leaderboard, Relative and Laps remove
+the corresponding grid tracks and shrink their windows when columns are hidden.
+Absent car classes are excluded from the live leaderboard, whose height follows
+the displayed rows. A loaded session may display overlays at the pit monitor as
+well as in driving; leaving the game foreground or stale telemetry hides them.
+
+Humidity and future forecasts remain unavailable from the SDK and show a dash;
+their sections can be disabled. Current weather, scoring and player inputs use
+shared-memory readings. Live validation in LMU is still pending for this release.

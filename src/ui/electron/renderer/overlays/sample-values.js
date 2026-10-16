@@ -51,6 +51,13 @@ export function sampleValues(id, settings) {
     result.pedals = result.pedals.filter((p) => p.label !== "C");
     result.clutchPts = "";
   }
+  if (id === "inputs")
+    result.pedals = result.pedals.filter(
+      (p) =>
+        settings.columns?.[
+          p.label === "T" ? "throttle" : p.label === "B" ? "brake" : "clutch"
+        ] !== false,
+    );
   if (id === "leaderboard")
     result.classes = result.classes.map((cl) => ({
       ...cl,

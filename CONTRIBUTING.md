@@ -34,3 +34,9 @@ not need compatibility copies in the former flat `src` directory.
 Keep generated captures, proprietary binaries/disassembly, local installation
 paths and credentials out of commits. Never overwrite a DLL while it is resident
 in a running game, even when its hooks have stopped.
+
+## Branches
+
+Work and push completed changes on `dev`. `prod` is the GitHub default branch
+and stays on the approved release. Update `prod` only when the user explicitly
+requests a production promotion. Never push routine development to `main`.

@@ -73,6 +73,36 @@ try {
     if (["Leaderboard", "Relative"].includes(name))
       assert.ok((await widget.locator(".manufacturer-logo").count()) > 0);
   }
+  await page.getByRole("button", { name: "Leaderboard", exact: true }).click();
+  await page
+    .getByRole("checkbox", { name: "Column Logo", exact: true })
+    .uncheck();
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".widget-leaderboard > div").style.width ===
+      "404px",
+  );
+  assert.equal(
+    await page.locator('.widget-leaderboard [data-column="logo"]').count(),
+    0,
+  );
+  await page
+    .getByRole("checkbox", { name: "Column Logo", exact: true })
+    .check();
+  await page.getByRole("button", { name: "Laps", exact: true }).click();
+  await page
+    .getByRole("checkbox", { name: "Column Fuel", exact: true })
+    .uncheck();
+  await page.waitForFunction(
+    () => document.querySelector(".widget-laps > div").style.width === "472px",
+  );
+  assert.equal(
+    await page.locator('.widget-laps [data-column="fuel"]').count(),
+    0,
+  );
+  await page
+    .getByRole("checkbox", { name: "Column Fuel", exact: true })
+    .check();
   await page.getByRole("button", { name: "Inputs", exact: true }).click();
   await app.evaluate(() => {
     const o = global.sectorTest.overlays();
@@ -88,7 +118,16 @@ try {
     const overlays = global.sectorTest.overlays();
     for (const win of overlays.windows.values()) {
       if (win.webContents.isLoading())
-        await new Promise((r) => win.webContents.once("did-finish-load", r));
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(
+            () => reject(new Error("Overlay load timeout")),
+            15000,
+          );
+          win.webContents.once("did-stop-loading", () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
     }
   });
   const overlayPages = app.windows().filter((p) => p !== page);
@@ -188,7 +227,7 @@ try {
         et: 100,
         remaining: 1000,
         length: 7000,
-        cars: [],
+        cars: [{ id: 1, player: true, class: "LMGT3", place: 1 }],
         player: {
           id: 1,
           et: 100,
@@ -236,6 +275,28 @@ try {
       Boolean(global.sectorTest.overlays().telemetry.child),
     ),
     false,
+  );
+  // Session telemetry remains visible at the monitor; it does not require a physics callback.
+  await app.evaluate(() => {
+    const overlay = global.sectorTest.overlays();
+    overlay.telemetry.publish(
+      {
+        connected: true,
+        foreground: true,
+        driving: false,
+        cars: [{ id: 1, player: true, class: "LMGT3", place: 1 }],
+        session: 1,
+        track: "Spa",
+      },
+      "Live",
+    );
+  });
+  assert.ok(
+    await app.evaluate(() =>
+      [...global.sectorTest.overlays().windows.values()].every((w) =>
+        w.isVisible(),
+      ),
+    ),
   );
   await app.evaluate(() => global.sectorTest.window().setSize(640, 600));
   await page.screenshot({

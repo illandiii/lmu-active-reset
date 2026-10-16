@@ -201,7 +201,7 @@ function valuesFor(id, data, settings) {
     (groups[v.cls] ||= []).push(v);
     v.classPlace = groups[v.cls].length;
   }
-  const car = cars.find((v) => v.id === p?.id),
+  const car = cars.find((v) => (p ? v.id === p.id : v.player)),
     own = car ? groups[car.cls] : [];
   const grid = own.every((v) => v.qualification > 0)
     ? [...own].sort((a, b) => a.qualification - b.qualification)
@@ -279,7 +279,11 @@ function valuesFor(id, data, settings) {
       { key: "brake", color: "#FF4D4D" },
       { key: "throttle", color: "#3DDC84" },
     ]
-      .filter((v) => settings.showClutch || v.key !== "clutch")
+      .filter(
+        (v) =>
+          (settings.showClutch || v.key !== "clutch") &&
+          settings.columns?.[v.key] !== false,
+      )
       .map((v) => ({
         ...v,
         v: clamp(p?.[v.key]),
@@ -288,8 +292,8 @@ function valuesFor(id, data, settings) {
     return {
       ...common,
       pedals,
-      throttlePts: pts("th"),
-      brakePts: pts("br"),
+      throttlePts: settings.columns?.throttle === false ? "" : pts("th"),
+      brakePts: settings.columns?.brake === false ? "" : pts("br"),
       clutchPts: settings.showClutch ? pts("cl") : "",
       speed: finite(p?.speed) ? Math.round(p.speed) : dash,
       gear: !p ? dash : p.gear === 0 ? "N" : p.gear === -1 ? "R" : p.gear,

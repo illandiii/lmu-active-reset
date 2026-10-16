@@ -98,7 +98,7 @@ class OverlayTelemetry extends EventEmitter {
             if (now - this.last > 1500) continue;
             this.publish(
               this.model.update(raw),
-              raw.driving ? "Live" : "Waiting for driving",
+              raw.cars.length ? "Live" : "Waiting for session",
             );
           } catch {
             this.publish(null, "Telemetry unavailable");

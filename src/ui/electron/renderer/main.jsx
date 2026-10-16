@@ -214,7 +214,7 @@ function App() {
   return (
     <>
       <div className="titlebar">
-        <span>sector</span>
+        <span />
         <div className="window-controls">
           <button aria-label="Minimize" onClick={() => api.minimize()}>
             <svg viewBox="0 0 16 16">
@@ -260,16 +260,19 @@ function App() {
             </Tabs.Tab>
             <Tabs.Indicator className="tab-indicator" />
           </Tabs.List>
-          <button
-            data-tour="settings"
-            className="settings-button"
-            aria-label="Settings"
-            title="Settings"
-            disabled={!settings || quitting}
-            onClick={() => setModal("settings")}
-          >
-            <Glyph icon={gear} />
-          </button>
+          <div className="header-tools">
+            <button
+              data-tour="settings"
+              className="settings-button"
+              aria-label="Settings"
+              title="Settings"
+              disabled={!settings || quitting}
+              onClick={() => setModal("settings")}
+            >
+              <Glyph icon={gear} />
+            </button>
+            {guideButton}
+          </div>
         </header>
         <main className="scroll-area">
           <Tabs.Panel value="reset" className="page">
@@ -279,7 +282,6 @@ function App() {
                   Active Reset<span className="accent">.</span>
                 </h1>
               </div>
-              {tab === "reset" && guideButton}
             </div>
             <section
               className={`checkpoint ${view.saved ? "is-saved" : ""}`}
@@ -376,7 +378,6 @@ function App() {
                   Overlay<span className="accent">.</span>
                 </h1>
               </div>
-              {tab === "overlay" && guideButton}
             </div>
             <OverlayEditor />
           </Tabs.Panel>
@@ -451,6 +452,14 @@ function App() {
                   }
                 />
               </div>
+              {shownModal === "close" && (
+                <Dialog.Close
+                  className="modal-dismiss"
+                  aria-label="Close dialog"
+                >
+                  <Glyph icon={close} />
+                </Dialog.Close>
+              )}
               <Dialog.Title>
                 {shownModal === "settings"
                   ? "Settings"
@@ -493,7 +502,8 @@ function App() {
                     Run in background
                     <Glyph icon={arrow} />
                   </button>
-                  <button className="secondary" onClick={exit}>
+                  <button className="text-button quit-button" onClick={exit}>
+                    <Glyph icon={close} />
                     Quit Sector
                   </button>
                   <Dialog.Close className="text-button">Cancel</Dialog.Close>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import model from "../../shared/overlay-model.cjs";
-import definitions from "../../shared/overlay-definitions.json";
+import layout from "../../shared/overlay-layout.cjs";
 import { Widget } from "./widget.jsx";
 import { sampleValues } from "./sample-values.js";
 import "./window.css";
@@ -29,13 +29,13 @@ function OverlayWindow() {
     return () => window.removeEventListener("keydown", escape);
   }, [state?.editing]);
   if (!state) return null;
-  const { id, settings, editing, frame, scale } = state,
-    def = definitions[id];
+  const { id, settings, editing, frame, scale } = state;
   const values = frame?.connected
     ? model.valuesFor(id, frame, settings)
     : editing
       ? sampleValues(id, settings)
       : model.valuesFor(id, null, settings);
+  const def = layout.dimensions(id, settings, values);
   return (
     <>
       <div

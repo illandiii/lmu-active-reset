@@ -44,6 +44,7 @@ async function launch(detect = true) {
     timeout: 30000,
   });
   const page = await app.firstWindow();
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   page.setDefaultTimeout(15000);
   page.on("pageerror", (error) => errors.push(error.message));
   // The modal makes the underlying controls inaccessible until setup finishes.
@@ -59,6 +60,12 @@ async function launch(detect = true) {
 try {
   let page = await launch();
   await page.getByText(game, { exact: true }).waitFor();
+  assert.equal(
+    await page
+      .locator(".onboarding")
+      .evaluate((node) => getComputedStyle(node).animationName),
+    "onboarding-enter",
+  );
   await page.keyboard.press("Escape");
   assert.equal(
     await page
@@ -77,12 +84,48 @@ try {
     .getByRole("button", { name: "Confirm folder", exact: true })
     .click();
   await page.getByRole("dialog", { name: "Ready for a quick tour?" }).waitFor();
+  assert.equal(
+    await page
+      .locator(".onboarding-step")
+      .evaluate((node) => getComputedStyle(node).animationName),
+    "onboarding-step-enter",
+  );
   assert.equal(JSON.parse(fs.readFileSync(setupFile)).completed, false);
   await page.screenshot({
     path: path.join(root, "work/electron-screenshots/onboarding-tour.png"),
   });
   await page.getByRole("button", { name: "Start guide", exact: true }).click();
   await page.locator(".tour-popup").waitFor();
+  assert.equal(
+    await page
+      .locator(".tour-popup")
+      .evaluate((node) => getComputedStyle(node).animationName),
+    "tour-enter-a",
+  );
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  assert.equal(
+    await page
+      .locator(".tour-popup")
+      .evaluate((node) => getComputedStyle(node).animationName),
+    "tour-enter-b",
+  );
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  assert.equal(
+    await page
+      .locator(".tour-popup")
+      .evaluate((node) => getComputedStyle(node).animationName),
+    "none",
+  );
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.evaluate(() => {
+    document.documentElement.dataset.reduceMotion = "true";
+  });
+  assert.equal(
+    await page
+      .locator(".tour-popup")
+      .evaluate((node) => getComputedStyle(node).animationName),
+    "none",
+  );
   assert.equal(JSON.parse(fs.readFileSync(setupFile)).completed, true);
   await page.getByRole("button", { name: "Skip", exact: true }).click();
   await app.close();

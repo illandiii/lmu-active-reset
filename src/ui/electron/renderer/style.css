@@ -1129,3 +1129,84 @@ textarea {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+
+/* Animate the popup itself, leaving its positioning container and focus intact. */
+.onboarding {
+  animation: onboarding-enter 260ms var(--ease-out);
+}
+.onboarding-step[data-step="tutorial"] {
+  animation: onboarding-step-enter 220ms var(--ease-out);
+}
+.tour-backdrop {
+  animation: backdrop-enter 180ms ease-out;
+}
+.tour-popup {
+  --entrance-offset: 7px;
+  animation: tour-enter-a 220ms var(--ease-out);
+}
+.tour-popup[data-side="bottom"] {
+  --entrance-offset: -7px;
+}
+/* Alternate names restart entrance motion for every step without remounting
+   the focused buttons or detaching the arrow from its anchor. */
+.tour-popup[data-motion-step="1"] {
+  animation-name: tour-enter-b;
+}
+@keyframes onboarding-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes onboarding-step-enter {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes tour-enter-a {
+  from {
+    opacity: 0;
+    transform: translateY(var(--entrance-offset)) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes tour-enter-b {
+  from {
+    opacity: 0;
+    transform: translateY(var(--entrance-offset)) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before {
+    animation: none !important;
+  }
+}

@@ -100,6 +100,7 @@ export function GuidedTour({ saveKey, restoreKey, onTabChange, onFinish }) {
         >
           <Popover.Popup
             className="tour-popup"
+            data-motion-step={index % 2}
             initialFocus={nextButton}
             finalFocus={() => document.querySelector(".guide-menu-trigger")}
           >

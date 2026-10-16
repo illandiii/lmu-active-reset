@@ -89,67 +89,69 @@ export function Onboarding({ open, initialFolder, onFinish, onQuit }) {
             >
               <Icon icon={closeIcon} aria-hidden="true" />
             </button>
-            <div className="modal-icon">
-              <Icon
-                icon={step === "folder" ? folderIcon : helpIcon}
-                aria-hidden="true"
-              />
-            </div>
-            <Dialog.Title>
-              {step === "folder"
-                ? "Connect Le Mans Ultimate"
-                : "Ready for a quick tour?"}
-            </Dialog.Title>
-            <Dialog.Description>
-              {step === "folder"
-                ? "Confirm your LMU folder, or choose another."
-                : "Learn how to save, restore and customize your overlays."}
-            </Dialog.Description>
-            {step === "folder" ? (
-              <>
-                <div className="installation-folder" role="status">
-                  <Icon icon={folderIcon} aria-hidden="true" />
-                  <span>
-                    {searching
-                      ? "Looking for LMU…"
-                      : folder || "Choose your LMU folder"}
-                  </span>
-                </div>
+            <div className="onboarding-step" key={step} data-step={step}>
+              <div className="modal-icon">
+                <Icon
+                  icon={step === "folder" ? folderIcon : helpIcon}
+                  aria-hidden="true"
+                />
+              </div>
+              <Dialog.Title>
+                {step === "folder"
+                  ? "Connect Le Mans Ultimate"
+                  : "Ready for a quick tour?"}
+              </Dialog.Title>
+              <Dialog.Description>
+                {step === "folder"
+                  ? "Confirm your LMU folder, or choose another."
+                  : "Learn how to save, restore and customize your overlays."}
+              </Dialog.Description>
+              {step === "folder" ? (
+                <>
+                  <div className="installation-folder" role="status">
+                    <Icon icon={folderIcon} aria-hidden="true" />
+                    <span>
+                      {searching
+                        ? "Looking for LMU…"
+                        : folder || "Choose your LMU folder"}
+                    </span>
+                  </div>
+                  <div className="onboarding-actions">
+                    <button
+                      className="secondary"
+                      onClick={browse}
+                      disabled={busy || searching}
+                    >
+                      Browse…
+                    </button>
+                    <button
+                      className="primary"
+                      onClick={confirm}
+                      disabled={busy || searching || !folder}
+                    >
+                      Confirm folder
+                    </button>
+                  </div>
+                </>
+              ) : (
                 <div className="onboarding-actions">
                   <button
                     className="secondary"
-                    onClick={browse}
-                    disabled={busy || searching}
+                    onClick={() => finish(false)}
+                    disabled={busy}
                   >
-                    Browse…
+                    Not now
                   </button>
                   <button
                     className="primary"
-                    onClick={confirm}
-                    disabled={busy || searching || !folder}
+                    onClick={() => finish(true)}
+                    disabled={busy}
                   >
-                    Confirm folder
+                    Start guide
                   </button>
                 </div>
-              </>
-            ) : (
-              <div className="onboarding-actions">
-                <button
-                  className="secondary"
-                  onClick={() => finish(false)}
-                  disabled={busy}
-                >
-                  Not now
-                </button>
-                <button
-                  className="primary"
-                  onClick={() => finish(true)}
-                  disabled={busy}
-                >
-                  Start guide
-                </button>
-              </div>
-            )}
+              )}
+            </div>
             {error && (
               <p className="modal-error" role="alert">
                 {error}

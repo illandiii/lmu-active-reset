@@ -7,7 +7,7 @@ if (-not $ZigPath) { $ZigPath=Join-Path $rigidWork 'tools\zig-x86_64-windows-0.1
 $env:ZIG_GLOBAL_CACHE_DIR=Join-Path $rigidWork 'zig-cache'
 $env:ZIG_LOCAL_CACHE_DIR=Join-Path $rigidWork 'zig-local-cache'
 $rigidFixture=Join-Path $projectRoot 'bin\rigid-restore-fixture.exe'
-& $ZigPath cc -O2 -Wall -Wextra -Werror -target x86_64-windows-gnu (Join-Path $projectRoot 'src\rigid_restore_core.c') (Join-Path $projectRoot 'src\rigid_restore_fixture.c') -o $rigidFixture
+& $ZigPath cc -O2 -Wall -Wextra -Werror -target x86_64-windows-gnu (Join-Path $projectRoot 'src/native/physics/rigid_restore_core.c') (Join-Path $projectRoot 'tests/native/rigid_restore_fixture.c') -o $rigidFixture
 if ($LASTEXITCODE -ne 0) { throw 'Rigid restore fixture build failed' }
 & $rigidFixture
 if ($LASTEXITCODE -ne 0) { throw 'Rigid restore fixture failed' }

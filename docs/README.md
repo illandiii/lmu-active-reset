@@ -117,7 +117,7 @@ sono prodotte in `../../work`, non caricate nel gioco.
 Per la sola telemetria, dalla cartella di questo progetto:
 
 ```powershell
-python .\src\capture_preparation_14200.py --pid <PID_ATTUALE> --seconds 180
+python .\src/python/sector/telemetry/capture_preparation_14200.py --pid <PID_ATTUALE> --seconds 180
 ```
 
 Questo comando verifica la build, legge SDK e GET locali; non carica DLL o

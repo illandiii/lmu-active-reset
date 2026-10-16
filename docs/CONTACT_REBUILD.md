@@ -47,7 +47,7 @@ Le routine senza unwind entry `0x1001BD0` e `0x1002930` sono state esaminate con
 
 ## Lettore esterno e verifica iniziale
 
-`src/probe_contacts_readonly.py --pid <PID_ATTUALE>` verifica hash, processo, UI e Practice attiva; rifiuta anche il menu principale quando conserva un'etichetta Practice precedente. Risolve la base del processo e la catena proprietario derivata dal codice di salvataggio 14150, poi osserva quattro pneumatici, nodi e collegamenti alla cache superfici.
+`src/python/sector/research/probe_contacts_readonly.py --pid <PID_ATTUALE>` verifica hash, processo, UI e Practice attiva; rifiuta anche il menu principale quando conserva un'etichetta Practice precedente. Risolve la base del processo e la catena proprietario derivata dal codice di salvataggio 14150, poi osserva quattro pneumatici, nodi e collegamenti alla cache superfici.
 
 Limiti di lettura: massimo 512 contatti per ruota, 512 KiB totali, letture individuali entro 4 KiB. Verifica allineamento degli indici, unicità dei puntatori e stabilità di proprietario, vettori e appartenenza dei contatti prima/dopo. Questi controlli non forniscono atomicità e non escludono un riciclo di oggetti allo stesso indirizzo. Un cambiamento rilevato scarta l'osservazione.
 
@@ -88,10 +88,10 @@ Su una nuova istanza offline senza EAC, già in Practice:
 
 ```powershell
 # Solo controllo preliminare: nessuna DLL caricata.
-python .\src\run_contact_experiment.py --pid <PID_ATTUALE>
+python .\src/python/sector/observers/run_contact_experiment.py --pid <PID_ATTUALE>
 
 # Esperimento esplicito, con auto ferma ai box in GUIDA e in folle.
-python .\src\run_contact_experiment.py --pid <PID_ATTUALE> --seconds 120 --load --rebuild-once --offline-launch-confirmed
+python .\src/python/sector/observers/run_contact_experiment.py --pid <PID_ATTUALE> --seconds 120 --load --rebuild-once --offline-launch-confirmed
 ```
 
 Il secondo comando osserva prima di intervenire e non forza condizioni sconosciute. Senza `--rebuild-once`, il caricamento abilita solo osservazione. I profili fisici precedenti rimangono invariati; il nuovo profilo non abilita un checkpoint completo.

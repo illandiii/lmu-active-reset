@@ -186,7 +186,7 @@ mechanical-status-5 rejections and five successes. The corrected validator accep
 all 12 and rejects all 192 deliberately corrupted mass/inertia-cache cases. Run:
 
 ```powershell
-python src/test_cached_reader_recording.py logs/20261013T201355027985Z_snapshot_observer_v31.frames.jsonl
+python scripts/sector.py replay.test_cached_reader_recording logs/20261013T201355027985Z_snapshot_observer_v31.frames.jsonl
 ```
 
 The loaded v7 host fixture also reproduces the phase mismatch, verifies immediate

@@ -251,7 +251,7 @@ nuovi osservatori superate. Non attribuire questi successi a un reset nel gioco.
 Audit indipendente alle 14:41 locali: `logs/20261003T124100Z_shutdown_audit_14200.json`.
 Tutti e sette i moduli residenti risultano arrestati, errore zero e richieste
 disabilitate. Prologhi nativi Contacts, Dynamics, Forces e Bar confermati originali.
-L'audit è ripetibile con `src/audit_observer_shutdown_14200.py --pid <PID>`.
+L'audit è ripetibile con `src/python/sector/observers/audit_observer_shutdown_14200.py --pid <PID>`.
 
 Restano: bias/limiti/stato persistente dei vincoli;
 copertura completa di pneumatici, freni, drivetrain, danni ed energia; adattatore
@@ -324,7 +324,7 @@ Prova reale: `logs/20261003T132700257453Z_vehicle_observer_v4.*`:
 - 460 errori introdotti nell'ultimo vincolo rifiutati senza output parziale.
 - Controller exit 0, stato 3/errore 0, hook Dynamics/Contacts/Forces ripristinati.
 
-Replay: `src/test_mechanical_constraint_recording.py`, rapporto
+Replay: `src/python/sector/replay/test_mechanical_constraint_recording.py`, rapporto
 `20261003T132700257453Z_vehicle_observer_v4.frames.integrated-replay.json`.
 Il replay non prova il ritorno alla posizione salvata: prepara solo valori locali.
 

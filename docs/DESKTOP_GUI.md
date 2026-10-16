@@ -17,7 +17,7 @@ Shortcut buttons open an embedded capture card. The window consumes the next
 supported key, saves it atomically and updates the running controller through
 the existing settings channel. Escape cancels, duplicates stay in capture, and
 focus loss cancels capture. Modifiers and combinations are rejected. UI and Python
-share `src/reset_keymap.json`, including letters, digits, F1–F24, navigation,
+share `src/python/sector/desktop/reset_keymap.json`, including letters, digits, F1–F24, navigation,
 numpad and OEM punctuation. Punctuation labels use the active keyboard layout.
 Existing F6/F7 preferences remain valid. Key release and game-focus guards still
 apply before any native command is admitted.

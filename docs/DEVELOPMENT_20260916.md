@@ -4,11 +4,11 @@
 
 ## Codice aggiunto
 
-`src/rigid_restore_core.c` prepara un gruppo di massimo 32 corpi usando valori numerici posseduti dal modulo: posizione e velocità mondiali, orientamento, momento angolare, massa e inerzie locali. Ricostruisce l'inerzia inversa mondiale come `R × diag(I^-1) × R^T` e la velocità angolare come `I^-1_world × L`. Gli offset del motore non entrano in questo nucleo. Nessun puntatore di processo viene serializzato.
+`src/native/physics/rigid_restore_core.c` prepara un gruppo di massimo 32 corpi usando valori numerici posseduti dal modulo: posizione e velocità mondiali, orientamento, momento angolare, massa e inerzie locali. Ricostruisce l'inerzia inversa mondiale come `R × diag(I^-1) × R^T` e la velocità angolare come `I^-1_world × L`. Gli offset del motore non entrano in questo nucleo. Nessun puntatore di processo viene serializzato.
 
 La preparazione verifica tutti i corpi prima di pubblicare il risultato. NaN, overflow, riflessioni, rotazioni non ortonormali e variazioni di massa/inerzia impediscono l'intera operazione; un errore sull'ultimo corpo non lascia output parziale. La soglia numerica di validazione delle rotazioni è una scelta del componente, non una tolleranza di reset misurata su LMU. Il rifiuto delle variazioni di massa è conservativo: finché carburante, danni e massa non saranno ripristinati coerentemente, anche un checkpoint apparentemente simile può essere rifiutato.
 
-`src/lap_guard_core.h` prepara l'azzeramento congiunto dei tre flag individuati nella build 14130: corrente, memorizzato e ultimo calcolato. Preserva la restrizione eventualmente già presente sul giro successivo. Azzerare solo il flag corrente produce una regressione nel modello dei rami esaminati: il giro regolare successivo può ereditare uno zero rimasto nella cache. Il nucleo non modifica record, tempi, oggetti scoring o memoria del gioco. I relativi offset non sono ancora riverificati sulla build 14150.
+`src/native/physics/lap_guard_core.h` prepara l'azzeramento congiunto dei tre flag individuati nella build 14130: corrente, memorizzato e ultimo calcolato. Preserva la restrizione eventualmente già presente sul giro successivo. Azzerare solo il flag corrente produce una regressione nel modello dei rami esaminati: il giro regolare successivo può ereditare uno zero rimasto nella cache. Il nucleo non modifica record, tempi, oggetti scoring o memoria del gioco. I relativi offset non sono ancora riverificati sulla build 14150.
 
 Non è presente un adattatore che applichi questi payload a LMU. Mancano la copertura di tutti i sottosistemi, l'identità completa del checkpoint e la verifica della finestra di ripristino e della ricostruzione dei contatti.
 
@@ -23,7 +23,7 @@ Comandi locali:
 
 ```powershell
 .\Build-RigidRestore.ps1
-python .\src\test_rigid_recording.py
+python .\src/python/sector/replay/test_rigid_recording.py
 .\Build-LapGuard.ps1
 python -m unittest discover -s .\src -p "test_*.py"
 ```
@@ -45,7 +45,7 @@ Il controllo della build 14130 ha rifiutato il nuovo processo prima di qualsiasi
 È stato aggiunto **solo un profilo per telemetria** in `compatibility/14150-telemetry.json`. Verifica EXE, adapter, header, lettore diagnostico e nuovo membro UI `start/assets/app-BnHQL6RF.js`. Il confronto singleplayer è stato riletto nel nuovo codice UI: `stateDto.state.settingMode === "SETTING_GRANDPRIX"`, linea 46733. Il gate mantiene `reset_permitted=false`, anche quando l'osservazione è allowed. Il parametro del gate per la nuova build non viene passato dai vecchi strumenti fisici, che continuano a rifiutarla.
 
 ```powershell
-python .\src\capture_preparation.py --pid <PID_ATTUALE> --seconds 180
+python .\src/python/sector/telemetry/capture_preparation.py --pid <PID_ATTUALE> --seconds 180
 ```
 
 Questo comando legge solo telemetria e GET locali; non preme GUIDA, non ritorna al monitor, non apre l'heap e non carica DLL.
@@ -58,7 +58,7 @@ La telemetria include marce da folle a settima, circa 331,3 km/h di velocità ma
 
 ## Migrazione delle routine fisiche: ricerca, non abilitazione
 
-`src/inspect_build_code.py` verifica il profilo nuovo e legge intestazione più sola sezione codice del processo (17.604.784 byte), senza heap o scritture. Ricerca riferimenti a stringhe profiler e segue gli intervalli PE concatenati; le disassemblazioni restano in `work`, escluse dal pacchetto. I seguenti RVA sono stati ritrovati indipendentemente nella build nuova:
+`src/python/sector/research/inspect_build_code.py` verifica il profilo nuovo e legge intestazione più sola sezione codice del processo (17.604.784 byte), senza heap o scritture. Ricerca riferimenti a stringhe profiler e segue gli intervalli PE concatenati; le disassemblazioni restano in `work`, escluse dal pacchetto. I seguenti RVA sono stati ritrovati indipendentemente nella build nuova:
 
 | Routine | Build 14130 | Build 14150 |
 |---|---:|---:|

@@ -73,7 +73,7 @@ campioni sovrascritti prima della lettura sono indicati con `trace_gap`.
 
 ## Analisi tecnica dopo la prova
 
-Eseguire `python src/analyze_physical_reset_trace.py <file.physical.jsonl>
+Eseguire `python scripts/sector.py analysis.analyze_physical_reset_trace <file.physical.jsonl>
 --output <file.analysis.json>` usando il Python locale del progetto.
 
 Verificare nell'ordine:

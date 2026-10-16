@@ -1,4 +1,4 @@
-$script:resetKeyMap = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/reset_keymap.json') -Raw | ConvertFrom-Json
+$script:resetKeyMap = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/python/sector/desktop/reset_keymap.json') -Raw | ConvertFrom-Json
 
 function Get-ResetKey([string]$Name) {
     return $script:resetKeyMap | Where-Object { $_.name -ieq $Name } | Select-Object -First 1

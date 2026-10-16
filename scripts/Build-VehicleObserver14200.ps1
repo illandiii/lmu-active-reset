@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$ZigPath)
 $projectRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'SourcePaths.ps1')
 
 $ErrorActionPreference='Stop'
 $poseWork=[IO.Path]::GetFullPath((Join-Path $projectRoot 'work'))
@@ -15,10 +16,10 @@ foreach($entry in $poseProfile.files) {
 }
 New-Item -ItemType Directory -Force -Path $poseBuild | Out-Null
 $poseCommon=@('c++','-O2','-target','x86_64-windows-gnu','-I',(Join-Path $poseMh 'include'),'-I',$poseSrc)
-$poseSources=@((Join-Path $poseSrc 'vehicle_observer_14200.cpp'),(Join-Path $poseSrc 'rigid_restore_core.c'),(Join-Path $poseSrc 'fuel_restore_core.c'),(Join-Path $poseMh 'src\buffer.c'),(Join-Path $poseMh 'src\hook.c'),(Join-Path $poseMh 'src\trampoline.c'),(Join-Path $poseMh 'src\hde\hde64.c'))
+$poseSources=@((Get-SectorNativeSource 'vehicle_observer_14200.cpp'),(Get-SectorNativeSource 'rigid_restore_core.c'),(Get-SectorNativeSource 'fuel_restore_core.c'),(Join-Path $poseMh 'src\buffer.c'),(Join-Path $poseMh 'src\hook.c'),(Join-Path $poseMh 'src\trampoline.c'),(Join-Path $poseMh 'src\hde\hde64.c'))
 & $poseZig @poseCommon '-shared' '-DLMU_POSE_FIXTURE' @poseSources '-ladvapi32' '-luser32' '-o' (Join-Path $poseBuild 'vehicle-fixture.dll')
 if($LASTEXITCODE -ne 0){throw 'Pose fixture DLL build failed'}
-& $poseZig @poseCommon (Join-Path $poseSrc 'vehicle_observer_fixture_14200.cpp') '-luser32' '-o' (Join-Path $poseBuild 'vehicle-fixture.exe')
+& $poseZig @poseCommon (Get-SectorNativeSource 'vehicle_observer_fixture_14200.cpp') '-luser32' '-o' (Join-Path $poseBuild 'vehicle-fixture.exe')
 if($LASTEXITCODE -ne 0){throw 'Pose fixture build failed'}
 & $poseZig @poseCommon '-shared' @poseSources '-ladvapi32' '-luser32' '-o' (Join-Path $poseBuild 'lmu-vehicle-observer-14200.dll')
 if($LASTEXITCODE -ne 0){throw 'Pose observer build failed'}

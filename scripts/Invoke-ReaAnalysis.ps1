@@ -24,7 +24,7 @@ try {
     $env:GHIDRA_INSTALL_DIR = $ghidraDirectory
     $env:GHIDRA_HEADLESS_MAXMEM = '4G'
     $env:REA_GHIDRA_STARTUP_TIMEOUT_MS = '900000'
-    & node (Join-Path $projectRoot 'src\rea_lmu_analysis.mjs') $CodeCapture $OutputDirectory
+    & node (Join-Path $projectRoot 'tools/rea/rea_lmu_analysis.mjs') $CodeCapture $OutputDirectory
     if ($LASTEXITCODE -ne 0) { throw "REA analysis failed; inspect $OutputDirectory" }
 } finally {
     $env:JAVA_HOME = $priorJava

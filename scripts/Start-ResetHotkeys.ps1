@@ -15,7 +15,7 @@ if ($game.Count -ne 1) { throw 'Open one LMU instance in offline Practice withou
 Write-Host "$SaveKey saves; $RestoreKey restores. Release both keys before using them."
 Push-Location $projectRoot
 try {
-    & $PythonPath src/start_reset_hotkeys.py --pid $game[0].Id --save-key $SaveKey --restore-key $RestoreKey --offline-launch-confirmed --allow-writes
+    & $PythonPath scripts/sector.py runtime.start_reset_hotkeys --pid $game[0].Id --save-key $SaveKey --restore-key $RestoreKey --offline-launch-confirmed --allow-writes
     if ($LASTEXITCODE -ne 0) { throw 'Connection refused; see the reason above.' }
 }
 finally { Pop-Location }

@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$ZigPath)
 $projectRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'SourcePaths.ps1')
 
 $ErrorActionPreference='Stop'
 $scoreWork=[IO.Path]::GetFullPath((Join-Path $projectRoot 'work'))
@@ -10,10 +11,10 @@ $scoreSrc=Join-Path $projectRoot 'src'
 $scoreBuild=Join-Path $scoreWork 'phase-bin-25661166'
 New-Item -ItemType Directory -Force -Path $scoreBuild | Out-Null
 $scoreCommon=@('c++','-O2','-target','x86_64-windows-gnu','-I',(Join-Path $scoreMh 'include'),'-I',$scoreSrc)
-$scoreSources=@((Join-Path $scoreSrc 'phase_native_25661166.cpp'),(Join-Path $scoreMh 'src\buffer.c'),(Join-Path $scoreMh 'src\hook.c'),(Join-Path $scoreMh 'src\trampoline.c'),(Join-Path $scoreMh 'src\hde\hde64.c'))
+$scoreSources=@((Get-SectorNativeSource 'phase_native_25661166.cpp'),(Join-Path $scoreMh 'src\buffer.c'),(Join-Path $scoreMh 'src\hook.c'),(Join-Path $scoreMh 'src\trampoline.c'),(Join-Path $scoreMh 'src\hde\hde64.c'))
 & $ZigPath @scoreCommon '-shared' '-DLMU_PHASE_FIXTURE' @scoreSources '-ladvapi32' '-o' (Join-Path $scoreBuild 'phase-fixture.dll')
 if($LASTEXITCODE -ne 0){throw 'Phase fixture DLL build failed'}
-& $ZigPath @scoreCommon (Join-Path $scoreSrc 'phase_fixture_25661166.cpp') '-o' (Join-Path $scoreBuild 'phase-fixture.exe')
+& $ZigPath @scoreCommon (Get-SectorNativeSource 'phase_fixture_25661166.cpp') '-o' (Join-Path $scoreBuild 'phase-fixture.exe')
 if($LASTEXITCODE -ne 0){throw 'Phase fixture build failed'}
 & (Join-Path $scoreBuild 'phase-fixture.exe') (Join-Path $scoreBuild 'phase-fixture.dll')
 if($LASTEXITCODE -ne 0){throw 'Phase stop fixture failed'}

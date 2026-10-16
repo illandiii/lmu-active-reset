@@ -7,7 +7,7 @@ if (-not $ZigPath) { $ZigPath=Join-Path $lapWork 'tools\zig-x86_64-windows-0.16.
 $env:ZIG_GLOBAL_CACHE_DIR=Join-Path $lapWork 'zig-cache'
 $env:ZIG_LOCAL_CACHE_DIR=Join-Path $lapWork 'zig-local-cache'
 $lapFixture=Join-Path $projectRoot 'bin\lap-guard-fixture.exe'
-& $ZigPath cc -O2 -Wall -Wextra -Werror -target x86_64-windows-gnu (Join-Path $projectRoot 'src\lap_guard_fixture.c') -o $lapFixture
+& $ZigPath cc -O2 -Wall -Wextra -Werror -target x86_64-windows-gnu (Join-Path $projectRoot 'tests/native/lap_guard_fixture.c') -o $lapFixture
 if ($LASTEXITCODE -ne 0) { throw 'Lap guard fixture build failed' }
 & $lapFixture
 if ($LASTEXITCODE -ne 0) { throw 'Lap guard fixture failed' }

@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$sourceRoot = Join-Path $projectRoot 'src'
+. (Join-Path $PSScriptRoot 'SourcePaths.ps1')
 $buildRoot = Join-Path $projectRoot 'work'
 $env:ZIG_GLOBAL_CACHE_DIR = Join-Path $buildRoot 'zig-cache'
 $env:ZIG_LOCAL_CACHE_DIR = Join-Path $buildRoot 'zig-local-cache'
@@ -24,19 +24,19 @@ $core = @(
     'checkpoint_powertrain_control', 'checkpoint_shift_transient', 'restore_joint_25661166',
     'restore_flow', 'scoring_plan_25661166', 'restore_native_memory_25661166',
     'active_reset_control', 'active_reset_native'
-) | ForEach-Object { Join-Path $sourceRoot "${_}.c" }
+) | ForEach-Object { Get-SectorNativeSource "${_}.c" }
 $native = @(
     'vehicle_checkpoint_25661166', 'vehicle_reader_25661166',
     'vehicle_restore_adapter_25661166', 'contact_batch_25661166',
     'native_lock_witness', 'native_lifetime_pin', 'native_lifetime_handoff',
     'fenced_restore', 'simulation_fence', 'active_reset_boundary'
-) | ForEach-Object { Join-Path $sourceRoot "${_}.cpp" }
+) | ForEach-Object { Get-SectorNativeSource "${_}.cpp" }
 $options = @('-O2', '-Wall', '-Wextra', '-Werror', '-Wno-deprecated', '-target', 'x86_64-windows-gnu', "-DLMU_RESET_HOST_REVISION=$Revision")
 
 $hostSources = @(
     'native_lifecycle_epoch.cpp', 'native_lifecycle_hooks_25661166.cpp',
     'verified_game_25661166.cpp', 'physical_reset_host_25661166.cpp'
-) | ForEach-Object { Join-Path $sourceRoot $_ }
+) | ForEach-Object { Get-SectorNativeSource $_ }
 $minhook = Join-Path $projectRoot 'third_party\minhook'
 $hostSources += @('src\buffer.c', 'src\hook.c', 'src\trampoline.c', 'src\hde\hde64.c') |
     ForEach-Object { Join-Path $minhook $_ }
@@ -45,7 +45,7 @@ $fixtureDll = Join-Path $buildRoot 'physical-reset-host-fixture.dll'
 & $ZigPath c++ @options -shared -DLMU_LIFECYCLE_FIXTURE -DLMU_RESET_HOST_FIXTURE -DLMU_VEHICLE_ADAPTER_FIXTURE -DLMU_PHASE_FIXTURE -I (Join-Path $minhook 'include') @core @native @hostSources -ladvapi32 -o $fixtureDll
 if ($LASTEXITCODE -ne 0) { throw 'Physical host fixture DLL build failed' }
 $fixtureExe = Join-Path $buildRoot 'physical-reset-host-fixture.exe'
-& $ZigPath c++ @options -DLMU_VEHICLE_ADAPTER_FIXTURE @core @native (Join-Path $sourceRoot 'physical_reset_host_fixture.cpp') -o $fixtureExe
+& $ZigPath c++ @options -DLMU_VEHICLE_ADAPTER_FIXTURE @core @native (Get-SectorNativeSource 'physical_reset_host_fixture.cpp') -o $fixtureExe
 if ($LASTEXITCODE -ne 0) { throw 'Physical host fixture build failed' }
 if ($FrameDirectory) {
     & $fixtureExe $fixtureDll (Join-Path $FrameDirectory 'saved.frame')
@@ -59,7 +59,7 @@ if ($FrameDirectory) {
 }
 & $ZigPath c++ @options -shared -I (Join-Path $minhook 'include') @core @native @hostSources -ladvapi32 -o $dll
 if ($LASTEXITCODE -ne 0) { throw 'Physical reset host build failed' }
-$targets = Get-Content (Join-Path $sourceRoot 'physical_reset_targets_25661166.json') -Raw | ConvertFrom-Json
+$targets = Get-Content (Get-SectorNativeSource 'physical_reset_targets_25661166.json') -Raw | ConvertFrom-Json
 $targets = @($targets | Where-Object { !$_.minimum_revision -or $_.minimum_revision -le $Revision })
 $manifest = [ordered]@{
     build = 14200

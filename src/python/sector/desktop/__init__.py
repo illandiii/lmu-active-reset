@@ -1,0 +1,1 @@
+"""Sector desktop components."""

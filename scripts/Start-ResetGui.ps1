@@ -27,7 +27,7 @@ public static class ResetWindowTheme {
 }
 '@
 
-$reader = [Xml.XmlReader]::Create((Join-Path $projectRoot 'src/reset_gui.xaml'))
+$reader = [Xml.XmlReader]::Create((Join-Path $projectRoot 'src/ui/reset_gui.xaml'))
 try { $window = [Windows.Markup.XamlReader]::Load($reader) } finally { $reader.Close() }
 $window.Add_SourceInitialized({
     try {
@@ -268,7 +268,7 @@ if (-not $Preview) {
             else { $PythonPath = (Get-Command python -ErrorAction Stop).Source }
         }
         [IO.Directory]::CreateDirectory($audioDirectory) | Out-Null
-        $audioArgs = '"{0}" "{1}"' -f (Join-Path $projectRoot 'src/reset_feedback.py'), $audioDirectory
+        $audioArgs = '"{0}" desktop.reset_feedback "{1}"' -f (Join-Path $projectRoot 'scripts/sector.py'), $audioDirectory
         $script:audioProcess = Start-Process $PythonPath -ArgumentList $audioArgs -WindowStyle Hidden -PassThru
     } catch {
         $script:startupError = 'Python is unavailable. Install Python 3.11+ or pass -PythonPath.'
@@ -330,7 +330,7 @@ $timer.Add_Tick({
         [IO.Directory]::CreateDirectory($script:sessionPath) | Out-Null
         [IO.File]::WriteAllText((Join-Path $script:sessionPath 'heartbeat'), '')
         $arguments = @(
-            (Join-Path $projectRoot 'src/start_reset_hotkeys.py'), '--pid', [string]$games[0].Id,
+            (Join-Path $projectRoot 'scripts/sector.py'), 'runtime.start_reset_hotkeys', '--pid', [string]$games[0].Id,
             '--save-key', $script:preferences.save_key, '--restore-key', $script:preferences.restore_key,
             '--gui-session', $script:sessionPath, '--settings-file', $settingsPath,
             '--offline-launch-confirmed', '--allow-writes'

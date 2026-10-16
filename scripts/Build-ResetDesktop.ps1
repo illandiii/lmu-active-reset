@@ -24,7 +24,7 @@ foreach ($entry in $profile.files) {
 $env:ZIG_GLOBAL_CACHE_DIR = Join-Path $work 'zig-cache'
 $env:ZIG_LOCAL_CACHE_DIR = Join-Path $work 'zig-local-cache'
 $diagnostic = Join-Path $work 'diagnostic-14200-desktop.exe'
-& $ZigPath c++ -std=c++17 -O2 -target x86_64-windows-gnu -I (Join-Path $profile.install_path 'Support/SharedMemoryInterface') (Join-Path $projectRoot 'src/diagnostic.cpp') -o $diagnostic
+& $ZigPath c++ -std=c++17 -O2 -target x86_64-windows-gnu -I (Join-Path $profile.install_path 'Support/SharedMemoryInterface') (Join-Path $projectRoot 'src/native/telemetry/diagnostic.cpp') -o $diagnostic
 if ($LASTEXITCODE -ne 0) { throw 'Telemetry build failed.' }
 & $diagnostic --schema
 if ($LASTEXITCODE -ne 0) { throw 'Telemetry schema check failed.' }

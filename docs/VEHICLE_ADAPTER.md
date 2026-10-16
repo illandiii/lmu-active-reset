@@ -48,7 +48,7 @@ Successful and compensated paths compare every mapped
 field against the expected final bytes.
 
 ```powershell
-python src/prepare_vehicle_adapter_fixture.py <recording.frames.jsonl> work/vehicle-adapter-fixture
+python scripts/sector.py replay.prepare_vehicle_adapter_fixture <recording.frames.jsonl> work/vehicle-adapter-fixture
 ./scripts/Build-VehicleRestoreAdapter.ps1 -ZigPath <zig.exe> -FrameDirectory work/vehicle-adapter-fixture
 ```
 

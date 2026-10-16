@@ -73,7 +73,16 @@ the subsequent live results are recorded in the
 
 | Directory | Contents |
 | --- | --- |
-| `src/` | Native implementation, fixtures, Python capture/replay tools and REA bridge |
+| `src/native/physics/` | Physical state, constraint and inertia calculations |
+| `src/native/checkpoints/` | Saved state banks and subsystem checkpoints |
+| `src/native/restore/` | Restore plans, transactions, vehicle adapters and contacts |
+| `src/native/runtime/` | Physics-thread host, synchronization, lifecycle and hooks |
+| `src/native/observers/` | Historical capture modules and their wire layouts |
+| `src/native/telemetry/` | Native telemetry reader |
+| `src/python/sector/` | Python package, split into runtime, desktop, telemetry, observers, analysis, research and replay |
+| `src/ui/` | WPF window layout and vector resources |
+| `tests/native/`, `tests/python/` | Native fixtures/bridges and Python unit tests |
+| `tools/rea/` | Offline REA JavaScript integration |
 | `scripts/` | PowerShell builds, tests and installation inspection |
 | `docs/` | Design contracts, development history, evidence summaries and limitations |
 | `third_party/minhook/` | MinHook source with its original license and authors |
@@ -91,11 +100,18 @@ Python 3.11 or later; disassembly tools additionally require `pefile` and `capst
 
 ```powershell
 ./scripts/Test-Core.ps1 -ZigPath 'C:\tools\zig\zig.exe'
+python scripts/sector.py test
 ```
 
 This suite runs isolated fixtures and does not load code into LMU. Live observer
 builds additionally require local installation/compatibility manifests and exact
 matching game binaries. An empty checkout does not contain local capture data.
+
+Run Python tools through the package launcher, for example
+`python scripts/sector.py analysis.analyze_physical_reset_trace <capture.physical.jsonl>`.
+The launcher resolves repository paths independently of the working directory;
+it also supplies the package path to child capture/replay processes. See
+[source organization](docs/SOURCE_LAYOUT.md) for entry points and build rules.
 
 Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 

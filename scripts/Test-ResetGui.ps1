@@ -32,7 +32,7 @@ try {
     Assert-True (-not (Test-ResetSettings $settings)) 'Modifier combination rejection'
     [IO.File]::WriteAllText($path, '{broken')
     Assert-True ((Read-ResetSettings $path).save_key -eq 'F6') 'Malformed settings recovery'
-    $xml = [xml][IO.File]::ReadAllText((Join-Path (Split-Path -Parent $PSScriptRoot) 'src/reset_gui.xaml'))
+    $xml = [xml][IO.File]::ReadAllText((Join-Path (Split-Path -Parent $PSScriptRoot) 'src/ui/reset_gui.xaml'))
     Assert-True ($null -ne $xml.Window) 'XAML is well-formed'
     Assert-True ($xml.Window.Title -eq 'Sector') 'Sector branding'
     $active = Get-ResetStatusView ([pscustomobject]@{

@@ -10,7 +10,7 @@ foreach($entry in $telemetryProfile.files) {
 $env:ZIG_GLOBAL_CACHE_DIR=Join-Path $telemetryWork 'zig-cache'
 $env:ZIG_LOCAL_CACHE_DIR=Join-Path $telemetryWork 'zig-local-cache'
 # Build to work first, preserving the known diagnostic if compilation fails.
-& $ZigPath c++ -std=c++17 -O2 -target x86_64-windows-gnu -I (Join-Path $telemetryProfile.install_path 'Support\SharedMemoryInterface') "$projectRoot\src\diagnostic.cpp" -o "$telemetryWork\diagnostic-14200.exe" 2> "$telemetryWork\telemetry-build.log"
+& $ZigPath c++ -std=c++17 -O2 -target x86_64-windows-gnu -I (Join-Path $telemetryProfile.install_path 'Support\SharedMemoryInterface') "$projectRoot\src/native/telemetry/diagnostic.cpp" -o "$telemetryWork\diagnostic-14200.exe" 2> "$telemetryWork\telemetry-build.log"
 if($LASTEXITCODE -ne 0){throw 'Telemetry compilation failed'}
 & "$telemetryWork\diagnostic-14200.exe" --schema
 if($LASTEXITCODE -ne 0){throw 'Schema failed'}

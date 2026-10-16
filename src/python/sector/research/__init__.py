@@ -1,0 +1,1 @@
+"""Sector research components."""

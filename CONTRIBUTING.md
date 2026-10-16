@@ -14,9 +14,16 @@ Keep UI presentation separate from native admission and reset sequencing. Deskto
 and future overlay views must display acknowledged state rather than infer success
 from a keypress.
 
-Check Python changes with `ruff check src`, `ruff format --check src` and
-`python -m unittest discover -s src -p 'test_*.py'`. Import cleanup must preserve
+Check Python changes with `ruff check src/python tests/python scripts/sector.py`,
+`ruff format --check src/python tests/python scripts/sector.py` and
+`python scripts/sector.py test`. Import cleanup must preserve
 wire types exported to other capture and replay modules.
+
+Use explicit `sector.<area>.<module>` imports. Read repository paths from
+`sector.paths`, and invoke tools through `scripts/sector.py`. Keep native headers
+next to their implementation and use relative includes across areas. Build lists
+resolve unique filenames through `scripts/SourcePaths.ps1`; new source files do
+not need compatibility copies in the former flat `src` directory.
 
 Keep generated captures, proprietary binaries/disassembly, local installation
 paths and credentials out of commits. Never overwrite a DLL while it is resident

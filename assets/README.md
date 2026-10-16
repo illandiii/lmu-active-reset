@@ -6,7 +6,7 @@ artwork at 16, 24, 32, 48, 64, 128 and 256 pixels for Windows. Rebuild the icon 
 The desktop header, window icon and notification tray use these assets.
 
 `icons/` contains original outline SVGs for reset, save, layers and sound. The WPF
-resource geometries in `src/reset_gui.xaml` mirror their path data; keep both in
+resource geometries in `src/ui/reset_gui.xaml` mirror their path data; keep both in
 sync when changing an icon. All use the same stroke width and rounded joins.
 
 The logo was generated with the built-in image generation tool on 16 October

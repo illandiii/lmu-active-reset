@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$sourceRoot = Join-Path $projectRoot 'src'
+. (Join-Path $PSScriptRoot 'SourcePaths.ps1')
 $buildRoot = Join-Path $projectRoot 'work'
 $env:ZIG_GLOBAL_CACHE_DIR = Join-Path $buildRoot 'zig-cache'
 $env:ZIG_LOCAL_CACHE_DIR = Join-Path $buildRoot 'zig-local-cache'
@@ -23,13 +23,13 @@ $core = @(
     'checkpoint_powertrain_control', 'checkpoint_shift_transient', 'restore_joint_25661166',
     'restore_flow', 'scoring_plan_25661166', 'restore_native_memory_25661166',
     'active_reset_control', 'active_reset_native'
-) | ForEach-Object { Join-Path $sourceRoot "${_}.c" }
+) | ForEach-Object { Get-SectorNativeSource "${_}.c" }
 $native = @(
     'vehicle_checkpoint_25661166', 'vehicle_reader_25661166',
     'vehicle_restore_adapter_25661166', 'contact_batch_25661166',
     'native_lock_witness', 'native_lifetime_pin', 'native_lifetime_handoff',
     'fenced_restore', 'simulation_fence', 'active_reset_boundary'
-) | ForEach-Object { Join-Path $sourceRoot "${_}.cpp" }
+) | ForEach-Object { Get-SectorNativeSource "${_}.cpp" }
 $options = @('-O2', '-Wall', '-Wextra', '-Werror', '-Wno-deprecated', '-target', 'x86_64-windows-gnu')
 
 # Compile the production translation units separately; no hook or injection entry.
@@ -38,7 +38,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Production adapter build failed' }
 
 $fixture = Join-Path $buildRoot 'vehicle-restore-adapter-fixture.exe'
 & $ZigPath c++ @options -DLMU_VEHICLE_ADAPTER_FIXTURE @core @native `
-    (Join-Path $sourceRoot 'vehicle_restore_adapter_fixture.cpp') -o $fixture
+    (Get-SectorNativeSource 'vehicle_restore_adapter_fixture.cpp') -o $fixture
 if ($LASTEXITCODE -ne 0) { throw 'Vehicle adapter fixture build failed' }
 
 if ($FrameDirectory) {

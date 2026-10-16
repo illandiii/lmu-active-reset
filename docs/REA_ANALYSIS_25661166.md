@@ -115,7 +115,7 @@ Dipendenze locali: `work/rea/package-lock.json` (REA 6.4.0),
 ZIP ufficiale Ghidra verificato SHA256
 `ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db`.
 
-1. `src/capture_rea_code.py --pid <PID senza EAC> --output <nuova copia .bin>`.
+1. `src/python/sector/research/capture_rea_code.py --pid <PID senza EAC> --output <nuova copia .bin>`.
 2. `Invoke-ReaAnalysis.ps1 -CodeCapture <copia> -OutputDirectory <nuova directory>`.
 3. Consultare le evidenze gia' salvate prima di ripetere un'importazione Ghidra.
 4. `Build-DrivelineOutputs.ps1 -ZigPath <zig.exe>` e
@@ -230,7 +230,7 @@ prima marcia, motore circa 1438 rpm, gas zero, vettura ferma ai box. Nessuna
 transizione del cambio osservata. Replay temporale superato su tutti i campioni.
 SHA256 fonte `4cac2279c95372a120c0f1dffcca7ce7475b18ab159e7362e57ca28d18f2f35e`.
 
-Aggiunto `src/run_motion_triggered_snapshot.py`: attende tre campioni freschi
+Aggiunto `src/python/sector/observers/run_motion_triggered_snapshot.py`: attende tre campioni freschi
 con gas superiore al 10% e contesto offline GUIDA verificato, poi avvia la
 cattura v28 per 60 secondi. Il tempo d'attesa è limitato a 10..180 secondi;
 nessuna DLL viene caricata se il trigger non arriva. Il lettore di attesa viene
@@ -272,7 +272,7 @@ scrittura fisica con contatti/scoring e recupero dopo errori successivi al commi
 
 ## Matrice offline dopo chiusura del gioco
 
-Completato `src/verify_offline_checkpoint_matrix.py` sui 74 campioni v28:
+Completato `src/python/sector/replay/verify_offline_checkpoint_matrix.py` sui 74 campioni v28:
 2.775 coppie temporali valide preparate, 2.701 regressioni temporali rifiutate,
 errore massimo di conservazione dell'età della richiesta pari a zero nei dati.
 Sei piani rappresentativi da 10.074 campi superano esecuzione/rollback locale,

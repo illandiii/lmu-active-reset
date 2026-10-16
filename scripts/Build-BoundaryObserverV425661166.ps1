@@ -5,6 +5,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'SourcePaths.ps1')
 $workRoot = Join-Path $projectRoot 'work'
 $sourceRoot = Join-Path $projectRoot 'src'
 $minhookRoot = Join-Path $projectRoot 'third_party\minhook'
@@ -19,14 +20,14 @@ $options = @(
 $sources = @(
     'native_lifetime_handoff.cpp', 'native_lifetime_pin.cpp',
     'native_lock_witness.cpp', 'boundary_phase_observer_25661166.cpp'
-) | ForEach-Object { Join-Path $sourceRoot $_ }
+) | ForEach-Object { Get-SectorNativeSource $_ }
 $sources += @('src\buffer.c', 'src\hook.c', 'src\trampoline.c', 'src\hde\hde64.c') |
     ForEach-Object { Join-Path $minhookRoot $_ }
 $fixtureDll = Join-Path $buildRoot 'boundary-fixture.dll'
 $fixtureExe = Join-Path $buildRoot 'boundary-fixture.exe'
 & $ZigPath @options -shared -DLMU_PHASE_FIXTURE @sources -ladvapi32 -o $fixtureDll
 if ($LASTEXITCODE -ne 0) { throw 'Boundary fixture DLL build failed' }
-& $ZigPath @options (Join-Path $sourceRoot 'boundary_fixture_v3_25661166.cpp') -o $fixtureExe
+& $ZigPath @options (Get-SectorNativeSource 'boundary_fixture_v3_25661166.cpp') -o $fixtureExe
 if ($LASTEXITCODE -ne 0) { throw 'Boundary fixture build failed' }
 & $fixtureExe $fixtureDll
 if ($LASTEXITCODE -ne 0) { throw 'Boundary stop fixture failed' }

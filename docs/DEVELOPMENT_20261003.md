@@ -124,7 +124,7 @@ residuo nativo; 24 rifiuti sintetici senza output parziale.
 
 È stato compilato un **osservatore v2 separato**, che acquisisce queste partizioni
 insieme ai corpi prima/dopo Dynamics: `Build-VehicleObserverV214200.ps1`,
-`src/run_vehicle_observer_v2_14200.py`, profilo `14200-vehicle-observer-v2.json`.
+`src/python/sector/observers/run_vehicle_observer_v2_14200.py`, profilo `14200-vehicle-observer-v2.json`.
 IPC 21.664 byte; fixture stop/watchdog superate. Hash DLL
 `e20308b3f4dcd9e4dcce22dccd8336a77d3fe2d61fce87939755e37f67e22e80`.
 I primi due preflight hanno rifiutato il caricamento: LMU era passato a

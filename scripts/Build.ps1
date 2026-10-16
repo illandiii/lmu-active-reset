@@ -14,7 +14,7 @@ $env:ZIG_GLOBAL_CACHE_DIR = [IO.Path]::GetFullPath((Join-Path $projectRoot 'work
 $env:ZIG_LOCAL_CACHE_DIR = [IO.Path]::GetFullPath((Join-Path $projectRoot 'work\zig-local-cache'))
 New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot 'bin') | Out-Null
 $buildLog = Join-Path $projectRoot 'work\build.log'
-& $ZigPath c++ -std=c++17 -O2 -target x86_64-windows-gnu -I (Join-Path $GamePath 'Support\SharedMemoryInterface') (Join-Path $projectRoot 'src\diagnostic.cpp') -o (Join-Path $projectRoot 'bin\diagnostic.exe') 2> $buildLog
+& $ZigPath c++ -std=c++17 -O2 -target x86_64-windows-gnu -I (Join-Path $GamePath 'Support\SharedMemoryInterface') (Join-Path $projectRoot 'src/native/telemetry/diagnostic.cpp') -o (Join-Path $projectRoot 'bin\diagnostic.exe') 2> $buildLog
 if ($LASTEXITCODE -ne 0) { Get-Content -LiteralPath $buildLog -Tail 30; throw 'C++ compilation failed' }
 & (Join-Path $projectRoot 'bin\diagnostic.exe') --schema | Set-Content -LiteralPath (Join-Path $projectRoot 'schema.json')
 if ($LASTEXITCODE -ne 0) { throw 'Schema inspection failed' }

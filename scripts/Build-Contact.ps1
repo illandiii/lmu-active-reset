@@ -1,5 +1,6 @@
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'SourcePaths.ps1')
 $ErrorActionPreference='Stop'
 $contactWork=[IO.Path]::GetFullPath((Join-Path $projectRoot 'work'))
 $contactZig=Join-Path $contactWork 'tools\zig-x86_64-windows-0.16.0\zig.exe'
@@ -14,10 +15,10 @@ foreach($entry in $contactProfile.files) {
 }
 New-Item -ItemType Directory -Force -Path $contactBuild | Out-Null
 $contactCommon=@('c++','-O2','-target','x86_64-windows-gnu','-I',(Join-Path $contactMh 'include'),'-I',$contactSrc,'-I',(Join-Path $contactProfile.install_path 'Support\SharedMemoryInterface'))
-$contactSources=@((Join-Path $contactSrc 'contact_native.cpp'),(Join-Path $contactMh 'src\buffer.c'),(Join-Path $contactMh 'src\hook.c'),(Join-Path $contactMh 'src\trampoline.c'),(Join-Path $contactMh 'src\hde\hde64.c'))
+$contactSources=@((Get-SectorNativeSource 'contact_native.cpp'),(Join-Path $contactMh 'src\buffer.c'),(Join-Path $contactMh 'src\hook.c'),(Join-Path $contactMh 'src\trampoline.c'),(Join-Path $contactMh 'src\hde\hde64.c'))
 & $contactZig @contactCommon '-shared' '-DLMU_CONTACT_FIXTURE' @contactSources '-ladvapi32' '-luser32' '-o' (Join-Path $contactBuild 'contact-fixture.dll')
 if($LASTEXITCODE -ne 0){throw 'Contact fixture DLL build failed'}
-& $contactZig @contactCommon (Join-Path $contactSrc 'contact_fixture.cpp') '-luser32' '-o' (Join-Path $contactBuild 'contact-fixture.exe')
+& $contactZig @contactCommon (Get-SectorNativeSource 'contact_fixture.cpp') '-luser32' '-o' (Join-Path $contactBuild 'contact-fixture.exe')
 if($LASTEXITCODE -ne 0){throw 'Contact fixture executable build failed'}
 & $contactZig @contactCommon '-shared' @contactSources '-ladvapi32' '-luser32' '-o' (Join-Path $contactBuild 'lmu-contact-native-14150.dll')
 if($LASTEXITCODE -ne 0){throw 'Contact DLL build failed'}
@@ -28,7 +29,7 @@ if($LASTEXITCODE -ne 0){throw "Contact watchdog fixture failed: $LASTEXITCODE"}
 Copy-Item -LiteralPath (Join-Path $contactBuild 'lmu-contact-native-14150.dll') -Destination (Join-Path $projectRoot 'bin\lmu-contact-native-14150.dll')
 $contactHashes=[ordered]@{}
 foreach($contactName in @('contact_native.cpp','contact_ipc.h','contact_fixture.cpp')) {
-    $contactHashes[$contactName]=(Get-FileHash -LiteralPath (Join-Path $contactSrc $contactName) -Algorithm SHA256).Hash.ToLowerInvariant()
+    $contactHashes[$contactName]=(Get-FileHash -LiteralPath (Get-SectorNativeSource $contactName) -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 $contactManifest=[ordered]@{
     utc=[DateTime]::UtcNow.ToString('o'); build=14150

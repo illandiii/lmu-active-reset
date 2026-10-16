@@ -73,8 +73,8 @@ I moduli sono inattivi ma restano residenti fino alla chiusura del gioco. Chiude
 ```powershell
 .\Build-PoseObserver.ps1
 # Nuova osservazione offline; rifiuta un osservatore posa già residente.
-python .\src\run_pose_observer.py --pid <PID_ATTUALE> --seconds 12 --load --offline-launch-confirmed
+python .\src/python/sector/observers/run_pose_observer.py --pid <PID_ATTUALE> --seconds 12 --load --offline-launch-confirmed
 
 .\Build-KinematicPreparation.ps1
-python .\src\test_pose_recording.py .\logs\20260921T184750615694Z_pose_observer.frames.jsonl
+python .\src/python/sector/replay/test_pose_recording.py .\logs\20260921T184750615694Z_pose_observer.frames.jsonl
 ```

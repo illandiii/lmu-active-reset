@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$ZigPath)
 $projectRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'SourcePaths.ps1')
 
 $ErrorActionPreference='Stop'
 $scoreWork=[IO.Path]::GetFullPath((Join-Path $projectRoot 'work'))
@@ -10,10 +11,10 @@ $scoreSrc=Join-Path $projectRoot 'src'
 $scoreBuild=Join-Path $scoreWork 'scoring-bin-25661166'
 New-Item -ItemType Directory -Force -Path $scoreBuild | Out-Null
 $scoreCommon=@('c++','-O2','-target','x86_64-windows-gnu','-I',(Join-Path $scoreMh 'include'),'-I',$scoreSrc)
-$scoreSources=@((Join-Path $scoreSrc 'scoring_native_25661166.cpp'),(Join-Path $scoreMh 'src\buffer.c'),(Join-Path $scoreMh 'src\hook.c'),(Join-Path $scoreMh 'src\trampoline.c'),(Join-Path $scoreMh 'src\hde\hde64.c'))
+$scoreSources=@((Get-SectorNativeSource 'scoring_native_25661166.cpp'),(Join-Path $scoreMh 'src\buffer.c'),(Join-Path $scoreMh 'src\hook.c'),(Join-Path $scoreMh 'src\trampoline.c'),(Join-Path $scoreMh 'src\hde\hde64.c'))
 & $ZigPath @scoreCommon '-shared' '-DLMU_SCORING_FIXTURE' @scoreSources '-ladvapi32' '-o' (Join-Path $scoreBuild 'scoring-fixture.dll')
 if($LASTEXITCODE -ne 0){throw 'Scoring fixture DLL build failed'}
-& $ZigPath @scoreCommon (Join-Path $scoreSrc 'scoring_fixture_25661166.cpp') '-o' (Join-Path $scoreBuild 'scoring-fixture.exe')
+& $ZigPath @scoreCommon (Get-SectorNativeSource 'scoring_fixture_25661166.cpp') '-o' (Join-Path $scoreBuild 'scoring-fixture.exe')
 if($LASTEXITCODE -ne 0){throw 'Scoring fixture build failed'}
 & (Join-Path $scoreBuild 'scoring-fixture.exe') (Join-Path $scoreBuild 'scoring-fixture.dll')
 if($LASTEXITCODE -ne 0){throw 'Scoring stop fixture failed'}
@@ -23,7 +24,7 @@ if($LASTEXITCODE -ne 0){throw 'Scoring watchdog fixture failed'}
 if($LASTEXITCODE -ne 0){throw 'Scoring DLL build failed'}
 Copy-Item -LiteralPath (Join-Path $scoreBuild 'lmu-scoring-observer-25661166.dll') -Destination (Join-Path $projectRoot 'bin\lmu-scoring-observer-25661166.dll')
 $scoreHashes=[ordered]@{}
-foreach($scoreName in @('scoring_native_25661166.cpp','scoring_ipc_25661166.h','scoring_fixture_25661166.cpp','lap_guard_core.h')){$scoreHashes[$scoreName]=(Get-FileHash -LiteralPath (Join-Path $scoreSrc $scoreName) -Algorithm SHA256).Hash.ToLowerInvariant()}
+foreach($scoreName in @('scoring_native_25661166.cpp','scoring_ipc_25661166.h','scoring_fixture_25661166.cpp','lap_guard_core.h')){$scoreHashes[$scoreName]=(Get-FileHash -LiteralPath (Get-SectorNativeSource $scoreName) -Algorithm SHA256).Hash.ToLowerInvariant()}
 $scoreManifest=[ordered]@{
  utc=[DateTime]::UtcNow.ToString('o');steam_build=25661166;app_build=14200
  exe_sha256='66942337813b301b87d12edfa330f33354a2a4b8cd9b048885cbf77eb6f940cf'

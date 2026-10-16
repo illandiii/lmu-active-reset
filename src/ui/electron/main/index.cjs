@@ -7,6 +7,7 @@ const {
   protocol,
   net,
   session,
+  dialog,
 } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
@@ -14,7 +15,8 @@ const { pathToFileURL } = require("node:url");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const { Overlays } = require("./overlays.cjs");
-const { Runtime, resolvePython } = require("./runtime.cjs");
+const { Runtime, resolvePython, discoverGame } = require("./runtime.cjs");
+const setupStore = require("./onboarding.cjs");
 const {
   defaults,
   keys,
@@ -50,6 +52,7 @@ if (app.isPackaged) {
 }
 const preview = process.argv.includes("--preview");
 const smoke = preview && process.argv.includes("--smoke");
+const onboardingSmoke = smoke && process.argv.includes("--onboarding-smoke");
 const previewRoot = path.join(root, "work/electron-preview");
 if (preview) app.setPath("userData", previewRoot);
 app.setName("Sector");
@@ -64,6 +67,14 @@ const settingsFile = path.join(
   preview ? previewRoot : process.env.LOCALAPPDATA || app.getPath("userData"),
   "LMUActiveReset/settings.json",
 );
+const setupFile =
+  onboardingSmoke && process.env.SECTOR_TEST_SETUP_FILE
+    ? process.env.SECTOR_TEST_SETUP_FILE
+    : path.join(path.dirname(settingsFile), "onboarding.json");
+let setup = setupStore.readSetup(setupFile);
+const setupReady = () => (preview && !onboardingSmoke) || setup.completed;
+const discoverInstallation = () =>
+  setupReady() ? discoverGame(setup.lmuPath) : Promise.resolve([]);
 let preferences = { ...defaults };
 let settingsError = "";
 try {
@@ -75,6 +86,7 @@ const runtime = new Runtime({
   root,
   settingsFile,
   getSettings: () => preferences,
+  discover: discoverInstallation,
 });
 let window;
 let tray;
@@ -127,14 +139,63 @@ function installBridge() {
     status: runtime.state,
     preview,
     settingsError,
+    onboarding: { required: !setupReady(), folder: setup.lmuPath },
   }));
+  handle("sector:setup-detect", async () => {
+    if (preview)
+      return onboardingSmoke && process.env.SECTOR_TEST_LMU
+        ? [setupStore.validateFolder(process.env.SECTOR_TEST_LMU)]
+        : [];
+    return setupStore.detectInstallations();
+  });
+  handle("sector:setup-browse", async () => {
+    const result = await dialog.showOpenDialog(window, {
+      title: "Select Le Mans Ultimate folder",
+      defaultPath: setup.lmuPath || undefined,
+      properties: ["openDirectory"],
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+    try {
+      return {
+        ok: true,
+        folder: setupStore.validateFolder(result.filePaths[0]),
+      };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
+  handle("sector:setup-confirm", (folder) => {
+    try {
+      if (setupReady()) throw new Error("Setup is already complete.");
+      setup = setupStore.writeSetup(setupFile, {
+        lmuPath: folder,
+        completed: false,
+      });
+      return { ok: true, folder: setup.lmuPath };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
+  handle("sector:setup-complete", () => {
+    try {
+      setup = setupStore.writeSetup(setupFile, { ...setup, completed: true });
+      if (!preview && !settingsError) {
+        preferences = writeSettings(settingsFile, preferences);
+        runtime.start();
+      }
+      overlays.sync();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
   handle("sector:settings", (candidate) => {
     try {
       preferences = preview
         ? validateSettings(candidate)
         : writeSettings(settingsFile, candidate);
       settingsError = "";
-      if (!preview && !runtime.timer) runtime.start();
+      if (!preview && setupReady() && !runtime.timer) runtime.start();
       return { ok: true, settings: preferences };
     } catch (error) {
       return { ok: false, error: error.message };
@@ -262,6 +323,8 @@ if (!app.requestSingleInstanceLock()) {
         file: path.join(path.dirname(settingsFile), "overlays.json"),
         preview,
         desktop: () => window,
+        discover: discoverInstallation,
+        ready: setupReady,
       });
       installBridge();
       runtime.on("status", (state) => {
@@ -286,7 +349,7 @@ if (!app.requestSingleInstanceLock()) {
       await window.loadURL("sector://app/index.html");
       if (!smoke) showWindow();
       // Preview and automated UI tests cannot discover LMU or launch the host.
-      if (!preview && !settingsError) {
+      if (!preview && setupReady() && !settingsError) {
         try {
           preferences = writeSettings(settingsFile, preferences);
           runtime.start();

@@ -12,6 +12,11 @@ contextBridge.exposeInMainWorld("sector", {
   editOverlays: (value) => ipcRenderer.invoke("sector:overlays-edit", value),
   onOverlays: (callback) => subscribe("sector:overlays", callback),
   initialize: () => ipcRenderer.invoke("sector:initialize"),
+  detectInstallations: () => ipcRenderer.invoke("sector:setup-detect"),
+  browseInstallation: () => ipcRenderer.invoke("sector:setup-browse"),
+  confirmInstallation: (folder) =>
+    ipcRenderer.invoke("sector:setup-confirm", folder),
+  completeOnboarding: () => ipcRenderer.invoke("sector:setup-complete"),
   saveSettings: (settings) => ipcRenderer.invoke("sector:settings", settings),
   previewSound: (name) => ipcRenderer.invoke("sector:sound", name),
   minimize: () => ipcRenderer.invoke("sector:minimize"),

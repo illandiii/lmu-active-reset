@@ -16,6 +16,7 @@ import gear from "@iconify-icons/solar/settings-linear";
 import { Preferences, AudioFeedback } from "./preferences.jsx";
 import { OverlayEditor } from "./overlays/editor.jsx";
 import { GuidedTour } from "./guided-tour.jsx";
+import { Onboarding } from "./onboarding.jsx";
 import help from "@iconify-icons/solar/question-circle-linear";
 import "@fontsource/manrope/latin-400.css";
 import "@fontsource/manrope/latin-500.css";
@@ -45,6 +46,7 @@ function App() {
   );
   const [pending, setPending] = useState(false);
   const [tour, setTour] = useState(false);
+  const [onboarding, setOnboarding] = useState(null);
   const tourStartTab = useRef("reset");
   const [quitting, setQuitting] = useState(false);
   const modalRef = useRef(null);
@@ -81,6 +83,7 @@ function App() {
       .then((data) => {
         if (!live) return;
         setSettings(data.settings);
+        setOnboarding(data.onboarding);
         setKeys(data.keys);
         setError(data.settingsError);
         if (!receivedStatus) setStatus(data.status);
@@ -455,6 +458,17 @@ function App() {
           <span className="status-detail">{view.message}</span>
         </div>
       </Tabs.Root>
+      {onboarding?.required && (
+        <Onboarding
+          open={!modal && !quitting}
+          initialFolder={onboarding.folder}
+          onQuit={exit}
+          onFinish={(tutorial) => {
+            setOnboarding({ required: false });
+            if (tutorial) startGuide();
+          }}
+        />
+      )}
       {tour && (
         <GuidedTour
           saveKey={key("save_key")}

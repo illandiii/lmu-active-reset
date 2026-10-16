@@ -4,8 +4,8 @@ const model = require("../shared/overlay-model.cjs");
 const store = require("../shared/overlay-config.cjs");
 const { OverlayTelemetry } = require("./overlay-telemetry.cjs");
 class Overlays {
-  constructor({ root, file, preview, desktop }) {
-    Object.assign(this, { root, file, preview, desktop });
+  constructor({ root, file, preview, desktop, discover, ready = () => true }) {
+    Object.assign(this, { root, file, preview, desktop, ready });
     this.windows = new Map();
     this.editing = false;
     this.error = "";
@@ -15,7 +15,7 @@ class Overlays {
       this.config = store.defaults();
       this.error = e.message;
     }
-    this.telemetry = new OverlayTelemetry(root);
+    this.telemetry = new OverlayTelemetry(root, { discover });
     this.telemetry.on("frame", () => this.sync());
     this.changed = () => this.sync();
     screen.on("display-added", this.changed);
@@ -139,7 +139,7 @@ class Overlays {
   }
   sync() {
     if (this.closed) return;
-    const active = this.config.enabled || this.editing;
+    const active = this.ready() && (this.config.enabled || this.editing);
     if (active && !this.preview) this.telemetry.start();
     else if (!active && !this.telemetry.stopped) this.telemetry.stop();
     for (const id of Object.keys(store.definitions)) {

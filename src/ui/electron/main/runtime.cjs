@@ -13,17 +13,25 @@ const emptyCheckpoint = {
   restore_count: 0,
 };
 
-async function discoverGame() {
+async function discoverGame(installation) {
   // This fixed command never includes data from the renderer or settings.
   const command =
-    "$env:PSModulePath = (Join-Path $PSHOME 'Modules') + [IO.Path]::PathSeparator + $env:PSModulePath; @(Get-Process -Name 'Le Mans Ultimate' -ErrorAction SilentlyContinue | ForEach-Object { @{pid=$_.Id; identity=([string]$_.Id + ':' + $_.StartTime.ToUniversalTime().Ticks)} }) | ConvertTo-Json -Compress";
+    "$env:PSModulePath = (Join-Path $PSHOME 'Modules') + [IO.Path]::PathSeparator + $env:PSModulePath; @(Get-Process -Name 'Le Mans Ultimate' -ErrorAction SilentlyContinue | ForEach-Object { @{pid=$_.Id; executable=$_.Path; identity=([string]$_.Id + ':' + $_.StartTime.ToUniversalTime().Ticks)} }) | ConvertTo-Json -Compress";
   const { stdout } = await execute(
     "powershell.exe",
     ["-NoProfile", "-NonInteractive", "-Command", command],
     { windowsHide: true, timeout: 5000 },
   );
   const parsed = stdout.trim() ? JSON.parse(stdout) : [];
-  return Array.isArray(parsed) ? parsed : [parsed];
+  const games = Array.isArray(parsed) ? parsed : [parsed];
+  return installation
+    ? games.filter(
+        (game) =>
+          typeof game.executable === "string" &&
+          path.resolve(game.executable).toLowerCase() ===
+            path.join(installation, "Le Mans Ultimate.exe").toLowerCase(),
+      )
+    : games;
 }
 
 function resolvePython() {

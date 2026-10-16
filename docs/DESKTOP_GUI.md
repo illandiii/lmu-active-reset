@@ -21,7 +21,7 @@ For an explicit UI build or an isolated preview:
 ./scripts/Test-ResetGui.ps1 -IncludeElectron
 ```
 
-Preview is clearly labeled, never starts the game detector or Python reset host,
+Preview never starts the game detector or Python reset host,
 and does not write real preferences. Its Electron profile is under
 `work/electron-preview`. Tests use this same isolated mode.
 
@@ -34,15 +34,20 @@ run `scripts/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`.
 
 ## Window and settings
 
-- Active Reset shows acknowledged checkpoint availability, timestamp and
-  successful restore count. Saved speed is not displayed.
-- The header gear opens an embedded Settings dialog with confirmation sounds,
-  sound previews and Reduce motion. The latter is stored with existing settings;
+- Active Reset shows acknowledged checkpoint availability, shortcut assignment
+  and confirmation audio. The compact layout omits counters, saved time and speed.
+- The header gear opens an embedded Settings dialog with Reduce motion.
+  This preference is stored with existing settings;
   old files default to normal motion, while the OS reduced-motion setting is
   always respected.
 - Connection phase and the latest command result live in the bottom status bar
   on both tabs. Page eyebrows, the old product footer and the blue card's
   Offline Practice label have been removed; the title bar only says sector.
+- The Guide button beside each page title starts an optional seven-step tour.
+  Anchored popups and arrows explain checkpoints, keys, audio, connection, settings,
+  future overlays and background mode. Next, Previous, Skip and Escape work with
+  keyboard focus containment. Finishing returns to the starting tab; the tour
+  never triggers a save or restore.
 - Overlay is a clearly labeled future feature, with no invented live data.
 - Click a shortcut to capture one key. Escape or window focus loss cancels.
   Duplicates, held repeats and modifier combinations are rejected. Tab navigates
@@ -144,7 +149,8 @@ keyboard mapping, acknowledged status, listener identity, discovery races and
 cooperative stop. The real Electron smoke suite covers isolation, tabs, actual
 key events, duplicate/modifier rejection, Escape, sound generation, mute,
 acknowledged checkpoint updates, focus containment, background/reopen,
-second-instance exclusion, compact layout, reduced motion and quit. Screenshots
+second-instance exclusion, compact layout, guided tour navigation and dismissal,
+  reduced motion and quit. Screenshots
 are written to ignored `work/electron-screenshots` and visually inspected.
 Python regressions run with `python scripts/sector.py test`.
 

@@ -12,7 +12,9 @@ import check from "@iconify-icons/solar/check-circle-linear";
 import close from "@iconify-icons/solar/close-circle-linear";
 import monitor from "@iconify-icons/solar/monitor-linear";
 import gear from "@iconify-icons/solar/settings-linear";
-import { Preferences } from "./preferences.jsx";
+import { Preferences, AudioFeedback } from "./preferences.jsx";
+import { GuidedTour } from "./guided-tour.jsx";
+import help from "@iconify-icons/solar/question-circle-linear";
 import "@fontsource/manrope/latin-400.css";
 import "@fontsource/manrope/latin-500.css";
 import "@fontsource/manrope/latin-600.css";
@@ -40,7 +42,8 @@ function App() {
     "Press one key. Esc to cancel.",
   );
   const [pending, setPending] = useState(false);
-  const [preview, setPreview] = useState(false);
+  const [tour, setTour] = useState(false);
+  const tourStartTab = useRef("reset");
   const [quitting, setQuitting] = useState(false);
   const modalRef = useRef(null);
   const modalContent = useRef(null);
@@ -67,14 +70,16 @@ function App() {
       receivedStatus = true;
       if (live) setStatus(value);
     });
-    const closeOff = api.onCloseRequested(() => setModal("close"));
+    const closeOff = api.onCloseRequested(() => {
+      setTour(false);
+      setModal("close");
+    });
     api
       .initialize()
       .then((data) => {
         if (!live) return;
         setSettings(data.settings);
         setKeys(data.keys);
-        setPreview(data.preview);
         setError(data.settingsError);
         if (!receivedStatus) setStatus(data.status);
       })
@@ -189,6 +194,22 @@ function App() {
 
   const key = (name) =>
     keyLabel(settings?.[name] || (name === "save_key" ? "F6" : "F7"), keys);
+  const guideButton = (
+    <button
+      className="guide-button"
+      aria-label="Start guided tour"
+      title="Quick guide"
+      disabled={!settings || quitting}
+      onClick={() => {
+        tourStartTab.current = tab;
+        setModal(null);
+        setTour(true);
+      }}
+    >
+      <Glyph icon={help} />
+      <span>Guide</span>
+    </button>
+  );
   return (
     <>
       <div className="titlebar">
@@ -208,6 +229,7 @@ function App() {
             </svg>
           </button>
           <button
+            data-tour="background"
             className="window-close"
             aria-label="Close window"
             onClick={() => setModal("close")}
@@ -231,13 +253,14 @@ function App() {
               <Glyph icon={restart} />
               Active Reset
             </Tabs.Tab>
-            <Tabs.Tab value="overlay">
+            <Tabs.Tab value="overlay" data-tour="overlay">
               <Glyph icon={layers} />
               Overlay
             </Tabs.Tab>
             <Tabs.Indicator className="tab-indicator" />
           </Tabs.List>
           <button
+            data-tour="settings"
             className="settings-button"
             aria-label="Settings"
             title="Settings"
@@ -255,12 +278,11 @@ function App() {
                   Active Reset<span className="accent">.</span>
                 </h1>
               </div>
-              <span className="module-number" aria-hidden="true">
-                01 / 02
-              </span>
+              {tab === "reset" && guideButton}
             </div>
             <section
               className={`checkpoint ${view.saved ? "is-saved" : ""}`}
+              data-tour="checkpoint"
               aria-label="Checkpoint"
             >
               <div className="checkpoint-main">
@@ -292,26 +314,16 @@ function App() {
                   <i />
                 </div>
               </div>
-              <div className="checkpoint-stats">
-                <div className="stat">
-                  <span className="eyebrow">Successful restores</span>
-                  <strong>{String(view.count).padStart(2, "0")}</strong>
-                </div>
-                <div className="stat">
-                  <span className="eyebrow">Saved at</span>
-                  <strong className="time">{view.time}</strong>
-                </div>
-              </div>
             </section>
             <div className="settings-grid">
               <section
+                data-tour="shortcuts"
                 className="settings-section"
                 aria-labelledby="shortcuts-title"
               >
                 <div className="section-heading">
                   <Glyph icon={keyboard} />
                   <h2 id="shortcuts-title">Keyboard shortcuts</h2>
-                  <span className="eyebrow">01</span>
                 </div>
                 <div className="setting-row">
                   <span className="action-icon">
@@ -347,10 +359,13 @@ function App() {
                     <Glyph icon={arrow} />
                   </button>
                 </div>
-                <p className="footnote">
-                  Click a key to reassign. Use keys not bound in LMU.
-                </p>
               </section>
+              <AudioFeedback
+                settings={settings}
+                pending={pending || quitting}
+                updateSettings={updateSettings}
+                sound={sound}
+              />
             </div>
           </Tabs.Panel>
           <Tabs.Panel value="overlay" className="page overlay-page">
@@ -360,9 +375,7 @@ function App() {
                   Overlay<span className="accent">.</span>
                 </h1>
               </div>
-              <span className="module-number" aria-hidden="true">
-                02 / 02
-              </span>
+              {tab === "overlay" && guideButton}
             </div>
             <section className="overlay-placeholder">
               <div className="overlay-symbol">
@@ -398,15 +411,32 @@ function App() {
             </div>
           )}
         </main>
-        <div className={`statusbar ${view.tone}`} role="status">
+        <div
+          data-tour="connection"
+          className={`statusbar ${view.tone}`}
+          role="status"
+        >
           <span className="connection">
             <span className="dot" />
             {view.title}
           </span>
           <span className="status-detail">{view.message}</span>
-          {preview && <span className="preview-label">Preview</span>}
         </div>
       </Tabs.Root>
+      {tour && (
+        <GuidedTour
+          saveKey={key("save_key")}
+          restoreKey={key("restore_key")}
+          onTabChange={setTab}
+          onFinish={() => {
+            setTour(false);
+            setTab(tourStartTab.current);
+            requestAnimationFrame(() =>
+              document.querySelector(".guide-button")?.focus(),
+            );
+          }}
+        />
+      )}
       <Dialog.Root
         open={modal !== null}
         onOpenChange={(open) => {
@@ -445,7 +475,7 @@ function App() {
                 className={shownModal === "settings" ? "sr-only" : undefined}
               >
                 {shownModal === "settings"
-                  ? "Audio and appearance preferences."
+                  ? "Appearance preferences."
                   : shownModal === "close"
                     ? "Keep your shortcuts active in the background, or quit Sector."
                     : captureHint}
@@ -456,7 +486,6 @@ function App() {
                     settings={settings}
                     pending={pending}
                     updateSettings={updateSettings}
-                    sound={sound}
                   />
                   <Dialog.Close className="secondary settings-done">
                     Done

@@ -192,8 +192,8 @@ if (!app.requestSingleInstanceLock()) {
       session.defaultSession.setPermissionCheckHandler(() => false);
       window = new BrowserWindow({
         title: "Sector",
-        width: 1100,
-        height: 810,
+        width: 1000,
+        height: 720,
         minWidth: 620,
         minHeight: 560,
         backgroundColor: "#101319",

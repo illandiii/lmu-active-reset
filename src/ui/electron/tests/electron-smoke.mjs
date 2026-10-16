@@ -21,6 +21,7 @@ const app = await electron.launch({
 const errors = [];
 try {
   const page = await app.firstWindow();
+  page.setDefaultTimeout(15000);
   page.on("pageerror", (error) => errors.push(error.message));
   await page
     .getByRole("button", { name: "Change save shortcut, F6", exact: true })
@@ -77,10 +78,6 @@ try {
       .count(),
     1,
   );
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
-  await settle();
-  await page.screenshot({ path: path.join(output, "settings.png") });
   await page.getByRole("switch", { name: "Confirmation sounds" }).click();
   await page.waitForFunction(
     () =>
@@ -95,7 +92,7 @@ try {
   );
   assert.equal(
     await page
-      .getByRole("button", { name: "Preview save", exact: true })
+      .getByRole("button", { name: "Play save sound", exact: true })
       .isDisabled(),
     true,
   );
@@ -116,6 +113,17 @@ try {
     }),
   );
   assert.equal(invalid.ok, false);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
+  await settle();
+  await page.screenshot({ path: path.join(output, "settings.png") });
+  assert.equal(
+    await page
+      .getByRole("dialog")
+      .getByRole("switch", { name: "Confirmation sounds" })
+      .count(),
+    0,
+  );
   await page.getByRole("switch", { name: "Reduce motion" }).click();
   await page.waitForFunction(
     () => document.documentElement.dataset.reduceMotion === "true",
@@ -131,6 +139,104 @@ try {
   );
   await page.keyboard.press("Escape");
   await page.getByRole("dialog").waitFor({ state: "hidden" });
+  const tourTargets = [
+    "checkpoint",
+    "shortcuts",
+    "audio",
+    "connection",
+    "settings",
+    "overlay",
+    "background",
+  ];
+  async function checkTourBounds() {
+    await page.waitForFunction(() => {
+      const popup = document.querySelector(".tour-popup");
+      if (!popup) return false;
+      const box = popup.getBoundingClientRect();
+      return (
+        box.width > 0 &&
+        box.x >= 0 &&
+        box.y >= 0 &&
+        box.right <= innerWidth &&
+        box.bottom <= innerHeight
+      );
+    });
+  }
+  async function completeTour() {
+    await page.getByRole("button", { name: "Start guided tour" }).click();
+    for (const [index, target] of tourTargets.entries()) {
+      await page
+        .locator(`[data-tour="${target}"][data-tour-active="true"]`)
+        .waitFor();
+      await page
+        .getByText(new RegExp(`Quick guide . ${index + 1} of 7`), {
+          exact: true,
+        })
+        .waitFor();
+      await checkTourBounds();
+      assert.equal(await page.locator(".tour-arrow svg").isVisible(), true);
+      if (index === 0) {
+        assert.match(
+          await page.locator(".tour-popup").innerText(),
+          /press G to save/,
+        );
+        await page.screenshot({
+          path: path.join(
+            output,
+            `tour-${await page.evaluate(() => innerWidth)}.png`,
+          ),
+        });
+        await page.keyboard.press("Tab");
+        await page.waitForFunction(() =>
+          Boolean(document.activeElement.closest(".tour-popup")),
+        );
+      }
+      await page
+        .getByRole("button", {
+          name: index === 6 ? "Finish" : "Next",
+          exact: true,
+        })
+        .click();
+    }
+    await page.locator(".tour-popup").waitFor({ state: "hidden" });
+    assert.equal(await page.locator("[data-tour-active]").count(), 0);
+    await page.waitForFunction(() =>
+      document.activeElement?.classList.contains("guide-button"),
+    );
+  }
+  await completeTour();
+  assert.equal(
+    await page
+      .getByRole("tab", { name: "Active Reset", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  await page.getByRole("tab", { name: "Overlay", exact: true }).click();
+  await page.getByRole("button", { name: "Start guided tour" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Previous step", exact: true })
+    .click();
+  await page.getByText(/Quick guide . 1 of 7/, { exact: true }).waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator(".tour-popup").waitFor({ state: "hidden" });
+  assert.equal(
+    await page
+      .getByRole("tab", { name: "Overlay", exact: true })
+      .getAttribute("aria-selected"),
+    "true",
+  );
+  await page.getByRole("tab", { name: "Active Reset", exact: true }).click();
+  await page.getByRole("button", { name: "Start guided tour" }).click();
+  await page.getByRole("button", { name: "Skip", exact: true }).click();
+  await page.locator(".tour-popup").waitFor({ state: "hidden" });
+  assert.equal(await page.locator("[data-tour-active]").count(), 0);
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Change save shortcut, G", exact: true })
+      .count(),
+    1,
+  );
   await app.evaluate(() =>
     global.sectorTest.publish({
       phase: "active",
@@ -240,6 +346,7 @@ try {
   );
   assert.equal(overflow, false);
   await page.screenshot({ path: path.join(output, "compact.png") });
+  await completeTour();
   await page.getByRole("button", { name: "Close window", exact: true }).click();
   await page.getByRole("dialog").waitFor();
   assert.equal(
@@ -258,8 +365,24 @@ try {
     });
   await closed;
   console.log(
-    "PASS: Electron isolation, tabs, key capture, validation, sound, acknowledgements, focus, background, compact layout, reduced motion and quit.",
+    "PASS: Electron isolation, tabs, key capture, validation, sound, acknowledgements, focus, background, compact layout, guided tour, reduced motion and quit.",
   );
+} catch (error) {
+  const page = app.windows()[0];
+  if (page && !page.isClosed()) {
+    await page
+      .screenshot({ path: path.join(output, "failure.png") })
+      .catch(() => {});
+    console.error(
+      await page
+        .locator("body")
+        .innerText()
+        .catch(() => "Window closed"),
+    );
+  }
+  if (page && !page.isClosed())
+    console.error(await page.evaluate(() => document.activeElement.outerHTML));
+  throw error;
 } finally {
   await app.close().catch(() => {});
 }

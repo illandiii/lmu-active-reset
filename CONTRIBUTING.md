@@ -4,8 +4,8 @@ Keep each completed, verified part in a separate commit. Record the relevant
 tests and remaining limitations before committing. Do not describe fixture
 results as evidence that a full reset has succeeded in LMU.
 
-Run `scripts/Test-Core.ps1` after changing restore or callback coordination.
-Format owned sources using `scripts/Format-Code.ps1`; leave third-party code
+Run `scripts/test/Test-Core.ps1` after changing restore or callback coordination.
+Format owned sources using `scripts/dev/Format-Code.ps1`; leave third-party code
 unchanged. Preserve historical observer layouts used by replay tools.
 
 Write code comments and docstrings in English. Explain ownership, synchronization
@@ -28,7 +28,7 @@ wire types exported to other capture and replay modules.
 Use explicit `sector.<area>.<module>` imports. Read repository paths from
 `sector.paths`, and invoke tools through `scripts/sector.py`. Keep native headers
 next to their implementation and use relative includes across areas. Build lists
-resolve unique filenames through `scripts/SourcePaths.ps1`; new source files do
+resolve unique filenames through `scripts/dev/SourcePaths.ps1`; new source files do
 not need compatibility copies in the former flat `src` directory.
 
 Keep generated captures, proprietary binaries/disassembly, local installation

@@ -2,7 +2,7 @@
 
 `sector-logo.png` is the transparent source mark. `sector.ico` packages the same
 artwork at 16, 24, 32, 48, 64, 128 and 256 pixels for Windows. Rebuild the icon with
-`powershell -STA -File scripts/Build-SectorIcon.ps1` from the repository root.
+`powershell -STA -File scripts/build/Build-SectorIcon.ps1` from the repository root.
 The desktop header, window icon and notification tray use these assets.
 
 The Electron renderer uses locally bundled Solar Linear icons by 480 Design via

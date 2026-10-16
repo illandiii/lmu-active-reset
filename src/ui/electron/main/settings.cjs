@@ -1,7 +1,12 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { randomUUID } = require("node:crypto");
-const keys = require("../../../python/sector/desktop/reset_keymap.json");
+const keymap = path.join(__dirname, "../shared/reset_keymap.json");
+const keys = require(
+  fs.existsSync(keymap)
+    ? keymap
+    : "../../../python/sector/desktop/reset_keymap.json",
+);
 const defaults = Object.freeze({
   save_key: "F6",
   restore_key: "F7",

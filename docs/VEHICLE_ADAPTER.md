@@ -49,7 +49,7 @@ field against the expected final bytes.
 
 ```powershell
 python scripts/sector.py replay.prepare_vehicle_adapter_fixture <recording.frames.jsonl> work/vehicle-adapter-fixture
-./scripts/Build-VehicleRestoreAdapter.ps1 -ZigPath <zig.exe> -FrameDirectory work/vehicle-adapter-fixture
+./scripts/build/Build-VehicleRestoreAdapter.ps1 -ZigPath <zig.exe> -FrameDirectory work/vehicle-adapter-fixture
 ```
 
 Omit `FrameDirectory` to compile both production and fixture targets without local

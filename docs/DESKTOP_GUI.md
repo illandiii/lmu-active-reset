@@ -16,9 +16,9 @@ point to `logs/desktop-startup.log`.
 For an explicit UI build or an isolated preview:
 
 ```powershell
-./scripts/Build-SectorUi.ps1
-./scripts/Start-ResetGui.ps1 -Preview
-./scripts/Test-ResetGui.ps1 -IncludeElectron
+./scripts/build/Build-SectorUi.ps1
+./scripts/launch/Start-ResetGui.ps1 -Preview
+./scripts/test/Test-ResetGui.ps1 -IncludeElectron
 ```
 
 Preview never starts the game detector or Python reset host,
@@ -30,7 +30,7 @@ pinned compatibility manifest. `SECTOR_PYTHON` (or launcher `-PythonPath`) selec
 Python; otherwise the configured local runtime, then `python.exe`, is used.
 A public clone does not contain private installation manifests or recorded frames.
 To rebuild the native backend on the configured machine, close LMU and Sector and
-run `scripts/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`.
+run `scripts/build/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`.
 
 ## Window and settings
 

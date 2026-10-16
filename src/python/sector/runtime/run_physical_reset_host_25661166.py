@@ -193,7 +193,7 @@ def run(args):
     )
     if telemetry_profile.get("continuous_capture") is not True:
         raise ValueError(
-            "Rebuild with scripts/Build-ResetDesktop.ps1 to enable continuous capture."
+            "Rebuild with scripts/build/Build-ResetDesktop.ps1 to enable continuous capture."
         )
     context()
     game = get_json("/rest/sessions/GetGameState")

@@ -23,7 +23,31 @@ const {
   validateSettings,
 } = require("./settings.cjs");
 
-const root = path.resolve(__dirname, "../../../..");
+// Packaged resources are copied to a versioned writable workspace for native logs and IPC.
+const sourceRoot = path.resolve(__dirname, "../../../..");
+const packagedPreview = process.argv.includes("--preview");
+const root = app.isPackaged
+  ? path.join(
+      app.getPath("userData"),
+      packagedPreview ? "preview-runtime" : "runtime",
+      `${app.getVersion()}-${fs.readFileSync(path.join(process.resourcesPath, "release-id"), "utf8").trim()}`,
+    )
+  : sourceRoot;
+if (app.isPackaged) {
+  if (!fs.existsSync(root)) {
+    const staging = `${root}-${process.pid}.tmp`;
+    fs.mkdirSync(staging, { recursive: true });
+    fs.cpSync(path.join(process.resourcesPath, "runtime"), staging, {
+      recursive: true,
+    });
+    try {
+      fs.renameSync(staging, root);
+    } catch (error) {
+      if (!fs.existsSync(root)) throw error;
+    }
+  }
+  process.env.SECTOR_PYTHON = path.join(root, "python/python.exe");
+}
 const preview = process.argv.includes("--preview");
 const smoke = preview && process.argv.includes("--smoke");
 const previewRoot = path.join(root, "work/electron-preview");

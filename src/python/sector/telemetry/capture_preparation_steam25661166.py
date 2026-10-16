@@ -19,13 +19,7 @@ def verify_telemetry(pid):
     profile = json.loads((PROJECT / "compatibility/steam-25661166-telemetry.json").read_text())
     if profile["observation_build"] != 14200 or profile["physics_compatible"] is not False:
         raise ValueError("Unsupported telemetry profile")
-    root = Path(profile["install_path"])
-    for entry in profile["files"]:
-        if (
-            hashlib.sha256((root / entry["relative_path"]).read_bytes()).hexdigest().upper()
-            != entry["sha256"]
-        ):
-            raise ValueError("Telemetry profile mismatch: " + entry["relative_path"])
+    # Resolve the installation from the requested process; retain all pinned hash checks.
     handle = KERNEL.OpenProcess(0x1000, False, pid)
     if not handle:
         raise OSError(ctypes.get_last_error(), "Cannot query process identity")
@@ -34,10 +28,18 @@ def verify_telemetry(pid):
         length = wintypes.DWORD(len(path))
         if not KERNEL.QueryFullProcessImageNameW(handle, 0, path, ctypes.byref(length)):
             raise OSError(ctypes.get_last_error(), "Cannot query process path")
-        if Path(path.value) != root / "Le Mans Ultimate.exe":
+        executable = Path(path.value)
+        if executable.name.lower() != "le mans ultimate.exe":
             raise ValueError("Wrong process")
+        root = executable.parent
     finally:
         KERNEL.CloseHandle(handle)
+    for entry in profile["files"]:
+        if (
+            hashlib.sha256((root / entry["relative_path"]).read_bytes()).hexdigest().upper()
+            != entry["sha256"]
+        ):
+            raise ValueError("Telemetry profile mismatch: " + entry["relative_path"])
     contract = profile["ui_contract"]
     with zipfile.ZipFile(root / "Bin/UI.zip") as archive:
         info = archive.getinfo(contract["member"])

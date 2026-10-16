@@ -61,7 +61,7 @@ mode cannot start either the telemetry reader or the reset host.
 The existing configured machine has the generated reader in `bin/`. Rebuild with:
 
 ```powershell
-./scripts/Build-OverlayReader.ps1 -ZigPath <path-to-zig.exe> -SdkPath <LMU-SDK-directory>
+./scripts/build/Build-OverlayReader.ps1 -ZigPath <path-to-zig.exe> -SdkPath <LMU-SDK-directory>
 ```
 
 `Build-ResetDesktop.ps1` also builds this reader. Proprietary SDK headers and

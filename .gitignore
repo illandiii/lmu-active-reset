@@ -17,3 +17,6 @@
 **/node_modules/
 src/ui/electron/dist/
 src/ui/electron/test-results/
+
+/releases/
+/.ruff_cache/

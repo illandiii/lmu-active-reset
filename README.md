@@ -47,7 +47,7 @@ uses the app's dark theme. Overlay functionality will be added in a later versio
 The launcher builds the local renderer and installs its locked dependencies on
 first use. Node.js 22.12+ and npm are required, with internet access for initial
 setup. Later launches use local assets. Existing shortcuts and sound preferences
-are retained. For a UI-only preview, run `scripts/Start-ResetGui.ps1 -Preview`.
+are retained. For a UI-only preview, run `scripts/launch/Start-ResetGui.ps1 -Preview`.
 
 A checkpoint has no time-based expiry. The v15 host has no session-duration cap;
 vehicle reconstruction, including a reset to the pits, invalidates its checkpoint.
@@ -59,13 +59,13 @@ The host has no speed or checkpoint-distance limit. Moving and long-distance
 restores pass isolated model tests and the seven live v15 trials described above.
 Identity, lifecycle, coherent physical state and valid contact
 reconstruction remain required. The keys are observed, not swallowed: select unused game bindings.
-For different keys run `scripts/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
+For different keys run `scripts/launch/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
 The launcher discovers the process and worker, chooses an unused locally built
 v15 host under a unique instance filename, and never replaces a resident DLL or
 falls back to older builds. Stopped modules remain resident until LMU exits.
 Generated binaries and the local Python runtime are required; a fresh
 clone must be built before this launcher can be used. On the configured Windows
-machine, close LMU and run `scripts/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`
+machine, close LMU and run `scripts/build/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`
 to rebuild v15 and the continuous telemetry reader. See
 [desktop setup and verification](docs/DESKTOP_GUI.md).
 
@@ -108,7 +108,7 @@ Requirements: Windows x64, PowerShell 7 and Zig 0.16.0. Python replay tools requ
 Python 3.11 or later; disassembly tools additionally require `pefile` and `capstone`.
 
 ```powershell
-./scripts/Test-Core.ps1 -ZigPath 'C:\tools\zig\zig.exe'
+./scripts/test/Test-Core.ps1 -ZigPath 'C:\tools\zig\zig.exe'
 python scripts/sector.py test
 ```
 
@@ -125,7 +125,7 @@ it also supplies the package path to child capture/replay processes. See
 Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 
 ```powershell
-./scripts/Format-Code.ps1 -ClangFormat clang-format -Ruff ruff
+./scripts/dev/Format-Code.ps1 -ClangFormat clang-format -Ruff ruff
 ```
 
 ## Current work
@@ -142,3 +142,9 @@ See [physics thread findings](docs/PHYSICS_THREAD_2026-10-13.md)
 and [restore integration](docs/RESTORE_INTEGRATION_2026-10-13.md).
 The [development archive](docs/README.md) preserves earlier results chronologically;
 older paths and source hashes refer to the pre-reorganization working tree.
+
+## Windows release 0.1.0
+
+Open `releases/Sector-0.1.0-win-x64/Sector.exe`. Keep the complete folder together;
+Node.js and Python do not need to be installed. See [release instructions](docs/RELEASE.md)
+for the repeatable build and packaged-app checks.

@@ -293,7 +293,7 @@ try {
       "-ExecutionPolicy",
       "Bypass",
       "-File",
-      path.resolve(directory, "../../../scripts/Start-ResetGui.ps1"),
+      path.resolve(directory, "../../../scripts/launch/Start-ResetGui.ps1"),
       "-Preview",
     ],
     {

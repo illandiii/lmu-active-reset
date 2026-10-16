@@ -108,7 +108,7 @@ successes between persisted frames. It releases each pin immediately and perform
 no vehicle writes. Its stop and watchdog fixtures pass, and the previous v3
 observer's fixtures still pass against their shared implementation.
 
-Build with `scripts/Build-BoundaryObserverV425661166.ps1 -ZigPath <zig.exe>`.
+Build with `scripts/build/Build-BoundaryObserverV425661166.ps1 -ZigPath <zig.exe>`.
 Run `python scripts/sector.py observers.run_boundary_observer_v4_25661166 --pid <pid> --load
 --offline-launch-confirmed` in a verified offline Practice. Its mapping, magic,
 DLL name and compatibility manifest are distinct from v3. The shutdown audit

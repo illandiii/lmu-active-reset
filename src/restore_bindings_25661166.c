@@ -13,6 +13,8 @@ int restore_binding_field(const RestoreBindings *b, uint32_t slot, uint32_t off,
         address > UINT64_C(0x800000000000) - off - n)
         return 0;
 #define F(offset, bytes) field(off, n, (offset), (bytes))
+    if (slot == RESTORE_COLLISION_EXPORT_SLOT)
+        return F(0, 96) || F(0x68, 4); /* Vehicle kinematics and exported mass. */
     if (slot >= RESTORE_THERMAL_BASE) {
         uint32_t pool = (slot - RESTORE_THERMAL_BASE) % 9;
         return F(0, 40) || F(0x40, 32) || (pool < 7 && (F(0x28, 16) || F(0x100, 8)));
@@ -91,7 +93,8 @@ int restore_binding_field(const RestoreBindings *b, uint32_t slot, uint32_t off,
                F(0x4a58, 8) || F(0x46d0, 8) || F(0x46e0, 8) || F(0x46e8, 8) || F(0x4b38, 8) ||
                F(0x4ac0, 8) || F(0x4668, 8) || F(0x50, 8) || F(0x4b30, 4) || F(0x4bb8, 4) ||
                F(0x4ba8, 16) || F(0x4ae8, 8) || F(0x48, 8) || F(0x4810, 8) || F(0x4818, 8) ||
-               F(0x4820, 2) || F(0x4828, 24);
+               F(0x4820, 2) || F(0x4828, 24) || F(0x24b0, 24) || F(0x2500, 72) || F(0x4bc8, 48) ||
+               F(0x2498, 24) || F(0x2550, 24);
     if (slot == 105) {
         if (F(0x1f8, 8) || F(0x250, 8) || F(0x260, 8) || F(0x280, 8) || F(0x208, 56) ||
             F(0x240, 12) || F(0x50, 8) || F(0x1b0, 8))

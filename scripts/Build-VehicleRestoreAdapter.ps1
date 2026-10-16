@@ -42,7 +42,7 @@ $fixture = Join-Path $buildRoot 'vehicle-restore-adapter-fixture.exe'
 if ($LASTEXITCODE -ne 0) { throw 'Vehicle adapter fixture build failed' }
 
 if ($FrameDirectory) {
-    foreach ($faultCase in 0..2) {
+    foreach ($faultCase in 0..3) {
         & $fixture (Join-Path $FrameDirectory 'saved.frame') (Join-Path $FrameDirectory 'current.frame') $faultCase
         if ($LASTEXITCODE -ne 0) { throw "Vehicle adapter fixture failed: $faultCase" }
     }

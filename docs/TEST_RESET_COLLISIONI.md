@@ -1,16 +1,17 @@
-# Prova del reset e delle collisioni — host v14
+# Prova del reset e delle collisioni — host v15
 
-Aggiornata il 16 ottobre 2026 per la prossima sessione. Non occorre aprire LMU
-durante il lavoro offline. Il difetto dello sbalzo non è ancora risolto: questa
-versione registra il passaggio che può provocarlo, senza disattivare collisioni
-o limitare velocità e distanza.
+Aggiornata il 16 ottobre 2026 dopo la cattura dello sbalzo. La v15 corregge
+il volume delle collisioni che attraversava la posizione precedente e quella
+salvata: ripristina anche le cache cinematiche, aggiorna la geometria con le
+routine native e rimuove le coppie di collisione obsolete. I test locali passano;
+la correzione deve ancora essere verificata in LMU.
 
 ## Preparazione
 
 1. Avvia LMU senza EAC, in Practice offline. Per confrontare la cattura precedente,
    usa possibilmente Spa e Mercedes GT3, con una vettura sana.
 2. Apri **una sola volta `Start-Reset.cmd`** nella cartella del progetto. Si apre
-   la UI; se sei al monitor, il programma attende GUIDA. La build selezionata è v14.
+   la UI; se sei al monitor, il programma attende GUIDA. La build selezionata è v15.
 3. Entra in GUIDA, attendi lo stato **Connected**, torna a dare il focus a LMU e
    rilascia F6 e F7. I tasti non devono avere altri comandi di gioco assegnati.
    Il programma resta attivo finché chiudi la UI o termina la connessione.
@@ -41,13 +42,20 @@ impostazioni, usa i tasti selezionati al posto di F6/F7.
    chiudi la UI per arrestare il listener. Se LMU si chiude, attendi che la UI
    rilevi la disconnessione e che il riepilogo venga salvato in `logs/`.
 
+## Terza prova: sterzata prima del ripristino
+
+Dopo una seconda prova stabile, salva su asfalto libero con F6. Più avanti sterza
+e premi F7 una volta, con orientamento diverso da quello salvato. Non è necessario
+provocare un urto: nella cattura del 16 ottobre il difetto è comparso durante una
+sterzata fuori pista. Attendi cinque secondi e interrompi alla prima instabilità.
+
 Comunica soltanto: esito, velocità approssimative di F6/F7, eventuale urto e se
 si è chiuso LMU oppure soltanto il programma delle hotkey. Non serve filmare.
 
 ## Dati da conservare
 
 I file vengono salvati automaticamente in `logs/`, con lo stesso prefisso
-`<data>_physical_reset_host_v14`:
+`<data>_physical_reset_host_v15`:
 
 - `.physical.jsonl`: corpi fisici, contatti pneumatici, corpo collisioni e stato
   prima/dopo le routine native di preparazione e correzione.
@@ -68,15 +76,17 @@ Eseguire `python src/analyze_physical_reset_trace.py <file.physical.jsonl>
 Verificare nell'ordine:
 
 1. `saved_vs_applied`: velocità, posa e momento dei cinque corpi coincidono con
-   F6 subito dopo F7; il rapporto deve riportare tutti i 10.077 campi verificati.
-2. `collision_corrections` (fasi 11/12): cercare il primo cambiamento dei corpi
+   F6 subito dopo F7; il rapporto deve riportare tutti i 10.084 campi verificati.
+2. `collision_rebuilds` (fasi 15/16, prima della fase 3): geometria riallineata,
+   flag pendente azzerato dalla routine nativa e corpi fisici invariati.
+3. `collision_corrections` (fasi 11/12): cercare il primo cambiamento dei corpi
    dentro `F4EAC0`, confrontandolo con `proxy_vs_exported`, flag e feedback.
-3. `collision_preparations` (13/14): verificare quando `F4E7B0` riallinea il corpo
+4. `collision_preparations` (13/14): verificare quando `F4E7B0` riallinea il corpo
    collisioni alla posa esportata. La differenza prima della preparazione può
    includere il normale avanzamento: non è da sola prova di un difetto.
-4. `between_dynamics_changes` e `dynamics_changes`: distinguere una trasformazione
+5. `between_dynamics_changes` e `dynamics_changes`: distinguere una trasformazione
    comune dei cinque corpi dalla successiva divergenza delle forze.
-5. Le chiamate senza uscita, i gruppi non leggibili e i valori non finiti devono
+6. Le chiamate senza uscita, i gruppi non leggibili e i valori non finiti devono
    restare indicati come evidenza incompleta, mai essere interpretati come zeri.
 
 Le fasi 7/8 e 9/10 restano disponibili nel file grezzo per outer update e scoring.

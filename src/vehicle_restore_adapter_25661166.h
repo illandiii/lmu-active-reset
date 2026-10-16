@@ -30,6 +30,9 @@ struct VehicleRestoreHost {
     void *user;
     int (*pinned)(void *, const VehicleRestoreContext *);
     void(WINAPI *refresh)(void *, double, double, void *, double);
+    // Optional for older hosts; v15 rebuilds collision caches after typed restore.
+    uintptr_t collision_vehicle = 0;
+    int (*rebuild_collision)(void *, uintptr_t) = nullptr;
 };
 
 struct VehicleRestoreAdapter;

@@ -1,5 +1,10 @@
 # High-speed reset and launcher lifecycle
 
+Latest result, 16 October: the v14 live trace identifies a new collision sweep
+across the teleport, followed by native collision correction. V15 contains a
+targeted repair, tested on owned memory but awaiting a live confirmation. The
+earlier sections below retain the evidence available at each investigation stage.
+
 ## Confirmed incident
 
 Local recording `20261013T210817261273Z_physical_reset_host_v8` contains three
@@ -277,3 +282,65 @@ before/after comparisons across gaps and keeps the gaps in the report.
 The native ring fixture and host fixture passed on Windows, and forty Python tests
 passed. The installed local default is v14. This fixes diagnostic exhaustion;
 it does not modify collision state or claim to fix the physical instability.
+
+## Captured collision sweep and v15 repair (16 October)
+
+Recording `20261016T142736982514Z_physical_reset_host_v14` contains 790 physical
+records, no gaps, two saves and eight restores. Every restore verified 10,077
+fields; the five traced bodies initially matched the saved pose, velocity and
+angular momentum. The first seven restores show no large jump within their
+20-step diagnostic windows. This is not a claim of longer-term stability.
+
+The user reported the final instability while steering after leaving the track.
+Request 18 restored a checkpoint saved at 206.86 km/h from 203.68 km/h, about
+708 metres away. This also shows that greater current speed is not necessary
+for the defect. At sequences 690/691, the physical root returns to
+`[-236.956884, 2.078725, 336.180637]`, while the separate collision body stays at
+`[-61.626900, 5.903471, 1021.373657]`. Its pending flag is zero on both sides.
+
+At sequences 701/702, `F4E7B0` finally moves the collision body to the restored
+exported pose. `F4DB30` has already calculated previous shape geometry from the
+old body, so its sweep spans the two locations. By sequence 703 a new correction
+is pending. Between sequences 704/705, inside `F4EAC0`, the root jumps
+115.539209 metres and its velocity vector changes by 75.436843 m/s. Collision
+feedback reaches approximately 56.94 million on its first axis. This incident
+is a newly generated collision, not an old pending flag surviving the reset.
+The trace also has an earlier first-Dynamics transient; eliminating the measured
+collision jump alone cannot establish that all resumed dynamics are correct.
+
+V15 adds seven typed fields to the existing transaction: exported pose/velocities,
+exported collision mass, HDV aggregate position, rotation, world velocity, world
+angular velocity and collision feedback. The first six come from the checkpoint;
+feedback from obsolete collision pairs is reset to zero. The exported binding is
+an explicit additional slot, with an exact field whitelist. It contains no saved
+pointers. Finite values, proper rotations and positive collision mass are required
+before replacing a checkpoint. Numeric caches participate in the same preflight,
+byte readback and compensation as the existing physical/scoring fields.
+
+After four tire-contact rebuilds succeed, the existing admitted physics boundary
+still owns W and C8 and pins the lifecycle generation. At that point the host uses
+the native teleport path's cache-maintenance sequence: invalidate spatial lookup
+`17B28`, call `F702E0`, prepare the collision body with `F4E7B0`, remove this vehicle's
+obsolete pairs with `FEDFA0`, then reset the overlap-cache flag `16CF9`. Pair-vector
+cleanup remains native; there is no manual vector truncation. The full teleport
+routine is not called because it adjusts reference position/suspension and
+transforms bodies whose checkpoint state has already been restored. Native code
+prologs are checked against the verified local capture before activation.
+
+The same rebuild callback runs after compensation, using the original numeric
+projection restored by the transaction. Failure to recover keeps the existing
+quarantine behavior. Additional locks are released before normal physics resumes.
+Trace phases 15/16 bracket this cache reconstruction, before phase 3. Exact-byte
+verification still occurs inside the transaction; the later host report allows
+only a 1e-6 component difference in the nine exported rotation floats normalized
+by the native routine. Other fields retain exact comparison.
+
+Local validation covers a 1,000-metre reset with changed heading and 80/-100 m/s
+saved/current velocity, removal of a pending correction, unchanged physical pose,
+saved collision mass and velocity, no long collision sweep, all 10,084 fields,
+four contacts, absent-callback rejection and two consecutive host instances.
+Adapter cases cover success, contact compensation, failed recovery quarantine and
+collision-rebuild failure followed by compensation, including rejected replacement
+of a checkpoint by a singular rotation. The core Windows suites and Python tests
+also pass. These fixtures model native collision helpers and do not replace a
+live test. No v15 live reset has yet been recorded.

@@ -126,7 +126,7 @@ def verify_flow(dll, joint, bindings, score, physical, mem, original, score_orig
         if expected == 0:
             for f in joint.fields[: joint.count]:
                 addr = (
-                    base if f.object_slot == 2700 else bindings.address[f.object_slot]
+                    base if f.object_slot == 2701 else bindings.address[f.object_slot]
                 ) + f.field_offset
                 assert C.string_at(addr, f.size) == bytes(f.desired[: f.size])
             assert calls == [0] and mode["resume"] == 1

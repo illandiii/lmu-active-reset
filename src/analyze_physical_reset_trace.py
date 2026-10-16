@@ -108,12 +108,16 @@ def analyze(records):
     saved = previous = pending = None
     restore_before = None
     hook_entries = {}
+    rebuild_entry = None
+    rebuilds = []
     requests = {}
     for row in records:
         if row.get("type") == "trace_gap":
             # No before/after pair or checkpoint comparison may bridge lost data.
             saved = previous = pending = restore_before = None
             hook_entries = {}
+            rebuild_entry = None
+            rebuilds = []
             continue
         if len(row["bodies"]) != 5 or any(len(body) != 18 for body in row["bodies"]):
             raise ValueError("Expected five 18-component body records")
@@ -126,7 +130,19 @@ def analyze(records):
         if phase == 2:
             previous = pending = None
             restore_before = row
+            rebuild_entry = None
+            rebuilds = []
             continue
+        if phase == 15:
+            rebuild_entry = row
+        elif (
+            phase == 16 and rebuild_entry is not None and rebuild_entry["request"] == row["request"]
+        ):
+            entry = change(rebuild_entry, row)
+            entry["before"] = collision_state(rebuild_entry)
+            entry["after"] = collision_state(row)
+            rebuilds.append(entry)
+            rebuild_entry = None
         if phase == 3:
             requests[row["request"]] = {
                 "request": row["request"],
@@ -137,6 +153,7 @@ def analyze(records):
                 "unpaired_dynamics_entry": None,
                 "collision_corrections": [],
                 "collision_preparations": [],
+                "collision_rebuilds": rebuilds[:],
                 "saved_collision_state": collision_state(saved) if saved else None,
                 "before_restore_collision_state": (
                     collision_state(restore_before)

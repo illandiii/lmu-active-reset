@@ -568,7 +568,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 100), default=14)
+    parser.add_argument("--revision", type=int, choices=range(1, 100), default=15)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--owner-thread", type=int, default=0)
     parser.add_argument("--request-file", type=Path, required=True)

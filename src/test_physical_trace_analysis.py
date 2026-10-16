@@ -132,6 +132,14 @@ class TraceAnalysisTests(unittest.TestCase):
         self.assertEqual(result["dynamics_changes"], [])
         self.assertEqual(result["unpaired_dynamics_entry"], 20)
 
+    def test_collision_rebuild_precedes_applied_record(self):
+        rows = [record(2, 0), record(15, 0), record(16, 0), record(3, 20)]
+        rebuilds = analyze(rows)["restores"][0]["collision_rebuilds"]
+        self.assertEqual(len(rebuilds), 1)
+        self.assertEqual(rebuilds[0]["bodies"][0]["position_m"], 0)
+        rows.insert(2, {"type": "trace_gap"})
+        self.assertEqual(analyze(rows)["restores"][0]["collision_rebuilds"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

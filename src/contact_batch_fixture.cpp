@@ -163,6 +163,7 @@ int batch_tests() {
 extern "C" {
 #include "restore_flow.h"
 #include "scoring_plan_25661166.h"
+#include "restore_joint_25661166.h"
 }
 static RestoreFlow flow_state;
 static RestoreFlowWork flow_work;
@@ -188,7 +189,7 @@ static void flow_quarantine(void *, int) {
 }
 static int flow_allowed(void *, uint32_t slot, uint32_t off, uint32_t n) {
     return (slot == 0 && off == 0 && n == 8) ||
-           (slot == 2700 && scoring_field_allowed_25661166(0, off, n));
+           (slot == RESTORE_SCORING_SLOT && scoring_field_allowed_25661166(0, off, n));
 }
 static int flow_read(void *u, uint32_t slot, uint32_t off, void *out, uint32_t n) {
     if (!flow_allowed(u, slot, off, n))
@@ -231,7 +232,7 @@ static void flow_init() {
     for (int i = 0; i < 3; i++) {
         auto &sf = flow_plan.fields[i + 1];
         sf = {};
-        sf.object_slot = 2700;
+        sf.object_slot = RESTORE_SCORING_SLOT;
         sf.field_offset = offsets[i];
         sf.size = 4;
         memcpy(sf.expected, &flag, 4);

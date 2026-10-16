@@ -4,7 +4,8 @@
 /* Ephemeral addresses, never serialized in a saved checkpoint. Capture and
  * validate on the physical thread, freeze until transaction/rollback ends. */
 #define RESTORE_THERMAL_BASE 108
-#define RESTORE_OBJECT_COUNT (108 + 4 * 72 * 9)
+#define RESTORE_COLLISION_EXPORT_SLOT (108 + 4 * 72 * 9)
+#define RESTORE_OBJECT_COUNT (RESTORE_COLLISION_EXPORT_SLOT + 1)
 typedef struct RestoreBindings {
     uint64_t epoch;
     uintptr_t address[RESTORE_OBJECT_COUNT];

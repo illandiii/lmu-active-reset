@@ -48,6 +48,10 @@ static void(WINAPI *contacts_original)(void *, double, double, void *, double);
 static void(WINAPI *collision_correct_original)(void *);
 static void(WINAPI *collision_prepare_original)(void *);
 #endif
+#if LMU_RESET_HOST_REVISION >= 15
+static void(WINAPI *collision_spatial_refresh)(void *);
+static void(WINAPI *collision_remove_pairs)(void *, void *);
+#endif
 static VehicleContactSample samples[4];
 static ResetTrace *trace;
 static unsigned trace_steps;
@@ -212,6 +216,50 @@ static int pinned(void *, const VehicleRestoreContext *c) {
            GetCurrentThreadId() == physics_thread && native_lifetime_valid(&native_pin) &&
            native_lifecycle_valid(&epoch_pin) && roots_match();
 }
+#if LMU_RESET_HOST_REVISION >= 15
+static bool writable(uintptr_t address, size_t size) {
+    MEMORY_BASIC_INFORMATION page{};
+    return VirtualQuery(reinterpret_cast<void *>(address), &page, sizeof(page)) == sizeof(page) &&
+           page.State == MEM_COMMIT &&
+           (page.Protect == PAGE_READWRITE || page.Protect == PAGE_WRITECOPY) &&
+           address + size <= reinterpret_cast<uintptr_t>(page.BaseAddress) + page.RegionSize;
+}
+static int rebuild_collision(void *, uintptr_t vehicle) {
+    if (vehicle != owner_root + 8 || !pinned(nullptr, &context) ||
+        !writable(vehicle + 0x17b28, sizeof(uintptr_t)) || !writable(vehicle + 0x16cf9, 1))
+        return 0;
+    trace_sample(15);
+    // The native teleport path uses this exact cache-maintenance order. Its
+    // position/suspension adjustment and body transform are deliberately absent:
+    // the typed transaction has already restored pose and checkpoint velocities.
+    *reinterpret_cast<uintptr_t *>(vehicle + 0x17b28) = 0;
+    collision_spatial_refresh(reinterpret_cast<void *>(vehicle));
+    collision_prepare_original(reinterpret_cast<void *>(vehicle));
+    collision_remove_pairs(nullptr, reinterpret_cast<void *>(vehicle));
+    *reinterpret_cast<unsigned char *>(vehicle + 0x16cf9) = 0;
+    trace_sample(16);
+    return 1;
+}
+#endif
+static bool restored_field_matches(const RestoreField &entry, const unsigned char *actual) {
+    if (std::memcmp(actual, entry.desired, entry.size) == 0)
+        return true;
+#if LMU_RESET_HOST_REVISION >= 15
+    if (entry.object_slot == RESTORE_COLLISION_EXPORT_SLOT && entry.field_offset == 0 &&
+        entry.size == 96 && std::memcmp(actual + 36, entry.desired + 36, 60) == 0) {
+        // Native CollisionPrepare normalizes the float rotation. The transaction
+        // already verified exact bytes before this derived-cache reconstruction.
+        float before[9], after[9];
+        std::memcpy(before, entry.desired, sizeof(before));
+        std::memcpy(after, actual, sizeof(after));
+        for (unsigned i = 0; i < 9; ++i)
+            if (!std::isfinite(after[i]) || std::fabs(after[i] - before[i]) > 1e-6f)
+                return false;
+        return true;
+    }
+#endif
+    return false;
+}
 static void release_scope() {
     if (!scope_active)
         return;
@@ -248,7 +296,7 @@ static void WINAPI resume_outer(uint64_t input) {
                                   reinterpret_cast<void *>(address + entry.field_offset), actual,
                                   entry.size, &got) &&
                 got == entry.size;
-            if (read && std::memcmp(actual, entry.desired, entry.size) == 0)
+            if (read && restored_field_matches(entry, actual))
                 ++report.verified_fields;
             else
                 ++report.mismatched_fields;
@@ -600,6 +648,23 @@ static DWORD WINAPI worker(void *) {
         return 0;
     }
 #endif
+#if LMU_RESET_HOST_REVISION >= 15
+#ifdef LMU_RESET_HOST_FIXTURE
+    collision_spatial_refresh = reinterpret_cast<decltype(collision_spatial_refresh)>(
+        GetProcAddress(reinterpret_cast<HMODULE>(base), "FixtureCollisionSpatial"));
+    collision_remove_pairs = reinterpret_cast<decltype(collision_remove_pairs)>(
+        GetProcAddress(reinterpret_cast<HMODULE>(base), "FixtureCollisionRemovePairs"));
+#else
+    collision_spatial_refresh =
+        reinterpret_cast<decltype(collision_spatial_refresh)>(base + 0xf702e0);
+    collision_remove_pairs = reinterpret_cast<decltype(collision_remove_pairs)>(base + 0xfedfa0);
+#endif
+    if (!collision_spatial_refresh || !collision_remove_pairs) {
+        ipc->error = 114;
+        ipc->status = 4;
+        return 0;
+    }
+#endif
     if (!native_lifecycle_hooks_create(base, &lifecycle)) {
         ipc->error = 105;
         ipc->status = 4;
@@ -632,6 +697,10 @@ static DWORD WINAPI worker(void *) {
     simulation_fence_init(&fence, 1, physics_thread, objects, tires, 4);
     VehicleRestoreHost host{base,    worker_lock, control_lock,     physics_thread,
                             nullptr, pinned,      contacts_original};
+#if LMU_RESET_HOST_REVISION >= 15
+    host.collision_vehicle = owner_root + 8;
+    host.rebuild_collision = rebuild_collision;
+#endif
     adapter = vehicle_restore_adapter_create(&host);
 #ifdef LMU_RESET_HOST_FIXTURE
     if (adapter)

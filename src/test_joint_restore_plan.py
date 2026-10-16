@@ -122,7 +122,7 @@ def verify_joint(dll, plan, physical, mem, original, state, bindings):
     )
     for f in joint.fields[: joint.count]:
         address = (
-            base if f.object_slot == 2700 else bindings.address[f.object_slot]
+            base if f.object_slot == 2701 else bindings.address[f.object_slot]
         ) + f.field_offset
         assert C.string_at(address, f.size) == bytes(f.desired[: f.size])
     assert bytes(score) == bytes(desired)

@@ -25,6 +25,15 @@ static DWORD WINAPI control_loop(void *) {
 static bool pinned = true;
 static int original_calls;
 static int fault;
+static unsigned char collision_vehicle[0x18000];
+static unsigned collision_refreshes;
+static int rebuild_fixture_collision(void *, uintptr_t vehicle) {
+    assert(vehicle == reinterpret_cast<uintptr_t>(collision_vehicle));
+    assert(native_lock_witness(reinterpret_cast<uintptr_t>(&game_lock)).held_by_caller);
+    assert(native_lock_witness(reinterpret_cast<uintptr_t>(&control_lock)).held_by_caller);
+    ++collision_refreshes;
+    return fault != 3 || collision_refreshes != 1;
+}
 static void WINAPI refresh(void *object, double dt, double horizon, void *world, double angular) {
     const auto forward_calls = fault == 1 ? 2u : fault == 2 ? 1u : 4u;
     assert(angular == (calls < forward_calls ? 2.5 : 3.5));
@@ -61,9 +70,9 @@ static void load_frame(const char *path) {
 int main(int argc, char **argv) {
     assert(argc == 4);
     fault = std::atoi(argv[3]);
-    assert(fault >= 0 && fault <= 2);
+    assert(fault >= 0 && fault <= 3);
     load_frame(argv[1]);
-    auto memory = std::make_unique<unsigned char[]>(108 * 0x5000 + 2592 * 0x110);
+    auto memory = std::make_unique<unsigned char[]>(108 * 0x5000 + 2593 * 0x110);
     for (unsigned i = 0; i < RESTORE_OBJECT_COUNT; ++i)
         source_bindings.address[i] = reinterpret_cast<uintptr_t>(memory.get()) +
                                      (i < 108 ? i * 0x5000 : 108 * 0x5000 + (i - 108) * 0x110);
@@ -89,6 +98,16 @@ int main(int argc, char **argv) {
                             nullptr,
                             lifetime,
                             refresh};
+    host.collision_vehicle = reinterpret_cast<uintptr_t>(collision_vehicle);
+    host.rebuild_collision = rebuild_fixture_collision;
+    source_bindings.address[RESTORE_COLLISION_EXPORT_SLOT] = host.collision_vehicle + 0x159e8;
+    put(collision_vehicle + 0x15a50, float{1250});
+    put(collision_vehicle + 0x15a24, float{80});
+    for (unsigned i = 0; i < 9; ++i) {
+        put(collision_vehicle + 0x159e8 + i * 4, float(i % 4 == 0));
+        put(reinterpret_cast<unsigned char *>(source_bindings.address[104]) + 0x2500 + i * 8,
+            double(i % 4 == 0));
+    }
     auto *adapter = vehicle_restore_adapter_create(&host);
     assert(adapter);
     vehicle_restore_adapter_fixture_reader(adapter, fixture_read,
@@ -146,10 +165,15 @@ int main(int argc, char **argv) {
                                               &request, original, 77);
     };
     assert(dispatch(1, RESET_SAVE).control_result == CONTROL_OK);
+    put(collision_vehicle + 0x159e8, float{0}); // Singular collision-facing rotation.
+    assert(ops.capture(ops.user, &context.identity) != 0);
+    put(collision_vehicle + 0x159e8, float{1});
     auto original_saved_position = source_frame.bodies[0].position_world[0];
     source_frame.terminal_failure = 1;
     assert(dispatch(2, RESET_SAVE).control_result == CONTROL_SAVE_FAILED);
     load_frame(argv[2]);
+    put(collision_vehicle + 0x15a50, float{1240});
+    put(collision_vehicle + 0x15a24, float{-100});
     current_angular = 3.5;
     context.simulation_time = source_frame.simulation_time;
     samples();
@@ -169,14 +193,15 @@ int main(int argc, char **argv) {
     std::fprintf(stderr, "full adapter result=%d fields=%zu flow=%d cause=%d contacts=%llu\n",
                  result.control_result, runtime->plan.count, runtime->report.result,
                  runtime->report.cause, static_cast<unsigned long long>(calls));
-    assert(runtime->plan.count == 10077);
+    assert(runtime->plan.count == 10084);
     assert(result.control_result == (fault == 2   ? CONTROL_QUARANTINED
-                                     : fault == 1 ? CONTROL_RESTORE_RECOVERED
+                                     : fault != 0 ? CONTROL_RESTORE_RECOVERED
                                                   : CONTROL_OK));
     assert(result.forwarded == (fault != 2));
     assert(runtime->control.loads == (fault == 0 ? 1 : 0));
     if (fault != 2) {
-        assert(calls == (fault == 1 ? 6 : 4));
+        assert(calls == (fault == 1 ? 6 : fault == 3 ? 8 : 4));
+        assert(collision_refreshes == (fault == 3 ? 2 : 1));
         assert(vehicle_restore_adapter_contact_report(adapter).completed_mask == 15);
         for (size_t i = 0; i < runtime->plan.count; ++i) {
             const auto &field = runtime->plan.fields[i];
@@ -228,7 +253,7 @@ int main(int argc, char **argv) {
     DeleteCriticalSection(&gate_lock);
     assert(original_calls == (fault == 2 ? 5 : 9) && abi_errors == 0);
     puts("PASS full vehicle adapter: asynchronous control handoff -> saved/current capture -> "
-         "10077-field native boundary "
+         "10084-field native boundary with collision cache compensation "
          "transaction -> four contact rebuilds; failed save preserves checkpoint; stale contacts, "
          "missing lock/pin and changed session rejected. Owned memory only; refresh modeled.");
     return 0;

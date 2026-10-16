@@ -35,7 +35,7 @@ class Backend(C.Structure):
 class Bindings(C.Structure):
     _fields_ = [
         ("epoch", C.c_uint64),
-        ("address", C.c_size_t * 2700),
+        ("address", C.c_size_t * 2701),
         ("body_count", C.c_uint32),
         ("constraint_count", C.c_uint32),
         ("constraint_kind", C.c_uint32 * 64),
@@ -59,7 +59,7 @@ def verify_plan(
     def address(slot, offset=0):
         return (slot * 0x5000 if slot < 108 else 108 * 0x5000 + (slot - 108) * 0x110) + offset
 
-    mem = (C.c_ubyte * (108 * 0x5000 + 2592 * 0x110))()
+    mem = (C.c_ubyte * (108 * 0x5000 + 2593 * 0x110))()
     C.memset(mem, 0x5A, C.sizeof(mem))
     original = bytes(mem)
     state = {"writes": 0, "fail_at": 0, "read_fail": False, "epoch": 42}
@@ -74,7 +74,7 @@ def verify_plan(
     @Allowed
     def allowed(_, slot, offset, size):
         return int(
-            slot < 2700 and 0 < size <= 128 and offset + size <= (0x5000 if slot < 108 else 0x110)
+            slot < 2701 and 0 < size <= 128 and offset + size <= (0x5000 if slot < 108 else 0x110)
         )
 
     @Transfer
@@ -320,7 +320,7 @@ def verify_plan(
     bindings.body_count = saved.body_count
     bindings.constraint_count = saved.constraint_count
     bindings.engine_channels = bank.integration.channel_count
-    for i in range(2700):
+    for i in range(2701):
         bindings.address[i] = C.addressof(mem) + address(i)
     for i in range(saved.constraint_count):
         bindings.constraint_kind[i] = saved.recipes[i].kind

@@ -46,10 +46,10 @@ static void quarantine(void *u, int cause) {
 static int allowed(void *u, uint32_t slot, uint32_t off, uint32_t n) {
     (void)u;
     return (slot == 0 && off == 0x40 && n == 8) ||
-           (slot == 2700 && scoring_field_allowed_25661166(0, off, n));
+           (slot == RESTORE_SCORING_SLOT && scoring_field_allowed_25661166(0, off, n));
 }
 static unsigned char *address(uint32_t slot, uint32_t off) {
-    return (slot == 2700 ? score : body) + off;
+    return (slot == RESTORE_SCORING_SLOT ? score : body) + off;
 }
 static int read_field(void *u, uint32_t slot, uint32_t off, void *v, uint32_t n) {
     if (!owner_ok)
@@ -117,7 +117,7 @@ static void init(void) {
     int32_t flag = 2;
     for (unsigned i = 0; i < 3; i++) {
         RestoreField *f = plan.fields + i + 1;
-        f->object_slot = 2700;
+        f->object_slot = RESTORE_SCORING_SLOT;
         f->field_offset = offsets[i];
         f->size = 4;
         memcpy(f->expected, &flag, 4);

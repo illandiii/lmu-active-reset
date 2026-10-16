@@ -1,0 +1,134 @@
+<div
+  class="{{rootClass}}"
+  style="width: 440px; height: 300px; box-sizing: border-box; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 2000px rgba(10, 12, 15, {{panelAlpha}}); font-family: 'Barlow Semi Condensed', system-ui, sans-serif; color: #F2F4F6; text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 1px rgba(0,0,0,0.9); display: flex; flex-direction: column"
+>
+  <div
+    style="
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    "
+  >
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em"
+      >RELATIVE</span
+    >
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      "
+    >
+      <span style="display: flex; align-items: center; gap: 4px; color: #ff8a80"
+        ><span
+          style="
+            width: 7px;
+            height: 7px;
+            border-radius: 2px;
+            background: #ff5a4e;
+          "
+        ></span
+        >LAP AHEAD</span
+      >
+      <span style="display: flex; align-items: center; gap: 4px; color: #7fb8ff"
+        ><span
+          style="
+            width: 7px;
+            height: 7px;
+            border-radius: 2px;
+            background: #3d8bff;
+          "
+        ></span
+        >LAP BEHIND</span
+      >
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; padding: 6px 0">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+      <div
+        class="ov-in"
+        style="display: grid; grid-template-columns: 34px 30px 36px 28px minmax(0, 1fr) 46px 70px; align-items: center; column-gap: 8px; height: 34px; padding: 0 14px; background: {{r.bg}}; animation-delay: {{r.delay}}"
+      >
+        <span
+          style="height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 1px rgba(0,0,0,0.35); background: {{r.clsColor}}"
+          >{{r.cls}}</span
+        >
+        <span
+          class="mono"
+          style="font-size: 12px; font-weight: 700; color: {{r.posFg}}"
+          >{{r.pos}}</span
+        >
+        <span
+          class="mono"
+          style="font-size: 12px; font-weight: 500; color: #c2c9d0"
+          >#{{r.num}}</span
+        >
+        <div
+          style="
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <sc-if value="{{r.hasImg}}" hint-placeholder-val="{{ true }}">
+            <img
+              src="{{r.img}}"
+              alt="{{r.make}}"
+              style="
+                width: 28px;
+                height: 22px;
+                object-fit: contain;
+                display: block;
+                filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+              "
+            />
+          </sc-if>
+          <sc-if value="{{r.noImg}}" hint-placeholder-val="{{ false }}">
+            <span
+              style="
+                height: 16px;
+                width: 28px;
+                border-radius: 3px;
+                background: rgba(0, 0, 0, 0.55);
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 8px;
+                font-weight: 700;
+                color: #e2e6ea;
+                text-shadow: none;
+              "
+              >{{r.make}}</span
+            >
+          </sc-if>
+        </div>
+        <span
+          style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: {{r.nameFg}}"
+          >{{r.name}}</span
+        >
+        <div style="display: flex; justify-content: center">
+          <sc-if value="{{r.hasLap}}" hint-placeholder-val="{{ false }}">
+            <span
+              class="mono"
+              style="font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; color: #FFFFFF; text-shadow: none; background: {{r.lapBg}}"
+              >{{r.lap}}</span
+            >
+          </sc-if>
+        </div>
+        <span
+          class="mono"
+          style="font-size: 14px; font-weight: 700; text-align: right; color: {{r.gapFg}}"
+          >{{r.gapTxt}}</span
+        >
+      </div>
+    </sc-for>
+  </div>
+</div>

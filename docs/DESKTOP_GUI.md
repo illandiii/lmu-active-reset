@@ -45,10 +45,10 @@ run `scripts/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`.
   Offline Practice label have been removed; the title bar only says sector.
 - The Guide button beside each page title starts an optional seven-step tour.
   Anchored popups and arrows explain checkpoints, keys, audio, connection, settings,
-  future overlays and background mode. Next, Previous, Skip and Escape work with
+  overlays and background mode. Next, Previous, Skip and Escape work with
   keyboard focus containment. Finishing returns to the starting tab; the tour
   never triggers a save or restore.
-- Overlay is a clearly labeled future feature, with no invented live data.
+- Overlay contains seven configurable transparent widgets; see [OVERLAYS.md](OVERLAYS.md).
 - Click a shortcut to capture one key. Escape or window focus loss cancels.
   Duplicates, held repeats and modifier combinations are rejected. Tab navigates
   the dialog; **Use Tab** explicitly assigns that key. Enter/Space activate a
@@ -164,5 +164,5 @@ PowerShell through Node.
 These are desktop/fixture checks, not a new live-game reset qualification. The
 seven successful v15 driving trials remain documented in
 [the collision incident report](HIGH_SPEED_RESET_INCIDENT.md). The complete
-Electron-to-LMU workflow still needs a live session; overlay functionality and a
-standalone distributable bundling Python/native assets are future work.
+Electron-to-LMU workflow still needs a live session; the overlay live-game validation and a
+standalone distributable bundling Python/native assets remain outstanding.

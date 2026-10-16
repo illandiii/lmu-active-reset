@@ -1,0 +1,51 @@
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+.widget-scale {
+  transform-origin: top left;
+}
+.layout-handle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 8px;
+  font: 11px system-ui;
+  color: white;
+  background: #315daddd;
+  -webkit-app-region: drag;
+}
+.layout-handle button,
+.resize-handle {
+  color: white;
+  background: #315dad;
+  border: 0;
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+.layout-handle button {
+  height: 24px;
+  width: 32px;
+}
+.resize-handle {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  cursor: nwse-resize;
+}
+button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: -2px;
+}

@@ -13,6 +13,10 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
     rolldownOptions: {
+      input: {
+        main: fileURLToPath(new URL("./index.html", import.meta.url)),
+        overlay: fileURLToPath(new URL("./overlay.html", import.meta.url)),
+      },
       onwarn(warning, defaultHandler) {
         // React client directives are redundant in this entirely client-side app.
         if (

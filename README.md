@@ -1,8 +1,7 @@
 # Sector
 
 A sim-racing companion for Le Mans Ultimate, starting with checkpoint and
-physical-state restoration in offline Practice on Windows x64. Telemetry overlays
-are planned; they are not part of this version.
+physical-state restoration in offline Practice on Windows x64. Seven configurable telemetry overlays are available in the Overlay tab.
 
 **V15 fixes the collision sweep that launched the car after moving resets.**
 Seven live restores on 16 October verified all 10,084 fields, with current speeds
@@ -33,6 +32,9 @@ start/stop buttons or session countdown. Release both keys before using them:
 - Distinct sounds confirm save, restore and rejection; preview or mute them in the GUI.
 - The checkpoint card shows availability; shortcuts and confirmation audio sit below it.
 - Use **Guide** beside the page title for a brief tour with arrows and popups.
+- **Overlay** contains seven widgets with per-widget position, size, opacity and visibility.
+  Use **Edit layout** to drag them, then **Lock layout** to return input to LMU.
+  See [overlay setup and supported data](docs/OVERLAYS.md).
 - The gear button opens app settings, including a persistent Reduce motion option.
 - Connection status and the latest result remain visible in the bottom status bar.
 - Closing the window offers **Run in background**, **Quit Sector** or **Cancel**

@@ -13,6 +13,7 @@ const fs = require("node:fs");
 const { pathToFileURL } = require("node:url");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
+const { Overlays } = require("./overlays.cjs");
 const { Runtime, resolvePython } = require("./runtime.cjs");
 const {
   defaults,
@@ -56,6 +57,7 @@ let tray;
 let quitting = false;
 let canQuit = false;
 let audioReady;
+let overlays;
 
 function showWindow() {
   if (!window || window.isDestroyed()) return;
@@ -69,6 +71,7 @@ async function quit() {
   quitting = true;
   showWindow();
   try {
+    overlays?.stop();
     await runtime.stop();
     canQuit = true;
     app.quit();
@@ -113,6 +116,9 @@ function installBridge() {
       return { ok: false, error: error.message };
     }
   });
+  handle("sector:overlays-initialize", () => overlays.state());
+  handle("sector:overlays-save", (value) => overlays.save(value));
+  handle("sector:overlays-edit", (value) => overlays.setEditing(value));
   handle("sector:sound", async (name) => {
     if (!["save", "restore"].includes(name) || !preferences.sound)
       return { ok: false, error: "Sound is disabled." };
@@ -149,7 +155,10 @@ function installBridge() {
     window.isMaximized() ? window.unmaximize() : window.maximize(),
   );
   handle("sector:background", () => {
-    if (!quitting) window.hide();
+    if (!quitting) {
+      overlays.setEditing(false);
+      window.hide();
+    }
   });
   handle("sector:quit", () => {
     void quit();
@@ -224,6 +233,12 @@ if (!app.requestSingleInstanceLock()) {
           if (!quitting) window.webContents.send("sector:close-requested");
         }
       });
+      overlays = new Overlays({
+        root,
+        file: path.join(path.dirname(settingsFile), "overlays.json"),
+        preview,
+        desktop: () => window,
+      });
       installBridge();
       runtime.on("status", (state) => {
         if (!window.isDestroyed())
@@ -262,6 +277,7 @@ if (!app.requestSingleInstanceLock()) {
           show: showWindow,
           window: () => window,
           hasListener: () => Boolean(runtime.child || runtime.timer),
+          overlays: () => overlays,
         };
     })
     .catch((error) => {

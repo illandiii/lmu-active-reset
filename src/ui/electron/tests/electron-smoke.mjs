@@ -46,7 +46,9 @@ try {
     "function",
   );
   await page.getByRole("tab", { name: "Overlay", exact: true }).click();
-  await page.getByText("Coming soon", { exact: true }).waitFor();
+  await page
+    .getByRole("switch", { name: "Enable overlays", exact: true })
+    .waitFor();
   await page.screenshot({ path: path.join(output, "overlay.png") });
   await page.getByRole("tab", { name: "Active Reset", exact: true }).click();
   await page

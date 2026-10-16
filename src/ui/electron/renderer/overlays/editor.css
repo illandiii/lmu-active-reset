@@ -1,0 +1,169 @@
+.overlay-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+.overlay-toolbar .switch {
+  margin-left: 0;
+}
+.overlay-toolbar select {
+  margin-left: auto;
+  max-width: 230px;
+  background: #1b2432;
+  border: 1px solid #ffffff16;
+  color: #d5deed;
+  font: inherit;
+  padding: 10px;
+  border-radius: 7px;
+}
+.layout-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.overlay-workspace {
+  display: grid;
+  grid-template-columns: 152px minmax(0, 1fr);
+  gap: 24px;
+}
+.widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.widget-list > div {
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+  border-radius: 7px;
+}
+.widget-list > div.selected {
+  background: #22314a;
+}
+.widget-choice {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  font-size: 12px;
+  padding: 14px 12px;
+  border-radius: 7px;
+}
+.overlay-editor input[type="checkbox"] {
+  accent-color: #82acff;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+.widget-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 210px;
+  padding: 36px 16px 22px;
+  border: 1px solid #ffffff12;
+  border-radius: 12px;
+  background-color: #20262e;
+  background-image: conic-gradient(
+    #252c35 25%,
+    transparent 0 50%,
+    #252c35 0 75%,
+    transparent 0
+  );
+  background-size: 20px 20px;
+  overflow: hidden;
+}
+.stage-mode {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  color: #8493aa;
+  font-size: 10px;
+}
+.overlay-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+.overlay-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11px;
+  color: #9ba8bc;
+}
+.overlay-field > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #ffffff16;
+  background: #1b2432;
+  padding-right: 10px;
+  border-radius: 7px;
+}
+.overlay-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  font:
+    12px Manrope,
+    sans-serif;
+  color: #e3eafb;
+  background: #1b2432;
+  border: 0;
+  border-radius: 7px;
+}
+.overlay-field input[type="color"] {
+  height: 37px;
+  padding: 4px;
+  cursor: pointer;
+}
+.overlay-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+}
+.overlay-parts label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #c2ccdd;
+}
+.overlay-connection {
+  color: #9ba8bc;
+  font-size: 11px;
+  margin-top: 18px;
+}
+.overlay-error {
+  color: #ffc1b3;
+  font-size: 12px;
+  margin-top: 18px;
+}
+@media (max-width: 850px) {
+  .overlay-workspace {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .widget-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .widget-choice {
+    padding: 10px;
+  }
+  .overlay-toolbar {
+    flex-wrap: wrap;
+  }
+  .overlay-toolbar select {
+    max-width: 180px;
+  }
+  .overlay-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

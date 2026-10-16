@@ -13,6 +13,7 @@ import close from "@iconify-icons/solar/close-circle-linear";
 import monitor from "@iconify-icons/solar/monitor-linear";
 import gear from "@iconify-icons/solar/settings-linear";
 import { Preferences, AudioFeedback } from "./preferences.jsx";
+import { OverlayEditor } from "./overlays/editor.jsx";
 import { GuidedTour } from "./guided-tour.jsx";
 import help from "@iconify-icons/solar/question-circle-linear";
 import "@fontsource/manrope/latin-400.css";
@@ -377,19 +378,7 @@ function App() {
               </div>
               {tab === "overlay" && guideButton}
             </div>
-            <section className="overlay-placeholder">
-              <div className="overlay-symbol">
-                <Glyph icon={layers} />
-              </div>
-              <span className="eyebrow">The next sector</span>
-              <h2>
-                More insight.
-                <br />
-                Same focus.
-              </h2>
-              <p>Telemetry overlays are coming in a future update.</p>
-              <span className="coming-soon">Coming soon</span>
-            </section>
+            <OverlayEditor />
           </Tabs.Panel>
           {error && (
             <div className="error-banner" role="alert">

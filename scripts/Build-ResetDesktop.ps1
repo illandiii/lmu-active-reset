@@ -36,6 +36,7 @@ Copy-Item -LiteralPath $diagnostic -Destination (Join-Path $projectRoot 'bin/dia
 $profile.diagnostic_sha256 = (Get-FileHash $diagnostic -Algorithm SHA256).Hash
 $profile | Add-Member -NotePropertyName continuous_capture -NotePropertyValue $true -Force
 [IO.File]::WriteAllText($profilePath, ($profile | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
+& (Join-Path $PSScriptRoot 'Build-OverlayReader.ps1') -ZigPath $ZigPath
 & (Join-Path $PSScriptRoot 'Build-SectorUi.ps1')
 & (Join-Path $PSScriptRoot 'Test-ResetGui.ps1') -IncludeElectron
 Write-Output 'Desktop build ready. Start-Sector.cmd opens the automatic GUI.'

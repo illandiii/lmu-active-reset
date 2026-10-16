@@ -7,6 +7,10 @@ const subscribe = (channel, callback) => {
   return () => ipcRenderer.removeListener(channel, listener);
 };
 contextBridge.exposeInMainWorld("sector", {
+  initializeOverlays: () => ipcRenderer.invoke("sector:overlays-initialize"),
+  saveOverlays: (value) => ipcRenderer.invoke("sector:overlays-save", value),
+  editOverlays: (value) => ipcRenderer.invoke("sector:overlays-edit", value),
+  onOverlays: (callback) => subscribe("sector:overlays", callback),
   initialize: () => ipcRenderer.invoke("sector:initialize"),
   saveSettings: (settings) => ipcRenderer.invoke("sector:settings", settings),
   previewSound: (name) => ipcRenderer.invoke("sector:sound", name),

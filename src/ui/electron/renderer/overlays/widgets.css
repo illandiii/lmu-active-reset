@@ -1,0 +1,29 @@
+.lmu-widget {
+  line-height: normal;
+  color: #f2f4f6;
+}
+.lmu-widget * {
+  box-sizing: border-box;
+}
+.lmu-widget .mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.lmu-widget .wheel {
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 1px 2px #000c);
+}
+.lmu-widget .bar {
+  transform-origin: center bottom;
+}
+.lmu-widget .dbar {
+  transform-origin: left center;
+}
+.lmu-widget .dbar-l {
+  transform-origin: right center;
+}
+.lmu-widget[data-trace="false"] .input-trace,
+.lmu-widget[data-wheel="false"] .input-wheel,
+.lmu-widget[data-gear="false"] .input-gear {
+  display: none !important;
+}

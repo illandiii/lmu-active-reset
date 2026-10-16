@@ -1,0 +1,37 @@
+{
+  "leaderboard": {
+    "name": "Leaderboard",
+    "width": 440,
+    "height": 600
+  },
+  "relative": {
+    "name": "Relative",
+    "width": 440,
+    "height": 300
+  },
+  "weather": {
+    "name": "Weather",
+    "width": 420,
+    "height": 250
+  },
+  "delta": {
+    "name": "Delta",
+    "width": 360,
+    "height": 96
+  },
+  "inputs": {
+    "name": "Inputs",
+    "width": 520,
+    "height": 150
+  },
+  "laps": {
+    "name": "Laps",
+    "width": 560,
+    "height": 380
+  },
+  "session-summary": {
+    "name": "Session",
+    "width": 440,
+    "height": 332
+  }
+}

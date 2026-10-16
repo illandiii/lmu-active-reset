@@ -1,0 +1,973 @@
+{
+  "delta": {
+    "deltaTxt": "−0.214",
+    "deltaFg": "#3DDC84",
+    "pred": "2:18.198",
+    "fastScale": 0.214,
+    "slowScale": 0,
+    "panelAlpha": 0.35,
+    "rootClass": "clear"
+  },
+  "inputs": {
+    "rootClass": "clear",
+    "panelAlpha": 0.35,
+    "accent": "#FFD23F",
+    "throttlePts": "0.0,3.0 1.4,3.0 2.9,3.0 4.3,3.0 5.7,3.0 7.2,3.0 8.6,3.0 10.1,3.0 11.5,3.0 12.9,3.0 14.4,3.0 15.8,3.0 17.2,3.0 18.7,3.0 20.1,3.0 21.5,3.0 23.0,3.0 24.4,3.0 25.9,3.0 27.3,3.0 28.7,3.0 30.2,3.0 31.6,3.0 33.0,3.0 34.5,3.0 35.9,3.0 37.3,3.0 38.8,3.0 40.2,3.0 41.7,3.0 43.1,3.0 44.5,3.0 46.0,3.0 47.4,3.0 48.8,3.0 50.3,3.0 51.7,3.0 53.1,3.0 54.6,3.0 56.0,3.0 57.4,3.0 58.9,3.0 60.3,3.0 61.8,3.0 63.2,3.0 64.6,3.0 66.1,3.0 67.5,3.0 68.9,3.0 70.4,3.0 71.8,3.0 73.2,3.0 74.7,3.0 76.1,3.0 77.6,3.0 79.0,3.0 80.4,3.0 81.9,3.0 83.3,3.0 84.7,3.0 86.2,3.0 87.6,3.0 89.0,3.0 90.5,3.0 91.9,3.0 93.4,3.0 94.8,3.0 96.2,3.0 97.7,3.0 99.1,3.0 100.5,3.0 102.0,3.0 103.4,3.0 104.8,3.0 106.3,3.0 107.7,3.0 109.2,3.0 110.6,3.0 112.0,123.0 113.5,123.0 114.9,123.0 116.3,123.0 117.8,123.0 119.2,123.0 120.6,123.0 122.1,123.0 123.5,123.0 125.0,123.0 126.4,123.0 127.8,123.0 129.3,123.0 130.7,123.0 132.1,123.0 133.6,123.0 135.0,123.0 136.4,123.0 137.9,123.0 139.3,123.0 140.8,123.0 142.2,123.0 143.6,123.0 145.1,123.0 146.5,123.0 147.9,123.0 149.4,123.0 150.8,123.0 152.2,113.4 153.7,113.4 155.1,113.4 156.6,113.4 158.0,113.4 159.4,113.4 160.9,102.8 162.3,100.3 163.7,97.7 165.2,95.2 166.6,92.7 168.0,90.2 169.5,87.7 170.9,85.1 172.3,82.6 173.8,80.1 175.2,77.6 176.7,75.1 178.1,72.5 179.5,70.0 181.0,67.5 182.4,65.0 183.8,62.5 185.3,59.9 186.7,57.4 188.1,54.9 189.6,52.4 191.0,49.9 192.5,47.3 193.9,44.8 195.3,42.3 196.8,39.8 198.2,37.3 199.6,34.7 201.1,32.2 202.5,29.7 203.9,27.2 205.4,24.7 206.8,22.1 208.3,20.7 209.7,20.2 211.1,19.7 212.6,19.2 214.0,18.7",
+    "brakePts": "0.0,123.0 1.4,123.0 2.9,123.0 4.3,123.0 5.7,123.0 7.2,123.0 8.6,123.0 10.1,123.0 11.5,123.0 12.9,123.0 14.4,123.0 15.8,123.0 17.2,123.0 18.7,123.0 20.1,123.0 21.5,123.0 23.0,123.0 24.4,123.0 25.9,123.0 27.3,123.0 28.7,123.0 30.2,123.0 31.6,123.0 33.0,123.0 34.5,123.0 35.9,123.0 37.3,123.0 38.8,123.0 40.2,123.0 41.7,123.0 43.1,123.0 44.5,123.0 46.0,123.0 47.4,123.0 48.8,123.0 50.3,123.0 51.7,123.0 53.1,123.0 54.6,123.0 56.0,123.0 57.4,123.0 58.9,123.0 60.3,123.0 61.8,123.0 63.2,123.0 64.6,123.0 66.1,123.0 67.5,123.0 68.9,123.0 70.4,123.0 71.8,123.0 73.2,123.0 74.7,123.0 76.1,123.0 77.6,123.0 79.0,123.0 80.4,123.0 81.9,123.0 83.3,123.0 84.7,123.0 86.2,123.0 87.6,123.0 89.0,123.0 90.5,123.0 91.9,123.0 93.4,123.0 94.8,123.0 96.2,123.0 97.7,123.0 99.1,123.0 100.5,123.0 102.0,123.0 103.4,123.0 104.8,123.0 106.3,123.0 107.7,123.0 109.2,123.0 110.6,123.0 112.0,116.4 113.5,85.0 114.9,53.7 116.3,22.3 117.8,11.0 119.2,14.6 120.6,18.2 122.1,21.7 123.5,25.3 125.0,28.8 126.4,32.4 127.8,35.9 129.3,39.5 130.7,43.0 132.1,46.6 133.6,50.1 135.0,53.7 136.4,57.2 137.9,60.8 139.3,64.4 140.8,67.9 142.2,71.5 143.6,75.0 145.1,78.6 146.5,82.1 147.9,85.7 149.4,89.2 150.8,92.8 152.2,96.7 153.7,100.7 155.1,104.6 156.6,108.6 158.0,112.6 159.4,116.5 160.9,120.5 162.3,123.0 163.7,123.0 165.2,123.0 166.6,123.0 168.0,123.0 169.5,123.0 170.9,123.0 172.3,123.0 173.8,123.0 175.2,123.0 176.7,123.0 178.1,123.0 179.5,123.0 181.0,123.0 182.4,123.0 183.8,123.0 185.3,123.0 186.7,123.0 188.1,123.0 189.6,123.0 191.0,123.0 192.5,123.0 193.9,123.0 195.3,123.0 196.8,123.0 198.2,123.0 199.6,123.0 201.1,123.0 202.5,123.0 203.9,123.0 205.4,123.0 206.8,123.0 208.3,123.0 209.7,123.0 211.1,123.0 212.6,123.0 214.0,123.0",
+    "clutchPts": "0.0,123.0 1.4,123.0 2.9,123.0 4.3,123.0 5.7,123.0 7.2,123.0 8.6,123.0 10.1,123.0 11.5,123.0 12.9,123.0 14.4,123.0 15.8,123.0 17.2,123.0 18.7,123.0 20.1,123.0 21.5,123.0 23.0,123.0 24.4,123.0 25.9,123.0 27.3,123.0 28.7,123.0 30.2,123.0 31.6,123.0 33.0,123.0 34.5,123.0 35.9,123.0 37.3,123.0 38.8,123.0 40.2,123.0 41.7,123.0 43.1,123.0 44.5,123.0 46.0,123.0 47.4,123.0 48.8,123.0 50.3,123.0 51.7,123.0 53.1,123.0 54.6,123.0 56.0,123.0 57.4,123.0 58.9,123.0 60.3,123.0 61.8,123.0 63.2,123.0 64.6,123.0 66.1,123.0 67.5,123.0 68.9,123.0 70.4,123.0 71.8,123.0 73.2,123.0 74.7,123.0 76.1,123.0 77.6,123.0 79.0,123.0 80.4,123.0 81.9,123.0 83.3,123.0 84.7,123.0 86.2,123.0 87.6,123.0 89.0,123.0 90.5,123.0 91.9,123.0 93.4,123.0 94.8,123.0 96.2,123.0 97.7,123.0 99.1,123.0 100.5,123.0 102.0,123.0 103.4,123.0 104.8,123.0 106.3,123.0 107.7,123.0 109.2,123.0 110.6,123.0 112.0,123.0 113.5,123.0 114.9,123.0 116.3,123.0 117.8,123.0 119.2,123.0 120.6,123.0 122.1,123.0 123.5,45.0 125.0,45.0 126.4,45.0 127.8,123.0 129.3,123.0 130.7,123.0 132.1,123.0 133.6,123.0 135.0,45.0 136.4,45.0 137.9,123.0 139.3,123.0 140.8,123.0 142.2,123.0 143.6,123.0 145.1,123.0 146.5,123.0 147.9,123.0 149.4,123.0 150.8,123.0 152.2,123.0 153.7,123.0 155.1,123.0 156.6,123.0 158.0,123.0 159.4,123.0 160.9,123.0 162.3,123.0 163.7,123.0 165.2,123.0 166.6,123.0 168.0,123.0 169.5,123.0 170.9,123.0 172.3,123.0 173.8,123.0 175.2,123.0 176.7,123.0 178.1,123.0 179.5,123.0 181.0,123.0 182.4,123.0 183.8,123.0 185.3,123.0 186.7,123.0 188.1,123.0 189.6,123.0 191.0,123.0 192.5,123.0 193.9,123.0 195.3,123.0 196.8,123.0 198.2,123.0 199.6,123.0 201.1,123.0 202.5,123.0 203.9,123.0 205.4,123.0 206.8,123.0 208.3,123.0 209.7,123.0 211.1,123.0 212.6,123.0 214.0,123.0",
+    "pedals": [
+      {
+        "label": "C",
+        "v": 0,
+        "pct": 0,
+        "color": "#4C8DFF",
+        "fg": "#8FBBFF"
+      },
+      {
+        "label": "B",
+        "v": 0,
+        "pct": 0,
+        "color": "#FF4D4D",
+        "fg": "#FF8A8A"
+      },
+      {
+        "label": "T",
+        "v": 0.8687500000000005,
+        "pct": 87,
+        "color": "#3DDC84",
+        "fg": "#3DDC84"
+      }
+    ],
+    "angle": "42.5",
+    "speed": 141,
+    "gear": 4
+  },
+  "laps": {
+    "laps": [
+      {
+        "lap": 48,
+        "time": "2:18.906",
+        "ve": "3.6%",
+        "fuel": "2.42 L",
+        "dpb": "+0.494",
+        "dbest": "+1.287",
+        "dpbFg": "#F2F4F6",
+        "timeFg": "#F2F4F6",
+        "tag": "",
+        "hasTag": false,
+        "bg": "rgba(0,0,0,0.35)",
+        "delay": "0ms"
+      },
+      {
+        "lap": 47,
+        "time": "2:18.655",
+        "ve": "3.5%",
+        "fuel": "2.40 L",
+        "dpb": "+0.243",
+        "dbest": "+1.036",
+        "dpbFg": "#3DDC84",
+        "timeFg": "#F2F4F6",
+        "tag": "",
+        "hasTag": false,
+        "bg": "transparent",
+        "delay": "30ms"
+      },
+      {
+        "lap": 46,
+        "time": "2:19.212",
+        "ve": "3.7%",
+        "fuel": "2.44 L",
+        "dpb": "+0.800",
+        "dbest": "+1.593",
+        "dpbFg": "#FF8A8A",
+        "timeFg": "#F2F4F6",
+        "tag": "",
+        "hasTag": false,
+        "bg": "transparent",
+        "delay": "60ms"
+      },
+      {
+        "lap": 45,
+        "time": "2:18.770",
+        "ve": "3.6%",
+        "fuel": "2.41 L",
+        "dpb": "+0.358",
+        "dbest": "+1.151",
+        "dpbFg": "#F2F4F6",
+        "timeFg": "#F2F4F6",
+        "tag": "",
+        "hasTag": false,
+        "bg": "transparent",
+        "delay": "90ms"
+      },
+      {
+        "lap": 44,
+        "time": "2:24.981",
+        "ve": "3.1%",
+        "fuel": "2.05 L",
+        "dpb": "+6.569",
+        "dbest": "+7.362",
+        "dpbFg": "#B8C0C8",
+        "timeFg": "#B8C0C8",
+        "tag": "OUT",
+        "hasTag": true,
+        "bg": "transparent",
+        "delay": "120ms"
+      },
+      {
+        "lap": 43,
+        "time": "2:39.540",
+        "ve": "3.4%",
+        "fuel": "2.21 L",
+        "dpb": "+21.128",
+        "dbest": "+21.921",
+        "dpbFg": "#B8C0C8",
+        "timeFg": "#B8C0C8",
+        "tag": "IN",
+        "hasTag": true,
+        "bg": "transparent",
+        "delay": "150ms"
+      },
+      {
+        "lap": 42,
+        "time": "2:19.044",
+        "ve": "3.6%",
+        "fuel": "2.43 L",
+        "dpb": "+0.632",
+        "dbest": "+1.425",
+        "dpbFg": "#FF8A8A",
+        "timeFg": "#F2F4F6",
+        "tag": "",
+        "hasTag": false,
+        "bg": "transparent",
+        "delay": "180ms"
+      },
+      {
+        "lap": 41,
+        "time": "2:18.598",
+        "ve": "3.6%",
+        "fuel": "2.41 L",
+        "dpb": "+0.186",
+        "dbest": "+0.979",
+        "dpbFg": "#3DDC84",
+        "timeFg": "#F2F4F6",
+        "tag": "",
+        "hasTag": false,
+        "bg": "transparent",
+        "delay": "210ms"
+      }
+    ],
+    "panelAlpha": 0.35,
+    "rootClass": "clear"
+  },
+  "leaderboard": {
+    "classes": [
+      {
+        "badge": "HY",
+        "color": "#E5322F",
+        "count": 18,
+        "best": "2:03.884",
+        "delay": "0ms",
+        "rows": [
+          {
+            "car": true,
+            "sep": false,
+            "pos": 1,
+            "num": 50,
+            "make": "FER",
+            "makeName": "FER",
+            "name": "A. Lindqvist",
+            "last": "2:04.512",
+            "gap": "Lap 52",
+            "pit": false,
+            "img": "/_blob/8943f64622b774dd4136b8fc9db0b13a",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#F2F4F6",
+            "gapFg": "#C2C9D0",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 2,
+            "num": 6,
+            "make": "POR",
+            "makeName": "POR",
+            "name": "T. Haddad",
+            "last": "2:04.231",
+            "gap": "+4.106",
+            "pit": false,
+            "img": "/_blob/c14f5c516b374336dfd86824232b704f",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#3DDC84",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 3,
+            "num": 36,
+            "make": "ALP",
+            "makeName": "ALP",
+            "name": "K. Ishida",
+            "last": "2:03.884",
+            "gap": "+9.877",
+            "pit": false,
+            "img": "/_blob/a6447f06d59446c526269eed7d1daec6",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#CFA8FF",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          }
+        ]
+      },
+      {
+        "badge": "P2",
+        "color": "#2D9CDB",
+        "count": 14,
+        "best": "2:11.060",
+        "delay": "60ms",
+        "rows": [
+          {
+            "car": true,
+            "sep": false,
+            "pos": 1,
+            "num": 22,
+            "make": "ORE",
+            "makeName": "ORE",
+            "name": "P. Varga",
+            "last": "2:11.302",
+            "gap": "Lap 50",
+            "pit": false,
+            "img": "/_blob/eefd8e6fee31d6775adddad394b37802",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#F2F4F6",
+            "gapFg": "#C2C9D0",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 2,
+            "num": 183,
+            "make": "ORE",
+            "makeName": "ORE",
+            "name": "M. Duarte",
+            "last": "2:11.060",
+            "gap": "+6.215",
+            "pit": true,
+            "img": "/_blob/eefd8e6fee31d6775adddad394b37802",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#CFA8FF",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          }
+        ]
+      },
+      {
+        "badge": "P3",
+        "color": "#F28C28",
+        "count": 6,
+        "best": "2:16.105",
+        "delay": "120ms",
+        "rows": [
+          {
+            "car": true,
+            "sep": false,
+            "pos": 1,
+            "num": 17,
+            "make": "LIG",
+            "makeName": "LIG",
+            "name": "C. Brunetti",
+            "last": "2:16.420",
+            "gap": "Lap 49",
+            "pit": false,
+            "img": "/_blob/058edafe0928ad019d94d24be2480019",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#F2F4F6",
+            "gapFg": "#C2C9D0",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 2,
+            "num": 4,
+            "make": "DUQ",
+            "makeName": "DUQ",
+            "name": "H. Lund",
+            "last": "2:16.105",
+            "gap": "+5.882",
+            "pit": false,
+            "img": "/_blob/9606265f18ed00f6cf2b5a08f9e8807a",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#CFA8FF",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          }
+        ]
+      },
+      {
+        "badge": "GT3",
+        "color": "#1FA34A",
+        "count": 18,
+        "best": "2:17.619",
+        "delay": "180ms",
+        "rows": [
+          {
+            "car": true,
+            "sep": false,
+            "pos": 1,
+            "num": 92,
+            "make": "POR",
+            "makeName": "POR",
+            "name": "E. Brandt",
+            "last": "2:17.988",
+            "gap": "Lap 48",
+            "pit": false,
+            "img": "/_blob/c14f5c516b374336dfd86824232b704f",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#F2F4F6",
+            "gapFg": "#C2C9D0",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 2,
+            "num": 31,
+            "make": "BMW",
+            "makeName": "BMW",
+            "name": "L. Moreau",
+            "last": "2:17.619",
+            "gap": "+3.774",
+            "pit": false,
+            "img": "/_blob/8a0dd37e17819bf7a44244d8cc5a2c4f",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#CFA8FF",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 3,
+            "num": 54,
+            "make": "FER",
+            "makeName": "FER",
+            "name": "G. Rinaldi",
+            "last": "2:18.341",
+            "gap": "+9.120",
+            "pit": false,
+            "img": "/_blob/8943f64622b774dd4136b8fc9db0b13a",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#F2F4F6",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "sep": true,
+            "car": false
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 4,
+            "num": 46,
+            "make": "MCL",
+            "makeName": "MCL",
+            "name": "F. Achterberg",
+            "last": "2:18.522",
+            "gap": "+19.660",
+            "pit": false,
+            "img": "/_blob/0da5aba271095f94ecb7701691d5745e",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#F2F4F6",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 5,
+            "num": 77,
+            "make": "FOR",
+            "makeName": "FOR",
+            "name": "D. Marino",
+            "last": "2:18.906",
+            "gap": "+24.318",
+            "pit": false,
+            "img": "/_blob/ce385ffd9e91f889d9725da453cc76cf",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#F2F4F6",
+            "gapFg": "#F2F4F6",
+            "bg": "rgba(255,210,63,0.22)",
+            "posBg": "#FFD23F",
+            "posFg": "#16181C",
+            "nameFg": "#FFD23F"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 6,
+            "num": 85,
+            "make": "LAM",
+            "makeName": "LAM",
+            "name": "S. Kowal",
+            "last": "2:18.711",
+            "gap": "+25.004",
+            "pit": false,
+            "img": "/_blob/29b988c1384645c82c370c4e8cb6d947",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#3DDC84",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          },
+          {
+            "car": true,
+            "sep": false,
+            "pos": 7,
+            "num": 59,
+            "make": "AST",
+            "makeName": "AST",
+            "name": "N. Hughes",
+            "last": "2:19.330",
+            "gap": "+31.557",
+            "pit": false,
+            "img": "/_blob/0d37816919fd3351cc3f82a614c60099",
+            "hasImg": true,
+            "noImg": false,
+            "lastFg": "#F2F4F6",
+            "gapFg": "#F2F4F6",
+            "bg": "transparent",
+            "posBg": "rgba(0,0,0,0.55)",
+            "posFg": "#F2F4F6",
+            "nameFg": "#F2F4F6"
+          }
+        ]
+      }
+    ],
+    "bgAlpha": 0.1,
+    "boxAlpha": 0.45,
+    "rootClass": "clear"
+  },
+  "relative": {
+    "rows": [
+      {
+        "cls": "HY",
+        "clsColor": "#E5322F",
+        "pos": "P2",
+        "num": 93,
+        "make": "PEU",
+        "name": "T. Haddad",
+        "img": "/_blob/a0f8a4b127bae7639392ac1eb7b3fdf0",
+        "hasImg": true,
+        "noImg": false,
+        "hasLap": true,
+        "lap": "+1 LAP",
+        "lapBg": "#E2483D",
+        "gapTxt": "−6.848",
+        "gapFg": "#FF8A80",
+        "posFg": "#FF8A80",
+        "nameFg": "#FF8A80",
+        "bg": "rgba(226,72,61,0.16)",
+        "delay": "0ms"
+      },
+      {
+        "cls": "GT3",
+        "clsColor": "#1FA34A",
+        "pos": "P4",
+        "num": 46,
+        "make": "MCL",
+        "name": "F. Achterberg",
+        "img": "/_blob/0da5aba271095f94ecb7701691d5745e",
+        "hasImg": true,
+        "noImg": false,
+        "hasLap": false,
+        "lap": "−0 LAP",
+        "lapBg": "#2F7BEA",
+        "gapTxt": "−4.622",
+        "gapFg": "#F2F4F6",
+        "posFg": "#F2F4F6",
+        "nameFg": "#F2F4F6",
+        "bg": "transparent",
+        "delay": "30ms"
+      },
+      {
+        "cls": "P2",
+        "clsColor": "#2D9CDB",
+        "pos": "P2",
+        "num": 183,
+        "make": "ORE",
+        "name": "M. Duarte",
+        "img": "/_blob/eefd8e6fee31d6775adddad394b37802",
+        "hasImg": true,
+        "noImg": false,
+        "hasLap": true,
+        "lap": "+1 LAP",
+        "lapBg": "#E2483D",
+        "gapTxt": "−1.198",
+        "gapFg": "#FF8A80",
+        "posFg": "#FF8A80",
+        "nameFg": "#FF8A80",
+        "bg": "rgba(226,72,61,0.16)",
+        "delay": "60ms"
+      },
+      {
+        "cls": "GT3",
+        "clsColor": "#1FA34A",
+        "pos": "P5",
+        "num": 77,
+        "make": "FOR",
+        "name": "D. Marino",
+        "img": "/_blob/ce385ffd9e91f889d9725da453cc76cf",
+        "hasImg": true,
+        "noImg": false,
+        "hasLap": false,
+        "lap": "−0 LAP",
+        "lapBg": "#2F7BEA",
+        "gapTxt": "0.000",
+        "gapFg": "#FFD23F",
+        "posFg": "#FFD23F",
+        "nameFg": "#FFD23F",
+        "bg": "rgba(255,210,63,0.22)",
+        "delay": "90ms"
+      },
+      {
+        "cls": "GT3",
+        "clsColor": "#1FA34A",
+        "pos": "P6",
+        "num": 85,
+        "make": "LAM",
+        "name": "S. Kowal",
+        "img": "/_blob/29b988c1384645c82c370c4e8cb6d947",
+        "hasImg": true,
+        "noImg": false,
+        "hasLap": false,
+        "lap": "−0 LAP",
+        "lapBg": "#2F7BEA",
+        "gapTxt": "+0.656",
+        "gapFg": "#F2F4F6",
+        "posFg": "#F2F4F6",
+        "nameFg": "#F2F4F6",
+        "bg": "transparent",
+        "delay": "120ms"
+      },
+      {
+        "cls": "GT3",
+        "clsColor": "#1FA34A",
+        "pos": "P7",
+        "num": 59,
+        "make": "AST",
+        "name": "N. Hughes",
+        "img": "/_blob/0d37816919fd3351cc3f82a614c60099",
+        "hasImg": true,
+        "noImg": false,
+        "hasLap": false,
+        "lap": "−0 LAP",
+        "lapBg": "#2F7BEA",
+        "gapTxt": "+7.201",
+        "gapFg": "#F2F4F6",
+        "posFg": "#F2F4F6",
+        "nameFg": "#F2F4F6",
+        "bg": "transparent",
+        "delay": "150ms"
+      },
+      {
+        "cls": "GT3",
+        "clsColor": "#1FA34A",
+        "pos": "P11",
+        "num": 11,
+        "make": "LEX",
+        "name": "V. Sato",
+        "img": "/_blob/f7214a598a91fd44ae4ac2bf034de080",
+        "hasImg": true,
+        "noImg": false,
+        "hasLap": true,
+        "lap": "−1 LAP",
+        "lapBg": "#2F7BEA",
+        "gapTxt": "+11.419",
+        "gapFg": "#7FB8FF",
+        "posFg": "#7FB8FF",
+        "nameFg": "#7FB8FF",
+        "bg": "rgba(47,123,234,0.16)",
+        "delay": "180ms"
+      }
+    ],
+    "panelAlpha": 0.35,
+    "rootClass": "clear"
+  },
+  "session-summary": {
+    "bars": [
+      {
+        "h": 70,
+        "c": "rgba(255,255,255,0.22)",
+        "delay": "6ms"
+      },
+      {
+        "h": 41,
+        "c": "#A3ADB8",
+        "delay": "12ms"
+      },
+      {
+        "h": 23,
+        "c": "#A3ADB8",
+        "delay": "18ms"
+      },
+      {
+        "h": 20,
+        "c": "#A3ADB8",
+        "delay": "24ms"
+      },
+      {
+        "h": 30,
+        "c": "#A3ADB8",
+        "delay": "30ms"
+      },
+      {
+        "h": 42,
+        "c": "#A3ADB8",
+        "delay": "36ms"
+      },
+      {
+        "h": 39,
+        "c": "#A3ADB8",
+        "delay": "42ms"
+      },
+      {
+        "h": 30,
+        "c": "#A3ADB8",
+        "delay": "48ms"
+      },
+      {
+        "h": 32,
+        "c": "#A3ADB8",
+        "delay": "54ms"
+      },
+      {
+        "h": 43,
+        "c": "#A3ADB8",
+        "delay": "60ms"
+      },
+      {
+        "h": 46,
+        "c": "#A3ADB8",
+        "delay": "66ms"
+      },
+      {
+        "h": 32,
+        "c": "#A3ADB8",
+        "delay": "72ms"
+      },
+      {
+        "h": 20,
+        "c": "#A3ADB8",
+        "delay": "78ms"
+      },
+      {
+        "h": 21,
+        "c": "#A3ADB8",
+        "delay": "84ms"
+      },
+      {
+        "h": 38,
+        "c": "#A3ADB8",
+        "delay": "90ms"
+      },
+      {
+        "h": 45,
+        "c": "#A3ADB8",
+        "delay": "96ms"
+      },
+      {
+        "h": 38,
+        "c": "#A3ADB8",
+        "delay": "102ms"
+      },
+      {
+        "h": 29,
+        "c": "#A3ADB8",
+        "delay": "108ms"
+      },
+      {
+        "h": 34,
+        "c": "#A3ADB8",
+        "delay": "114ms"
+      },
+      {
+        "h": 43,
+        "c": "#A3ADB8",
+        "delay": "120ms"
+      },
+      {
+        "h": 40,
+        "c": "#A3ADB8",
+        "delay": "126ms"
+      },
+      {
+        "h": 70,
+        "c": "rgba(255,255,255,0.22)",
+        "delay": "132ms"
+      },
+      {
+        "h": 70,
+        "c": "rgba(255,255,255,0.22)",
+        "delay": "138ms"
+      },
+      {
+        "h": 29,
+        "c": "#A3ADB8",
+        "delay": "144ms"
+      },
+      {
+        "h": 45,
+        "c": "#A3ADB8",
+        "delay": "150ms"
+      },
+      {
+        "h": 46,
+        "c": "#A3ADB8",
+        "delay": "156ms"
+      },
+      {
+        "h": 34,
+        "c": "#A3ADB8",
+        "delay": "162ms"
+      },
+      {
+        "h": 28,
+        "c": "#A3ADB8",
+        "delay": "168ms"
+      },
+      {
+        "h": 35,
+        "c": "#A3ADB8",
+        "delay": "174ms"
+      },
+      {
+        "h": 41,
+        "c": "#A3ADB8",
+        "delay": "180ms"
+      },
+      {
+        "h": 19,
+        "c": "#3DDC84",
+        "delay": "186ms"
+      },
+      {
+        "h": 21,
+        "c": "#A3ADB8",
+        "delay": "192ms"
+      },
+      {
+        "h": 21,
+        "c": "#A3ADB8",
+        "delay": "198ms"
+      },
+      {
+        "h": 38,
+        "c": "#A3ADB8",
+        "delay": "204ms"
+      },
+      {
+        "h": 50,
+        "c": "#A3ADB8",
+        "delay": "210ms"
+      },
+      {
+        "h": 44,
+        "c": "#A3ADB8",
+        "delay": "216ms"
+      },
+      {
+        "h": 29,
+        "c": "#A3ADB8",
+        "delay": "222ms"
+      },
+      {
+        "h": 26,
+        "c": "#A3ADB8",
+        "delay": "228ms"
+      },
+      {
+        "h": 35,
+        "c": "#A3ADB8",
+        "delay": "234ms"
+      },
+      {
+        "h": 39,
+        "c": "#A3ADB8",
+        "delay": "240ms"
+      },
+      {
+        "h": 25,
+        "c": "#A3ADB8",
+        "delay": "246ms"
+      },
+      {
+        "h": 41,
+        "c": "#A3ADB8",
+        "delay": "252ms"
+      },
+      {
+        "h": 70,
+        "c": "rgba(255,255,255,0.22)",
+        "delay": "258ms"
+      },
+      {
+        "h": 70,
+        "c": "rgba(255,255,255,0.22)",
+        "delay": "264ms"
+      },
+      {
+        "h": 31,
+        "c": "#A3ADB8",
+        "delay": "270ms"
+      },
+      {
+        "h": 46,
+        "c": "#A3ADB8",
+        "delay": "276ms"
+      },
+      {
+        "h": 27,
+        "c": "#A3ADB8",
+        "delay": "282ms"
+      },
+      {
+        "h": 36,
+        "c": "#A3ADB8",
+        "delay": "288ms"
+      }
+    ],
+    "accent": "#FFD23F",
+    "panelAlpha": 0.35,
+    "rootClass": "clear"
+  },
+  "weather": {
+    "slots": [
+      {
+        "label": "NOW",
+        "temp": "17°",
+        "rain": "10%",
+        "isSun": false,
+        "isPartly": true,
+        "isCloud": false,
+        "isRain": false,
+        "rainScale": 0.1,
+        "rainFg": "#B8C0C8",
+        "bg": "rgba(0,0,0,0.35)",
+        "labelFg": "#F2F4F6",
+        "delay": "0ms"
+      },
+      {
+        "label": "+30M",
+        "temp": "16°",
+        "rain": "25%",
+        "isSun": false,
+        "isPartly": false,
+        "isCloud": true,
+        "isRain": false,
+        "rainScale": 0.25,
+        "rainFg": "#B8C0C8",
+        "bg": "transparent",
+        "labelFg": "#B8C0C8",
+        "delay": "40ms"
+      },
+      {
+        "label": "+1H",
+        "temp": "15°",
+        "rain": "40%",
+        "isSun": false,
+        "isPartly": false,
+        "isCloud": true,
+        "isRain": false,
+        "rainScale": 0.4,
+        "rainFg": "#B8C0C8",
+        "bg": "transparent",
+        "labelFg": "#B8C0C8",
+        "delay": "80ms"
+      },
+      {
+        "label": "+1H30",
+        "temp": "14°",
+        "rain": "65%",
+        "isSun": false,
+        "isPartly": false,
+        "isCloud": false,
+        "isRain": true,
+        "rainScale": 0.65,
+        "rainFg": "#8FBBFF",
+        "bg": "transparent",
+        "labelFg": "#B8C0C8",
+        "delay": "120ms"
+      },
+      {
+        "label": "+2H",
+        "temp": "13°",
+        "rain": "80%",
+        "isSun": false,
+        "isPartly": false,
+        "isCloud": false,
+        "isRain": true,
+        "rainScale": 0.8,
+        "rainFg": "#8FBBFF",
+        "bg": "transparent",
+        "labelFg": "#B8C0C8",
+        "delay": "160ms"
+      }
+    ],
+    "panelAlpha": 0.35,
+    "rootClass": "clear"
+  }
+}

@@ -13,3 +13,10 @@ Fonts and icon data are bundled locally through pinned npm lockfile entries.
 Font license texts are included in `licenses/`. The installed Electron runtime
 includes its own LICENSE and LICENSES.chromium.html. Library license notices
 remain with their npm packages. No reference-site imagery or code is copied.
+
+## User-supplied overlay designs and logos
+
+Widget layouts and artwork come from the supplied LMU Overlay.html and loghi_LMU.png.
+Manufacturer names and marks belong to their respective owners. The sheet is bundled unchanged.
+The bundled Barlow Semi Condensed and JetBrains Mono font files retain the original
+license in renderer/overlays/fonts/LICENSE.txt. No remote page runtime is bundled.

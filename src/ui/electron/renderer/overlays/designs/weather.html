@@ -1,0 +1,229 @@
+<div
+  class="{{rootClass}}"
+  style="width: 420px; height: 250px; box-sizing: border-box; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 2000px rgba(10, 12, 15, {{panelAlpha}}); font-family: 'Barlow Semi Condensed', system-ui, sans-serif; color: #F2F4F6; text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 1px rgba(0,0,0,0.9); display: flex; flex-direction: column"
+>
+  <div
+    style="
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px 9px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    "
+  >
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em"
+      >WEATHER</span
+    >
+    <span style="font-size: 12px; font-weight: 600; color: #b8c0c8"
+      >{{surface}}</span
+    >
+  </div>
+
+  <div
+    style="
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px 12px;
+    "
+  >
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span
+        style="
+          font-size: 11px;
+          font-weight: 600;
+          color: #b8c0c8;
+          letter-spacing: 0.06em;
+        "
+        >AIR</span
+      >
+      <span class="mono" style="font-size: 18px; font-weight: 700"
+        >{{air}}</span
+      >
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span
+        style="
+          font-size: 11px;
+          font-weight: 600;
+          color: #b8c0c8;
+          letter-spacing: 0.06em;
+        "
+        >TRACK</span
+      >
+      <span class="mono" style="font-size: 18px; font-weight: 700"
+        >{{trackTemp}}</span
+      >
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span
+        style="
+          font-size: 11px;
+          font-weight: 600;
+          color: #b8c0c8;
+          letter-spacing: 0.06em;
+        "
+        >HUMIDITY</span
+      >
+      <span class="mono" style="font-size: 18px; font-weight: 700"
+        >{{humidity}}</span
+      >
+    </div>
+  </div>
+
+  <div
+    style="
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      padding: 0 12px;
+    "
+  >
+    <sc-for list="{{slots}}" as="s" hint-placeholder-count="5">
+      <div
+        class="ov-in"
+        style="display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 0 8px; border-radius: 6px; background: {{s.bg}}; animation-delay: {{s.delay}}"
+      >
+        <span
+          style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: {{s.labelFg}}"
+          >{{s.label}}</span
+        >
+        <sc-if value="{{s.isSun}}" hint-placeholder-val="{{ false }}">
+          <svg
+            class="ico"
+            width="24"
+            height="24"
+            sc-camel-view-box="0 0 24 24"
+            fill="none"
+            stroke="#FFD23F"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="4.2"></circle>
+            <path
+              d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"
+            ></path>
+          </svg>
+        </sc-if>
+        <sc-if value="{{s.isPartly}}" hint-placeholder-val="{{ false }}">
+          <svg
+            class="ico"
+            width="24"
+            height="24"
+            sc-camel-view-box="0 0 24 24"
+            fill="none"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M8.5 3.5v1.6M3.5 8.5h1.6M5 5l1.1 1.1M12 5l-1.1 1.1"
+              stroke="#FFD23F"
+            ></path>
+            <path d="M6.2 11.2a3.4 3.4 0 0 1 6-2.4" stroke="#FFD23F"></path>
+            <path
+              d="M8 19.5h9a3.5 3.5 0 0 0 .4-7 5 5 0 0 0-9.6 1.2A2.9 2.9 0 0 0 8 19.5Z"
+              stroke="#E2E6EA"
+            ></path>
+          </svg>
+        </sc-if>
+        <sc-if value="{{s.isCloud}}" hint-placeholder-val="{{ true }}">
+          <svg
+            class="ico"
+            width="24"
+            height="24"
+            sc-camel-view-box="0 0 24 24"
+            fill="none"
+            stroke="#E2E6EA"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M7 18.5h10a4 4 0 0 0 .5-8 5.5 5.5 0 0 0-10.6 1.4A3.3 3.3 0 0 0 7 18.5Z"
+            ></path>
+          </svg>
+        </sc-if>
+        <sc-if value="{{s.isRain}}" hint-placeholder-val="{{ false }}">
+          <svg
+            class="ico"
+            width="24"
+            height="24"
+            sc-camel-view-box="0 0 24 24"
+            fill="none"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M7 15h10a4 4 0 0 0 .5-8 5.5 5.5 0 0 0-10.6 1.4A3.3 3.3 0 0 0 7 15Z"
+              stroke="#E2E6EA"
+            ></path>
+            <path
+              d="M8.5 18l-1 2.5M12.5 18l-1 2.5M16.5 18l-1 2.5"
+              stroke="#6FA4FF"
+            ></path>
+          </svg>
+        </sc-if>
+        <span class="mono" style="font-size: 13px; font-weight: 700"
+          >{{s.temp}}</span
+        >
+        <div
+          style="
+            width: 70%;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+          "
+        >
+          <div
+            style="width: 100%; height: 100%; background: #4C8DFF; transform-origin: left center; transform: scaleX({{s.rainScale}})"
+          ></div>
+        </div>
+        <span
+          class="mono"
+          style="font-size: 11px; font-weight: 500; color: {{s.rainFg}}"
+          >{{s.rain}}</span
+        >
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div
+    style="
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+    "
+  >
+    <svg
+      class="ico"
+      width="14"
+      height="14"
+      sc-camel-view-box="0 0 24 24"
+      fill="none"
+      stroke="#6FA4FF"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10Z"
+      ></path>
+    </svg>
+    <span style="font-size: 13px; font-weight: 600">{{forecast}}</span>
+    <span style="flex: 1"></span>
+    <span style="font-size: 12px; font-weight: 500; color: #b8c0c8"
+      >{{rainLap}}</span
+    >
+  </div>
+</div>

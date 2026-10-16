@@ -1,0 +1,224 @@
+<div
+  class="{{rootClass}}"
+  style="width: 520px; height: 150px; box-sizing: border-box; padding: 12px; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 2000px rgba(10, 12, 15, {{panelAlpha}}); font-family: 'Barlow Semi Condensed', system-ui, sans-serif; color: #F2F4F6; text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 1px rgba(0,0,0,0.9); display: flex; align-items: stretch; gap: 12px"
+>
+  <div
+    class="input-trace"
+    style="
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    "
+  >
+    <svg
+      width="214"
+      height="126"
+      sc-camel-view-box="0 0 214 126"
+      sc-camel-preserve-aspect-ratio="none"
+      role="img"
+      aria-label="Input trace: clutch, brake, throttle"
+      style="display: block; width: 100%; height: 100%"
+    >
+      <line
+        x1="0"
+        y1="32"
+        x2="214"
+        y2="32"
+        stroke="rgba(255,255,255,0.1)"
+        stroke-width="1"
+      ></line>
+      <line
+        x1="0"
+        y1="63"
+        x2="214"
+        y2="63"
+        stroke="rgba(255,255,255,0.1)"
+        stroke-width="1"
+      ></line>
+      <line
+        x1="0"
+        y1="94"
+        x2="214"
+        y2="94"
+        stroke="rgba(255,255,255,0.1)"
+        stroke-width="1"
+      ></line>
+      <polyline
+        points="{{clutchPts}}"
+        fill="none"
+        stroke="#4C8DFF"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        vector-effect="non-scaling-stroke"
+      ></polyline>
+      <polyline
+        points="{{brakePts}}"
+        fill="none"
+        stroke="#FF4D4D"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        vector-effect="non-scaling-stroke"
+      ></polyline>
+      <polyline
+        points="{{throttlePts}}"
+        fill="none"
+        stroke="#3DDC84"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        vector-effect="non-scaling-stroke"
+      ></polyline>
+    </svg>
+  </div>
+
+  <div
+    class="input-pedals"
+    style="display: flex; align-items: stretch; gap: 3px; flex: none"
+  >
+    <sc-for list="{{pedals}}" as="p" hint-placeholder-count="3">
+      <div
+        style="
+          position: relative;
+          width: 28px;
+          border-radius: 6px;
+          background: rgba(0, 0, 0, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-sizing: border-box;
+          overflow: hidden;
+          display: flex;
+          align-items: flex-end;
+        "
+      >
+        <div
+          class="bar"
+          style="width: 100%; height: 100%; background: {{p.color}}; transform: scaleY({{p.v}})"
+        ></div>
+        <span
+          class="mono"
+          style="
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 4px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+          "
+          >{{p.pct}}</span
+        >
+      </div>
+    </sc-for>
+  </div>
+
+  <div
+    class="input-gear"
+    style="
+      width: 56px;
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.35);
+    "
+  >
+    <span
+      style="
+        font-size: 10px;
+        font-weight: 600;
+        color: #c2c9d0;
+        letter-spacing: 0.08em;
+      "
+      >GEAR</span
+    >
+    <span class="mono" style="font-size: 40px; font-weight: 700; line-height: 1"
+      >{{gear}}</span
+    >
+    <span
+      class="mono"
+      style="font-size: 14px; font-weight: 700; margin-top: 4px"
+      >{{speed}}</span
+    >
+    <span
+      style="
+        font-size: 10px;
+        font-weight: 600;
+        color: #c2c9d0;
+        letter-spacing: 0.06em;
+      "
+      >KM/H</span
+    >
+  </div>
+
+  <div
+    class="input-wheel"
+    style="
+      width: 100px;
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    "
+  >
+    <svg
+      class="wheel"
+      width="100"
+      height="100"
+      sc-camel-view-box="0 0 104 104"
+      aria-hidden="true"
+      style="display: block; transform: rotate({{angle}}deg)"
+    >
+      <circle
+        cx="52"
+        cy="52"
+        r="45"
+        fill="none"
+        stroke="#2A3038"
+        stroke-width="9"
+      ></circle>
+      <circle
+        cx="52"
+        cy="52"
+        r="45"
+        fill="none"
+        stroke="rgba(255,255,255,0.22)"
+        stroke-width="1"
+      ></circle>
+      <path
+        d="M36 52 L9 52"
+        stroke="#2A3038"
+        stroke-width="8"
+        stroke-linecap="round"
+      ></path>
+      <path
+        d="M68 52 L95 52"
+        stroke="#2A3038"
+        stroke-width="8"
+        stroke-linecap="round"
+      ></path>
+      <path
+        d="M52 68 L52 95"
+        stroke="#2A3038"
+        stroke-width="8"
+        stroke-linecap="round"
+      ></path>
+      <rect x="49" y="3" width="6" height="11" rx="2" fill="{{accent}}"></rect>
+      <circle
+        cx="52"
+        cy="52"
+        r="17"
+        fill="#1C2128"
+        stroke="#3A414B"
+        stroke-width="1.5"
+      ></circle>
+    </svg>
+  </div>
+</div>

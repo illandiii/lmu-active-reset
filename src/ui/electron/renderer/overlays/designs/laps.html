@@ -1,0 +1,255 @@
+<div
+  class="{{rootClass}}"
+  style="width: 560px; height: 380px; box-sizing: border-box; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 2000px rgba(10, 12, 15, {{panelAlpha}}); font-family: 'Barlow Semi Condensed', system-ui, sans-serif; color: #F2F4F6; text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 1px rgba(0,0,0,0.9); display: flex; flex-direction: column"
+>
+  <div
+    style="
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px 9px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    "
+  >
+    <div style="display: flex; align-items: baseline; gap: 8px">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em"
+        >LAPS</span
+      >
+      <span style="font-size: 12px; font-weight: 500; color: #b8c0c8"
+        >{{stint}}</span
+      >
+    </div>
+    <div style="display: flex; align-items: baseline; gap: 14px">
+      <div style="display: flex; align-items: baseline; gap: 5px">
+        <span
+          style="
+            font-size: 11px;
+            font-weight: 600;
+            color: #b8c0c8;
+            letter-spacing: 0.06em;
+          "
+          >VE</span
+        >
+        <span class="mono" style="font-size: 14px; font-weight: 700"
+          >{{energy}}</span
+        >
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 5px">
+        <span
+          style="
+            font-size: 11px;
+            font-weight: 600;
+            color: #b8c0c8;
+            letter-spacing: 0.06em;
+          "
+          >FUEL</span
+        >
+        <span class="mono" style="font-size: 14px; font-weight: 700"
+          >{{fuel}}</span
+        >
+      </div>
+    </div>
+  </div>
+
+  <div
+    style="
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) 70px 80px 80px 80px;
+      align-items: center;
+      column-gap: 8px;
+      height: 26px;
+      padding: 0 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #b8c0c8;
+    "
+  >
+    <span>LAP</span>
+    <span>TIME</span>
+    <span style="text-align: right">VE</span>
+    <span style="text-align: right">FUEL</span>
+    <span style="text-align: right">Δ PB</span>
+    <span style="text-align: right">Δ BEST</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column">
+    <sc-for list="{{laps}}" as="l" hint-placeholder-count="8">
+      <div
+        class="ov-in"
+        style="display: grid; grid-template-columns: 54px minmax(0, 1fr) 70px 80px 80px 80px; align-items: center; column-gap: 8px; height: 28px; padding: 0 12px; background: {{l.bg}}; animation-delay: {{l.delay}}"
+      >
+        <span
+          class="mono"
+          style="font-size: 12px; font-weight: 500; color: #b8c0c8"
+          >{{l.lap}}</span
+        >
+        <div style="display: flex; align-items: center; gap: 6px">
+          <span
+            class="mono"
+            style="font-size: 14px; font-weight: 700; color: {{l.timeFg}}"
+            >{{l.time}}</span
+          >
+          <sc-if value="{{l.hasTag}}" hint-placeholder-val="{{ false }}">
+            <span
+              style="
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.06em;
+                padding: 1px 5px;
+                border-radius: 3px;
+                background: #f5a524;
+                color: #16181c;
+                text-shadow: none;
+              "
+              >{{l.tag}}</span
+            >
+          </sc-if>
+        </div>
+        <span
+          class="mono"
+          style="font-size: 12px; font-weight: 500; text-align: right"
+          >{{l.ve}}</span
+        >
+        <span
+          class="mono"
+          style="font-size: 12px; font-weight: 500; text-align: right"
+          >{{l.fuel}}</span
+        >
+        <span
+          class="mono"
+          style="font-size: 12px; font-weight: 500; text-align: right; color: {{l.dpbFg}}"
+          >{{l.dpb}}</span
+        >
+        <span
+          class="mono"
+          style="
+            font-size: 12px;
+            font-weight: 500;
+            text-align: right;
+            color: #b8c0c8;
+          "
+          >{{l.dbest}}</span
+        >
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div
+    style="
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) 70px 80px 80px 80px;
+      align-items: center;
+      column-gap: 8px;
+      height: 30px;
+      padding: 0 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+    "
+  >
+    <span class="mono" style="font-size: 12px; font-weight: 500; color: #b8c0c8"
+      >{{bestLapLabel}}</span
+    >
+    <div style="display: flex; align-items: center; gap: 6px">
+      <span
+        class="mono"
+        style="font-size: 14px; font-weight: 700; color: #3ddc84"
+        >{{best}}</span
+      >
+      <span
+        style="
+          font-size: 11px;
+          font-weight: 600;
+          color: #b8c0c8;
+          letter-spacing: 0.04em;
+        "
+        >PB</span
+      >
+    </div>
+    <span
+      class="mono"
+      style="font-size: 12px; font-weight: 500; text-align: right"
+      >{{bestEnergy}}</span
+    >
+    <span
+      class="mono"
+      style="font-size: 12px; font-weight: 500; text-align: right"
+      >{{bestFuel}}</span
+    >
+    <span
+      class="mono"
+      style="
+        font-size: 12px;
+        font-weight: 500;
+        text-align: right;
+        color: #b8c0c8;
+      "
+      >—</span
+    >
+    <span
+      class="mono"
+      style="
+        font-size: 12px;
+        font-weight: 500;
+        text-align: right;
+        color: #b8c0c8;
+      "
+      >{{bestGap}}</span
+    >
+  </div>
+  <div
+    style="
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) 70px 80px 80px 80px;
+      align-items: center;
+      column-gap: 8px;
+      height: 30px;
+      padding: 0 12px;
+      background: rgba(0, 0, 0, 0.35);
+    "
+  >
+    <span
+      style="
+        font-size: 11px;
+        font-weight: 600;
+        color: #b8c0c8;
+        letter-spacing: 0.06em;
+      "
+      >AVG</span
+    >
+    <div style="display: flex; align-items: center; gap: 6px">
+      <span class="mono" style="font-size: 14px; font-weight: 700"
+        >{{average}}</span
+      >
+      <span
+        style="
+          font-size: 11px;
+          font-weight: 600;
+          color: #b8c0c8;
+          letter-spacing: 0.04em;
+        "
+        >CLEAN LAPS</span
+      >
+    </div>
+    <span
+      class="mono"
+      style="font-size: 12px; font-weight: 500; text-align: right"
+      >{{averageEnergy}}</span
+    >
+    <span
+      class="mono"
+      style="font-size: 12px; font-weight: 500; text-align: right"
+      >{{averageFuel}}</span
+    >
+    <span
+      class="mono"
+      style="
+        font-size: 12px;
+        font-weight: 500;
+        text-align: right;
+        color: #b8c0c8;
+      "
+      >{{averageGap}}</span
+    >
+  </div>
+</div>

@@ -38,8 +38,8 @@ export function GuidedTour({ saveKey, restoreKey, onTabChange, onFinish }) {
     },
     {
       target: "overlay",
-      title: "A place for overlays",
-      text: "The Overlay tab is reserved for future telemetry features. It is not available yet.",
+      title: "Build your HUD",
+      text: "Choose widgets, toggle their parts and adjust size or opacity. Edit layout lets you drag and resize them on your display. Lock layout returns clicks to the game.",
       side: "bottom",
       tab: "overlay",
     },

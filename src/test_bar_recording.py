@@ -1,6 +1,10 @@
 """Compare coherent native Bar caches to the independent local geometry core."""
 
-import argparse, collections, ctypes as C, hashlib, json
+import argparse
+import collections
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from probe_bar_constraints_14200 import Body, Geometry, Prepared
 from test_binding_recording import assign

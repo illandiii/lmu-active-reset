@@ -7,7 +7,7 @@ is valid. Pin counters are cumulative; no vehicle or scoring fields are written.
 import argparse
 
 # Shared ABI is deliberately identical; the mapping and magic isolate v4.
-from run_boundary_observer_v3_25661166 import Frame, IPC, run as run_phase
+from run_boundary_observer_v3_25661166 import run as run_phase
 
 
 def run(pid, seconds, execute, offline):

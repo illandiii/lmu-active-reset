@@ -1,6 +1,9 @@
 """Quantify dependency mismatches from recorded snapshots, without game access."""
 
-import argparse, collections, json, math
+import argparse
+import collections
+import json
+import math
 from pathlib import Path
 
 

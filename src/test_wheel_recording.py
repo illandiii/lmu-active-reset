@@ -1,6 +1,10 @@
 """Replay numerical observations through the C core in THIS process only."""
 
-import argparse, ctypes as C, hashlib, json, math
+import argparse
+import ctypes as C
+import hashlib
+import json
+import math
 from pathlib import Path
 
 

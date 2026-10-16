@@ -1,6 +1,10 @@
 """Read-only scoring ownership and flags; never writes or invokes Score methods."""
 
-import argparse, ctypes, datetime, json, struct
+import argparse
+import ctypes
+import datetime
+import json
+import struct
 from ctypes import wintypes as W
 from capture_context import PROJECT, KERNEL, get_json
 from capture_preparation_14200 import verify_telemetry

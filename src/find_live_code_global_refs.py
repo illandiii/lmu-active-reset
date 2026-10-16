@@ -4,7 +4,11 @@ Candidate byte matches are accepted only at instruction boundaries obtained by
 disassembling their PE runtime function. No process access or game execution.
 """
 
-import argparse, bisect, hashlib, json, struct
+import argparse
+import bisect
+import hashlib
+import json
+import struct
 from pathlib import Path
 import pefile
 from capstone import Cs, CS_ARCH_X86, CS_MODE_64, CS_AC_WRITE

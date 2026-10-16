@@ -4,7 +4,12 @@ Code/rdata scans are bounded by PE sections. Heap reads are limited to named
 links and bounded vectors, never an object dump. Does not approve a restore.
 """
 
-import argparse, collections, hashlib, json, re, struct
+import argparse
+import collections
+import hashlib
+import json
+import re
+import struct
 from pathlib import Path
 from capture_preparation_steam25661166 import verify_telemetry
 from run_physics_observer import modules, k, read_process

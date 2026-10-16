@@ -1,6 +1,12 @@
 """Bounded observations of code-derived candidate pointers. No writes or calls."""
 
-import ctypes, hashlib, json, pathlib, struct, sys, urllib.request
+import ctypes
+import hashlib
+import json
+import pathlib
+import struct
+import sys
+import urllib.request
 from ctypes import wintypes
 
 root = pathlib.Path(__file__).resolve().parents[1]

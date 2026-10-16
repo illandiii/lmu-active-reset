@@ -1,6 +1,9 @@
 """Replay shift state preparation, with request-age preservation; no live writes."""
 
-import ctypes as C, json, argparse, hashlib
+import ctypes as C
+import json
+import argparse
+import hashlib
 from pathlib import Path
 from run_snapshot_observer_v24_25661166 import ShiftObserved
 

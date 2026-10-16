@@ -100,6 +100,7 @@ class WindowsKeys:
     def read(self):
         pid = self.w.DWORD()
         self.user.GetWindowThreadProcessId(self.user.GetForegroundWindow(), self.c.byref(pid))
+
         def down(vk):
             return bool(self.user.GetAsyncKeyState(vk) & 0x8000)
 

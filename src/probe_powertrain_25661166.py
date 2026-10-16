@@ -1,6 +1,9 @@
 """Bounded pointer/virtual-entry observations; never invokes native routines."""
 
-import argparse, json, struct, sys
+import argparse
+import json
+import struct
+import sys
 from pathlib import Path
 from capture_preparation_steam25661166 import verify_telemetry
 from capture_context import PROJECT, get_json

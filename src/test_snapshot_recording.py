@@ -1,6 +1,11 @@
 """Validate a typed partial snapshot from the updated executable, offline."""
 
-import argparse, collections, ctypes as C, hashlib, json, math
+import argparse
+import collections
+import ctypes as C
+import hashlib
+import json
+import math
 from pathlib import Path
 from run_snapshot_observer_25661166 import Saved
 from constraint_wire_types import Recipe, Result

@@ -4,7 +4,13 @@ This is an asynchronous layout check, never a restorable checkpoint.
 No object bytes or process addresses are saved to the output.
 """
 
-import argparse, ctypes, datetime, json, math, pathlib, struct
+import argparse
+import ctypes
+import datetime
+import json
+import math
+import pathlib
+import struct
 from ctypes import wintypes as W
 from capture_context import verify, get_json, KERNEL, PROJECT
 

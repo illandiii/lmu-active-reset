@@ -1,6 +1,9 @@
 """Replay the native tire partition observations against the local C core."""
 
-import argparse, ctypes as C, hashlib, json
+import argparse
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 
 

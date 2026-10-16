@@ -1,6 +1,10 @@
 """Bounded read-only inventory of the current player's driveline object links."""
 
-import argparse, ctypes, datetime, json, struct
+import argparse
+import ctypes
+import datetime
+import json
+import struct
 from ctypes import wintypes as W
 from capture_context import PROJECT, KERNEL, get_json
 from capture_preparation_steam25661166 import verify_telemetry

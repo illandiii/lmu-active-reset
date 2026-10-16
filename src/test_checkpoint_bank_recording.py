@@ -3,7 +3,11 @@
 Epoch values below are replay-only labels, not verified native identity tokens.
 """
 
-import argparse, collections, ctypes as C, hashlib, json
+import argparse
+import collections
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from run_snapshot_observer_25661166 import Saved, Mass
 from constraint_wire_types import Recipe, Result, Memory

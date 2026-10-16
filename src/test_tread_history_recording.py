@@ -1,6 +1,9 @@
 """Verify exact saved thermal and tread history on owned RAM only."""
 
-import argparse, ctypes as C, json, hashlib
+import argparse
+import ctypes as C
+import json
+import hashlib
 from pathlib import Path
 from test_tire_thermal_recording import ThermalGrid, Bank, grid
 from run_snapshot_observer_v15_25661166 import TreadHistoryGrid

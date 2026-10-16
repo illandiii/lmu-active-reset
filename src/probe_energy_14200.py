@@ -2,7 +2,13 @@
 No field is declared restorable by this experiment.
 """
 
-import argparse, ctypes, datetime, json, math, struct, time
+import argparse
+import ctypes
+import datetime
+import json
+import math
+import struct
+import time
 from ctypes import wintypes as W
 from pathlib import Path
 from capture_context import PROJECT, KERNEL, get_json

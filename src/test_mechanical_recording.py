@@ -1,6 +1,10 @@
 """Replay the coherent mechanical dependency preparation; never accesses LMU."""
 
-import argparse, collections, ctypes as C, hashlib, json
+import argparse
+import collections
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from test_vehicle_recording import Fuel, FuelPrepared, Prepared, Body, Mass
 from test_tire_inertia_recording import Partition

@@ -1,6 +1,9 @@
 """Replay the four captured outputs on owned memory, without LMU writes."""
 
-import argparse, ctypes as C, json, hashlib
+import argparse
+import ctypes as C
+import json
+import hashlib
 from pathlib import Path
 from run_snapshot_observer_v20_25661166 import DrivelineOutputs
 

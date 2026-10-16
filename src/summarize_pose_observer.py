@@ -1,6 +1,8 @@
 """Summarize coherent pose observations without claiming a live restore."""
 
-import argparse, json, statistics
+import argparse
+import json
+import statistics
 from pathlib import Path
 
 

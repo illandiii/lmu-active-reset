@@ -1,6 +1,9 @@
 """Inventory installed files; never authorizes old hooks for a changed binary."""
 
-import datetime, hashlib, json, re
+import datetime
+import hashlib
+import json
+import re
 from pathlib import Path
 
 

@@ -1,13 +1,18 @@
 """Read-only 14200 topology/RTTI inventory; vtable addresses are research only."""
 
-import ctypes, struct, json, sys, pathlib, collections, re
-
-root = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(root / "src"))
+import ctypes
+import struct
+import json
+import sys
+import pathlib
+import collections
 from capture_context import get_json, KERNEL, PROJECT
 from capture_preparation_14200 import verify_telemetry as verify
 from run_physics_observer import modules
 from ctypes import wintypes as W
+
+
+root = pathlib.Path(__file__).resolve().parents[1]
 
 pid = int(sys.argv[1])
 listed = modules(pid)

@@ -1,6 +1,10 @@
 """Replay coherent vehicle geometry preparation without accessing LMU."""
 
-import argparse, collections, ctypes as C, hashlib, json
+import argparse
+import collections
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from test_mechanical_recording import (
     Body,

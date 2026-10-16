@@ -1,7 +1,11 @@
 """Wait for three fresh offline throttle samples before starting a bounded observer."""
 
-import argparse, datetime, json, math, subprocess, time
-from pathlib import Path
+import argparse
+import datetime
+import json
+import math
+import subprocess
+import time
 from capture_context import PROJECT, KERNEL, get_json
 from capture_preparation_steam25661166 import verify_telemetry
 from context_gate import assess_player_observation

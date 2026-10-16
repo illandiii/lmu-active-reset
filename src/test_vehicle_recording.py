@@ -1,6 +1,10 @@
 """Local C replay of the 14200 body/fuel snapshots. Never accesses the game."""
 
-import argparse, collections, ctypes as C, hashlib, json
+import argparse
+import collections
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from test_wheel_recording import Body, Mass
 from test_binding_recording import assign

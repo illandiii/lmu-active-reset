@@ -4,7 +4,11 @@ Recordings were made at different times; they are deliberately NOT combined
 into a purported simultaneous vehicle checkpoint.
 """
 
-import argparse, collections, ctypes as C, hashlib, json
+import argparse
+import collections
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from run_ball_observer_14200 import Saved, Geometry as BallGeometry
 from run_ori_observer_14200 import Geometry as AngularGeometry

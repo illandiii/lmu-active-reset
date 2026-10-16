@@ -1,6 +1,10 @@
 """Exercise actual C preparation on recorded 14150 numerical payloads only."""
 
-import argparse, ctypes, hashlib, json, math
+import argparse
+import ctypes
+import hashlib
+import json
+import math
 from pathlib import Path
 from run_pose_observer import Mass, Saved
 

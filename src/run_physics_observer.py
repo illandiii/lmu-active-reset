@@ -5,14 +5,21 @@ The DLL installs one verified observational hook; there is NO physics reset.
 Any denied process access stops the operation; no privilege escalation or bypass.
 """
 
-import argparse, ctypes, datetime, hashlib, json, pathlib, struct, subprocess, sys, time
+import argparse
+import ctypes
+import datetime
+import hashlib
+import json
+import pathlib
+import subprocess
+import time
 from ctypes import wintypes as W
+from capture_context import verify, get_json, KERNEL
+from context_gate import assess
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PROJECT = ROOT
-sys.path.insert(0, str(PROJECT / "src"))
-from capture_context import verify, get_json, KERNEL
-from context_gate import assess
 
 
 class IPC(ctypes.Structure):

@@ -3,13 +3,18 @@
 Reports matching instruction prefixes, never ABI/semantic equivalence.
 """
 
-import argparse, hashlib, json, re, struct, sys
+import argparse
+import hashlib
+import json
+import re
+import struct
+import sys
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parents[1]
 ROOT = PROJECT
 sys.path.insert(0, str(ROOT / "work/pydeps"))
-import capstone
+import capstone  # noqa: E402 - Load the project-local optional disassembler first.
 
 
 def normalized(mnemonic, operands):

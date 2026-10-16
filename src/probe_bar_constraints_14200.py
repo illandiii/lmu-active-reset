@@ -1,6 +1,11 @@
 """Read-only typed Bar constraint observation; cached geometry may be from an earlier solver phase."""
 
-import argparse, ctypes as C, datetime, json, math, struct
+import argparse
+import ctypes as C
+import datetime
+import json
+import math
+import struct
 from ctypes import wintypes as W
 from capture_context import PROJECT, KERNEL
 from capture_preparation_14200 import verify_telemetry

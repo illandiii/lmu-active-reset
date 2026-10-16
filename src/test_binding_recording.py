@@ -1,6 +1,9 @@
 """Replay same-thread recorded bodies with their actual masses and momenta."""
 
-import argparse, ctypes as C, hashlib, json
+import argparse
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from test_wheel_recording import Body, Spin, Prepared
 

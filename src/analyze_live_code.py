@@ -1,9 +1,17 @@
-import sys, pathlib, ctypes, struct, hashlib, json, re, bisect, urllib.request, collections, math
+import sys
+import pathlib
+import ctypes
+import struct
+import hashlib
+import json
+import re
+import bisect
+import urllib.request
 from ctypes import wintypes
 
 root = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(root / "work/pydeps"))
-import capstone
+import capstone  # noqa: E402 - Load the project-local optional disassembler first.
 
 pid = int(sys.argv[1])
 base = int(sys.argv[2], 0)

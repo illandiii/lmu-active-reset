@@ -1,6 +1,9 @@
 """Replay the partial vehicle bank, preserving all captured dependencies."""
 
-import argparse, ctypes as C, hashlib, json, math
+import argparse
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from test_persistent_checkpoint_recording import (
     PersistentBank,
@@ -162,8 +165,8 @@ def main():
     for row in rows:
         s = snapshot(row)
         d = mechanical_dependencies(row)
-        l = Links()
-        assign(l, row["links"])
+        links = Links()
+        assign(links, row["links"])
         pstate = PowertrainPartialState()
         assign(pstate, row["powertrain"])
         if "native_cache" in row:
@@ -225,7 +228,7 @@ def main():
 
         def store():
             return save(
-                C.byref(bank), C.byref(s), C.byref(l), C.byref(d), t, C.byref(pstate), *extra
+                C.byref(bank), C.byref(s), C.byref(links), C.byref(d), t, C.byref(pstate), *extra
             )
 
         def restore(source):

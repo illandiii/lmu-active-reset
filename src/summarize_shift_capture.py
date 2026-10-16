@@ -1,6 +1,8 @@
 """Summarize observed shift transitions without assuming every shift was sampled."""
 
-import argparse, json, hashlib
+import argparse
+import json
+import hashlib
 from pathlib import Path
 
 

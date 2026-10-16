@@ -1,9 +1,14 @@
-import ctypes, struct, json, sys, pathlib, collections, re
-
-root = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(root / "src"))
+import ctypes
+import struct
+import json
+import sys
+import pathlib
+import collections
 from capture_context import verify, get_json, KERNEL, PROJECT
 from ctypes import wintypes as W
+
+
+root = pathlib.Path(__file__).resolve().parents[1]
 
 pid = int(sys.argv[1])
 base = int(sys.argv[2], 0)

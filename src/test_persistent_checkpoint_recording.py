@@ -1,6 +1,10 @@
 """Replay persistent tire checkpoints. No live writes; identities are synthetic."""
 
-import argparse, collections, ctypes as C, hashlib, json
+import argparse
+import collections
+import ctypes as C
+import hashlib
+import json
 from pathlib import Path
 from test_checkpoint_bank_recording import (
     Bank,

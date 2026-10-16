@@ -1,6 +1,9 @@
 """Replay the thermal bank from coherent native frames, never write to LMU."""
 
-import argparse, ctypes as C, json, hashlib
+import argparse
+import ctypes as C
+import json
+import hashlib
 from pathlib import Path
 from run_snapshot_observer_v14_25661166 import ThermalGrid
 

@@ -1,6 +1,10 @@
 """Replay coherent v2 tire partitions with the C core; no process access."""
 
-import argparse, ctypes as C, hashlib, json, math
+import argparse
+import ctypes as C
+import hashlib
+import json
+import math
 from pathlib import Path
 from test_tire_inertia_recording import Partition, Prepared
 

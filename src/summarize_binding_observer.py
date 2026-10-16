@@ -1,6 +1,10 @@
 """Summarize completed 14200 thread-bound wheel/hub observations."""
 
-import argparse, collections, hashlib, json, statistics
+import argparse
+import collections
+import hashlib
+import json
+import statistics
 from pathlib import Path
 
 

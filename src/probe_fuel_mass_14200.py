@@ -1,6 +1,11 @@
 """Read-only check of C6E170 fuel-dependent mass and EE2730 addends."""
 
-import argparse, ctypes, json, math, struct, datetime
+import argparse
+import ctypes
+import json
+import math
+import struct
+import datetime
 from ctypes import wintypes as W
 from capture_context import PROJECT, KERNEL, get_json
 from capture_preparation_14200 import verify_telemetry

@@ -1,6 +1,12 @@
 """Bounded read-only test of the tire inertia partition; not a coherent checkpoint."""
 
-import argparse, ctypes, datetime, json, math, struct, time
+import argparse
+import ctypes
+import datetime
+import json
+import math
+import struct
+import time
 from ctypes import wintypes as W
 from capture_context import PROJECT, KERNEL
 from capture_preparation_14200 import verify_telemetry

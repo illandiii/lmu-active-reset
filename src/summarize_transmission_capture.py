@@ -1,6 +1,9 @@
 """Summarize observed transitions, without treating finite values as full coverage."""
 
-import argparse, hashlib, json, math
+import argparse
+import hashlib
+import json
+import math
 from pathlib import Path
 
 

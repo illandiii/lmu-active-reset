@@ -4,7 +4,13 @@ Offsets below are derived from build 14200 code, not a relocated old profile.
 Stable double reads reduce tearing; they do not establish a simulation boundary.
 """
 
-import argparse, ctypes, datetime, json, math, struct, time
+import argparse
+import ctypes
+import datetime
+import json
+import math
+import struct
+import time
 from ctypes import wintypes as W
 from capture_context import PROJECT, KERNEL, get_json
 from capture_preparation_steam25661166 import verify_telemetry

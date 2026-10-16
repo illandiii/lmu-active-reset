@@ -21,4 +21,27 @@ static_assert(sizeof(ResetTraceRecord) == 952, "Physical trace ABI");
 struct ResetTrace {
     volatile LONG64 count;
     ResetTraceRecord records[512];
+#if LMU_RESET_HOST_REVISION >= 14
+    volatile LONG64 published[512];
+#endif
 };
+
+// Single writer: the admitted physics thread. Readers never write into this map.
+static inline void reset_trace_append(ResetTrace *trace, const ResetTraceRecord &record) {
+    const auto index = InterlockedCompareExchange64(&trace->count, 0, 0);
+#if LMU_RESET_HOST_REVISION >= 14
+    const auto slot = index % 512;
+    // Mark reuse before touching the payload so a concurrent reader rejects it.
+    InterlockedExchange64(&trace->published[slot], -(index + 1));
+    trace->records[slot] = record;
+    MemoryBarrier();
+    InterlockedExchange64(&trace->published[slot], index + 1);
+    InterlockedExchange64(&trace->count, index + 1);
+#else
+    if (index >= 512)
+        return;
+    trace->records[index] = record;
+    MemoryBarrier();
+    InterlockedIncrement64(&trace->count);
+#endif
+}

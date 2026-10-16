@@ -110,6 +110,11 @@ def analyze(records):
     hook_entries = {}
     requests = {}
     for row in records:
+        if row.get("type") == "trace_gap":
+            # No before/after pair or checkpoint comparison may bridge lost data.
+            saved = previous = pending = restore_before = None
+            hook_entries = {}
+            continue
         if len(row["bodies"]) != 5 or any(len(body) != 18 for body in row["bodies"]):
             raise ValueError("Expected five 18-component body records")
         phase = row["phase"]
@@ -168,11 +173,12 @@ def analyze(records):
             previous, pending = row, None
     return {
         "record_count": len(records),
-        "phase_counts": dict(Counter(row["phase"] for row in records)),
+        "phase_counts": dict(Counter(row["phase"] for row in records if "phase" in row)),
+        "trace_gaps": [row for row in records if row.get("type") == "trace_gap"],
         "nonfinite_body_records": [
             {"index": i, "phase": row["phase"], "step": row["step"], "body": body_index}
             for i, row in enumerate(records)
-            for body_index, body in enumerate(row["bodies"])
+            for body_index, body in enumerate(row.get("bodies", []))
             if not finite(body)
         ],
         "restores": list(requests.values()),

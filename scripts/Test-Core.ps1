@@ -2,6 +2,7 @@ param([Parameter(Mandatory = $true)][string]$ZigPath)
 
 $ErrorActionPreference = 'Stop'
 $builds = @(
+    'Build-PhysicalResetTrace.ps1',
     'Build-ResetHostPolicy.ps1',
     'Build-RestoreTransaction.ps1',
     'Build-RestoreFlow.ps1',

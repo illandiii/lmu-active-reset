@@ -26,7 +26,7 @@ start/stop buttons or session countdown. Release both keys before using them:
 - Distinct sounds confirm save, restore and rejection; preview or mute them in the GUI.
 - Closing the window requests orderly native shutdown.
 
-A checkpoint has no time-based expiry. The v13 host has no session-duration cap;
+A checkpoint has no time-based expiry. The v14 host has no session-duration cap;
 vehicle reconstruction, including a reset to the pits, invalidates its checkpoint.
 After a clean detach, the app waits for driving and connects a fresh host automatically.
 Pausing driving or moving focus alone does not discard a checkpoint. Existing
@@ -38,16 +38,17 @@ still pending. Identity, lifecycle, coherent physical state and valid contact
 reconstruction remain required. The keys are observed, not swallowed: select unused game bindings.
 For different keys run `scripts/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
 The launcher discovers the process and worker, chooses an unused locally built
-v13 host under a unique instance filename, and never replaces a resident DLL or
+v14 host under a unique instance filename, and never replaces a resident DLL or
 falls back to older builds. Stopped modules remain resident until LMU exits.
 Generated binaries and the local Python runtime are required; a fresh
 clone must be built before this launcher can be used. On the configured Windows
 machine, close LMU and run `scripts/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`
-to rebuild v13 and the continuous telemetry reader. See
+to rebuild v14 and the continuous telemetry reader. See
 [desktop setup and verification](docs/DESKTOP_GUI.md).
 
-The v12 diagnostic build records collision preparation/correction around the
-restore. The next live test is documented in Italian in
+The current host records collision preparation/correction around the restore,
+using the diagnostics introduced in v12 and a continuous ring in v14.
+The next live test is documented in Italian in
 [the collision test procedure](docs/TEST_RESET_COLLISIONI.md). This instrumentation
 has passed local fixtures; it has not yet established or fixed the live cause.
 

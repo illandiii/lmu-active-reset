@@ -27,5 +27,13 @@ try {
     if ($IncludeWpf) { & (Join-Path $PSScriptRoot 'Start-ResetGui.ps1') -ValidateOnly }
     Write-Output 'PASS: GUI settings persistence, invalid-key rejection, recovery and XAML.'
 } finally {
-    if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force }
+    if (Test-Path -LiteralPath $testRoot) {
+        $resolvedTestRoot = [IO.Path]::GetFullPath($testRoot)
+        $temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+        if (-not $resolvedTestRoot.StartsWith($temporaryRoot, [StringComparison]::OrdinalIgnoreCase) -or
+            (Split-Path -Leaf $resolvedTestRoot) -notmatch '^reset-gui-test-[0-9a-f]{32}$') {
+            throw 'Refusing cleanup outside the generated GUI test directory.'
+        }
+        Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force
+    }
 }

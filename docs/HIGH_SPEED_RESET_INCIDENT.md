@@ -254,3 +254,26 @@ correctly before the common pose transformation. The pending implementation work
 is coherent aggregate/exported pose synchronization, collision history rebasing
 and native invalidation of obsolete pairs at a proven boundary. No unverified
 candidate for those writes has been enabled in v12.
+
+## Continuous-session trace fix (v14, 16 October)
+
+After integration of the desktop/v13 branch, the native fixed trace buffer would
+still stop permanently at 512 records. That meant later resets in a continuous
+session could be applied without physical diagnostic samples. V14 replaces this
+with a fixed-size ring while retaining the 1368-byte v12 record payload.
+
+The original count/payload region is followed by 512 aligned 64-bit publication
+stamps. The sole physics-thread writer marks a slot busy with the negative next
+sequence, copies its payload, publishes its positive sequence, then advances the
+global count. Readers check the same stamp before and after copying and emit only
+matching completed records. They never write into the mapping or stall physics.
+Old layouts remain selected for hosts through v13.
+
+Losses are explicit sequence ranges, including an old slot destroyed by a reuse
+interrupted by a game crash before the global count advances. That interrupted
+slot does not hide the other completed records. Analysis discards pending
+before/after comparisons across gaps and keeps the gaps in the report.
+
+The native ring fixture and host fixture passed on Windows, and forty Python tests
+passed. The installed local default is v14. This fixes diagnostic exhaustion;
+it does not modify collision state or claim to fix the physical instability.

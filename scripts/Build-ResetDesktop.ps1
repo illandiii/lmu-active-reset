@@ -31,7 +31,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Telemetry schema check failed.' }
 & $diagnostic --self-test
 if ($LASTEXITCODE -ne 0) { throw 'Telemetry self-test failed.' }
 & (Join-Path $PSScriptRoot 'Test-Core.ps1') -ZigPath $ZigPath
-& (Join-Path $PSScriptRoot 'Build-PhysicalResetHost25661166.ps1') -ZigPath $ZigPath -Revision 13 -FrameDirectory $FrameDirectory
+& (Join-Path $PSScriptRoot 'Build-PhysicalResetHost25661166.ps1') -ZigPath $ZigPath -Revision 14 -FrameDirectory $FrameDirectory
 Copy-Item -LiteralPath $diagnostic -Destination (Join-Path $projectRoot 'bin/diagnostic-14200.exe')
 $profile.diagnostic_sha256 = (Get-FileHash $diagnostic -Algorithm SHA256).Hash
 $profile | Add-Member -NotePropertyName continuous_capture -NotePropertyValue $true -Force

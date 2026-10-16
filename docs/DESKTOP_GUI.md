@@ -1,4 +1,4 @@
-# Automatic desktop UI and continuous host v13
+# Automatic desktop UI and continuous host v14
 
 ## Product and design
 
@@ -79,8 +79,11 @@ and the child requests native stop. Unexpected/quarantined failures are displaye
 and are not automatically retried against the same game instance.
 
 Stopped DLLs remain resident until the game exits, as before. Long sessions retain
-diagnostic logs; the bounded 512-record physical trace does not become an unlimited
-trace buffer. These are unchanged diagnostic limitations.
+diagnostic logs. V14 keeps a bounded 512-record ring in game memory and drains it
+to disk. It no longer stops recording after the first 512 samples. Sequence stamps
+reject records overwritten during a read; slow-reader losses are recorded as
+explicit gaps. The analyzer never pairs state across those gaps. Disk logs grow
+with the session; the native ring size stays constant.
 
 ## Verification in the Linux workspace
 
@@ -115,3 +118,22 @@ Then check launch-before-game, launch-after-game, F6/F7, duplicate/reassigned ke
 audio previews/mute, focus changes, more than five minutes of continuous operation,
 pit reconstruction and close/reopen. Use the existing collision test protocol for
 any moving-reset validation; this change does not establish high-speed stability.
+
+## Windows validation on 16 October 2026
+
+The desktop branch was integrated locally and `Build-ResetDesktop.ps1` completed
+on Windows with the recorded fixture frame. Telemetry schema/self-tests, all
+`Test-Core.ps1` suites, the v13 full restore/absent-player/restart fixtures and WPF
+settings/layout validation passed. This supersedes the Linux execution limitations
+above for those checks, but does not establish live-game or visual/audio behavior.
+
+V14 was then built and its full host fixtures passed, including all 10,077 writes,
+four native-contact fixture calls, lifecycle stop and two-instance restart. Its
+dedicated trace fixture published 1,555 samples across multiple ring wraps and
+checked the 704,520-byte mapping layout. Forty Python tests passed, covering
+continuous draining, exact loss counts, concurrent slot reuse, a crash during reuse,
+legacy trace decoding and analysis boundaries. V14 is the default local launcher
+version. LMU was not started or attached during these checks.
+
+Closing the window still disconnects and exits; background/tray behavior remains
+separate pending UI work. The physical high-speed reset defect remains open.

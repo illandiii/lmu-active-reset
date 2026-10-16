@@ -1,6 +1,6 @@
-# Prova del reset e delle collisioni — host v12
+# Prova del reset e delle collisioni — host v14
 
-Preparata il 15 ottobre 2026 per la prossima sessione. Non occorre aprire LMU
+Aggiornata il 16 ottobre 2026 per la prossima sessione. Non occorre aprire LMU
 durante il lavoro offline. Il difetto dello sbalzo non è ancora risolto: questa
 versione registra il passaggio che può provocarlo, senza disattivare collisioni
 o limitare velocità e distanza.
@@ -9,11 +9,11 @@ o limitare velocità e distanza.
 
 1. Avvia LMU senza EAC, in Practice offline. Per confrontare la cattura precedente,
    usa possibilmente Spa e Mercedes GT3, con una vettura sana.
-2. Apri **una sola volta `Start-Reset.cmd`** nella cartella del progetto. Se sei
-   al monitor, il programma attende GUIDA. La build locale selezionata è v12.
-3. Entra in GUIDA, attendi il messaggio che abilita le hotkey, torna a dare il
-   focus a LMU e rilascia F6 e F7. I tasti non devono avere altri comandi di gioco
-   assegnati. Il programma si arresta dopo quattro minuti dall'avvio del modulo.
+2. Apri **una sola volta `Start-Reset.cmd`** nella cartella del progetto. Si apre
+   la UI; se sei al monitor, il programma attende GUIDA. La build selezionata è v14.
+3. Entra in GUIDA, attendi lo stato **Connected**, torna a dare il focus a LMU e
+   rilascia F6 e F7. I tasti non devono avere altri comandi di gioco assegnati.
+   Il programma resta attivo finché chiudi la UI o termina la connessione.
 
 ## Prima prova: controllo da fermo
 
@@ -26,8 +26,9 @@ o limitare velocità e distanza.
 ## Seconda prova: velocità salvata diversa da quella attuale
 
 Eseguila solo se la prima prova è passata e sei disponibile a riprodurre il difetto.
-Chiudi prima il listener con Ctrl+C e attendi il riepilogo; riapri `Start-Reset.cmd`
-per avere una cattura separata e il buffer libero. Non sovrapporre due console.
+Chiudi prima la UI e attendi che termini; riapri `Start-Reset.cmd` per avere una
+cattura separata. Non sovrapporre due istanze. Se hai cambiato le hotkey nelle
+impostazioni, usa i tasti selezionati al posto di F6/F7.
 
 1. In un rettilineo libero premi **F6 intorno a 80 km/h**, con l'auto stabile e
    senza urti. Attendi il segnale di salvataggio riuscito.
@@ -37,8 +38,8 @@ per avere una cattura separata e il buffer libero. Non sovrapporre due console.
 3. Osserva per cinque secondi: deve tornare alla posizione, orientamento e
    velocità salvati. La sola scritta «stato applicato» non dimostra la stabilità.
 4. Se si verifica lo sbalzo o un crash, non ripetere F7. Se LMU resta aperto,
-   arresta il listener con Ctrl+C. Se LMU si chiude, lascia terminare la console
-   perché salvi il riepilogo.
+   chiudi la UI per arrestare il listener. Se LMU si chiude, attendi che la UI
+   rilevi la disconnessione e che il riepilogo venga salvato in `logs/`.
 
 Comunica soltanto: esito, velocità approssimative di F6/F7, eventuale urto e se
 si è chiuso LMU oppure soltanto il programma delle hotkey. Non serve filmare.
@@ -46,7 +47,7 @@ si è chiuso LMU oppure soltanto il programma delle hotkey. Non serve filmare.
 ## Dati da conservare
 
 I file vengono salvati automaticamente in `logs/`, con lo stesso prefisso
-`<data>_physical_reset_host_v12`:
+`<data>_physical_reset_host_v14`:
 
 - `.physical.jsonl`: corpi fisici, contatti pneumatici, corpo collisioni e stato
   prima/dopo le routine native di preparazione e correzione.
@@ -54,9 +55,10 @@ I file vengono salvati automaticamente in `logs/`, con lo stesso prefisso
 - `.native.jsonl`: contesto e diagnostica del modulo.
 
 Se LMU termina, conserva anche il suo `UserData/Log/trace_*.txt` più recente prima
-di fare altre prove. Non cancellare i log del progetto. Il buffer contiene al
-massimo 512 campioni e segue i primi 20 passi Dynamics dopo il reset: una sola
-prova in movimento per avvio evita di saturarlo.
+di fare altre prove. Non cancellare i log del progetto. Il buffer circolare mantiene
+512 campioni in memoria e viene svuotato su disco; segue i primi 20 passi Dynamics
+dopo ciascun reset. Può continuare a registrare nelle sessioni lunghe. Eventuali
+campioni sovrascritti prima della lettura sono indicati con `trace_gap`.
 
 ## Analisi tecnica dopo la prova
 

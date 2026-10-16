@@ -110,9 +110,10 @@ static void trace_sample(uint64_t phase) {
     if (!trace || GetCurrentThreadId() != physics_thread ||
         !native_lock_witness(worker_lock).held_by_caller || !roots_match())
         return;
-    const auto index = InterlockedCompareExchange64(&trace->count, 0, 0);
-    if (index >= 512)
+#if LMU_RESET_HOST_REVISION < 14
+    if (InterlockedCompareExchange64(&trace->count, 0, 0) >= 512)
         return;
+#endif
     ResetTraceRecord sample{};
     sample.phase = phase;
     sample.request = trace_request;
@@ -172,9 +173,7 @@ static void trace_sample(uint64_t phase) {
     if (field(physics_root + 0x4bc8, sample.collision_feedback))
         sample.valid |= 1ULL << 13;
 #endif
-    trace->records[index] = sample;
-    MemoryBarrier();
-    InterlockedIncrement64(&trace->count);
+    reset_trace_append(trace, sample);
 }
 #if LMU_RESET_HOST_REVISION >= 12
 static bool trace_collision(void *object) {

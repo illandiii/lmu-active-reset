@@ -36,6 +36,8 @@ def record_dict(r):
 class TraceReader:
     def __init__(self, name, path, revision=10):
         self.record = RecordV12 if revision >= 12 else Record
+        self.ring = revision >= 14
+        self.payload_end = 8 + 512 * C.sizeof(self.record)
         self.k = C.WinDLL("kernel32", use_last_error=True)
         self.k.OpenFileMappingW.argtypes = [W.DWORD, W.BOOL, W.LPCWSTR]
         self.k.OpenFileMappingW.restype = W.HANDLE
@@ -45,7 +47,9 @@ class TraceReader:
         self.k.CloseHandle.argtypes = [W.HANDLE]
         self.handle = self.k.OpenFileMappingW(4, False, name + "_trace")
         self.view = (
-            self.k.MapViewOfFile(self.handle, 4, 0, 0, 8 + 512 * C.sizeof(self.record))
+            self.k.MapViewOfFile(
+                self.handle, 4, 0, 0, self.payload_end + (4096 if self.ring else 0)
+            )
             if self.handle
             else None
         )
@@ -56,15 +60,52 @@ class TraceReader:
         self.output = path.open("w")
         self.count = 0
 
-    def drain(self):
-        count = min(C.c_int64.from_address(self.view).value, 512)
-        while self.count < count:
-            r = self.record.from_buffer_copy(
-                C.string_at(
-                    self.view + 8 + self.count * C.sizeof(self.record), C.sizeof(self.record)
+    def skip_to(self, count):
+        self.output.write(
+            json.dumps(
+                dict(
+                    type="trace_gap",
+                    first_sequence=self.count + 1,
+                    last_sequence=count,
+                    dropped=count - self.count,
                 )
             )
-            self.output.write(json.dumps(record_dict(r)) + "\n")
+            + "\n"
+        )
+        self.count = count
+
+    def drain(self):
+        count = C.c_int64.from_address(self.view).value
+        if not self.ring:
+            count = min(count, 512)
+        oldest = max(0, count - 512)
+        if self.count < oldest:
+            self.skip_to(oldest)
+        while self.count < count:
+            slot = self.count % 512
+            stamp_address = self.view + self.payload_end + slot * 8
+            expected = self.count + 1
+            stamp = C.c_int64.from_address(stamp_address).value if self.ring else expected
+            if abs(stamp) > expected:
+                # The old record is already lost, even if a crash interrupts reuse
+                # before the writer can advance the global publication counter.
+                self.skip_to(expected)
+                continue
+            if stamp != expected:
+                break
+            r = self.record.from_buffer_copy(
+                C.string_at(self.view + 8 + slot * C.sizeof(self.record), C.sizeof(self.record))
+            )
+            stamp = C.c_int64.from_address(stamp_address).value if self.ring else expected
+            if abs(stamp) > expected:
+                self.skip_to(expected)
+                continue
+            if stamp != expected:
+                break  # Never publish a payload overwritten during the copy.
+            row = record_dict(r)
+            if self.ring:
+                row["sequence"] = expected
+            self.output.write(json.dumps(row) + "\n")
             self.count += 1
         self.output.flush()
 

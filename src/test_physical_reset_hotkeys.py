@@ -1,5 +1,10 @@
 import unittest
-from physical_reset_hotkeys import HotkeyCommands, function_key
+from physical_reset_hotkeys import (
+    HotkeyCommands,
+    expected_restore_fields,
+    function_key,
+    preparation_ready,
+)
 
 
 class HotkeyTests(unittest.TestCase):
@@ -28,7 +33,7 @@ class HotkeyTests(unittest.TestCase):
         self.assertEqual(self.poll(restore=True), {"id": 2, "action": 2})
         self.assertEqual(self.poll(restore=True), {})
         self.assertEqual(
-            self.poll(restore=True, report={"id": 2, "result": 0, "fields": 10077}),
+            self.poll(restore=True, report={"id": 2, "action": 2, "result": 0, "fields": 10084}),
             {"id": 3, "action": 3},
         )
         self.poll(restore=True, report={"id": 3, "result": 0})
@@ -39,21 +44,50 @@ class HotkeyTests(unittest.TestCase):
         self.poll()
         self.assertEqual(self.poll(restore=True), {})
 
+    def test_native_revision_controls_both_preparation_gates(self):
+        # The live v15 incident acknowledged PREPARE with 10084 fields, but the
+        # two launcher gates still expected 10077 and never sent RESTORE.
+        for revision, count in ((14, 10077), (15, 10084)):
+            with self.subTest(revision=revision):
+                expected = expected_restore_fields(revision)
+                self.assertEqual(expected, count)
+                self.keys = HotkeyCommands(expected)
+                self.saved()
+                self.poll(restore=True)
+                report = {"id": 2, "action": 2, "result": 0, "fields": count}
+                self.assertTrue(preparation_ready(report, expected))
+                self.assertEqual(self.poll(report=report), {"id": 3, "action": 3})
+                self.assertEqual(self.poll(report=report), {})
+
+    def test_wrong_plan_size_is_rejected_with_a_reason(self):
+        self.saved()
+        self.poll(restore=True)
+        report = {"id": 2, "action": 2, "result": 0, "fields": 10077}
+        self.assertFalse(preparation_ready(report, expected_restore_fields(15)))
+        self.assertEqual(self.poll(report=report), {})
+        self.assertIn("expected 10084", self.keys.notice)
+        self.assertTrue(self.keys.saved)
+        for revision in (0, 16):
+            with self.assertRaises(ValueError):
+                expected_restore_fields(revision)
+
     def test_focus_context_and_timeout_cancel_prepare(self):
         for kwargs in ({"focused": False}, {"allowed": False}, {"modifiers": True}, {"now": 3}):
             self.keys = HotkeyCommands()
             self.saved()
             self.poll(restore=True)
             self.assertEqual(
-                self.poll(report={"id": 2, "result": 0, "fields": 10077}, **kwargs), {}
+                self.poll(report={"id": 2, "action": 2, "result": 0, "fields": 10084}, **kwargs), {}
             )
-            self.assertEqual(self.poll(report={"id": 2, "result": 0, "fields": 10077}), {})
+            self.assertEqual(
+                self.poll(report={"id": 2, "action": 2, "result": 0, "fields": 10084}), {}
+            )
 
     def test_failed_or_unrelated_preparation_never_restores(self):
         for report in (
-            {"id": 2, "result": 2, "fields": 10077},
-            {"id": 2, "result": 0, "fields": 0},
-            {"id": 99, "result": 0, "fields": 10077},
+            {"id": 2, "action": 2, "result": 2, "fields": 10084},
+            {"id": 2, "action": 2, "result": 0, "fields": 0},
+            {"id": 99, "action": 2, "result": 0, "fields": 10084},
         ):
             self.keys = HotkeyCommands()
             self.saved()

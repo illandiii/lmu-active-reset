@@ -1,8 +1,26 @@
 """Focused key edges and acknowledged prepare/restore sequencing."""
 
 
+def expected_restore_fields(revision):
+    """Match the admitted native host's typed plan, including v15 collision caches."""
+    if revision == 15:
+        return 10084
+    if 1 <= revision <= 14:
+        return 10077
+    raise ValueError(f"Unsupported reset host revision: {revision}")
+
+
+def preparation_ready(report, expected_fields):
+    return (
+        report.get("action") == 2
+        and report.get("result") == 0
+        and report.get("fields") == expected_fields
+    )
+
+
 class HotkeyCommands:
-    def __init__(self):
+    def __init__(self, expected_fields=10084):
+        self.expected_fields = expected_fields
         self.armed = False
         self.saved = False
         self.pending = None
@@ -48,8 +66,14 @@ class HotkeyCommands:
                 self.pending = None
                 if action == 1:
                     self.saved = self.saved or report["result"] == 0
-                elif action == 2 and report["result"] == 0 and report["fields"] == 10077:
-                    return self.issue(3, now)
+                elif action == 2:
+                    if preparation_ready(report, self.expected_fields):
+                        return self.issue(3, now)
+                    self.notice = (
+                        "Restore preparation rejected: "
+                        f"result {report.get('result')}, fields {report.get('fields')} "
+                        f"(expected {self.expected_fields})."
+                    )
             return {}
         if edge == 1:
             return self.issue(1, now)
@@ -76,7 +100,9 @@ class WindowsKeys:
     def read(self):
         pid = self.w.DWORD()
         self.user.GetWindowThreadProcessId(self.user.GetForegroundWindow(), self.c.byref(pid))
-        down = lambda vk: bool(self.user.GetAsyncKeyState(vk) & 0x8000)
+        def down(vk):
+            return bool(self.user.GetAsyncKeyState(vk) & 0x8000)
+
         return (
             pid.value == self.pid,
             down(self.save_vk),

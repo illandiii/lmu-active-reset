@@ -161,12 +161,19 @@ def shutdown_failure(previous, exit_code, status, restored):
 
 
 def run(args):
-    from physical_reset_hotkeys import HotkeyCommands, WindowsKeys, function_key
+    from physical_reset_hotkeys import (
+        HotkeyCommands,
+        WindowsKeys,
+        expected_restore_fields,
+        function_key,
+        preparation_ready,
+    )
     from reset_desktop_session import DesktopSession
     from reset_feedback import Feedback, report_feedback
 
     desktop = getattr(args, "desktop", None) or DesktopSession(None)
-    hotkeys = HotkeyCommands() if getattr(args, "hotkeys", False) else None
+    expected_fields = expected_restore_fields(args.revision)
+    hotkeys = HotkeyCommands(expected_fields) if getattr(args, "hotkeys", False) else None
     feedback = Feedback(
         PROJECT / "work/ui-audio", muted=getattr(args, "mute", False) or not hotkeys
     )
@@ -422,9 +429,7 @@ def run(args):
                             feedback.play(event[0])
                         last_completed = completed
                         prepared_at = (
-                            time.monotonic()
-                            if row["action"] == 2 and row["result"] == 0 and row["fields"] == 10077
-                            else 0.0
+                            time.monotonic() if preparation_ready(row, expected_fields) else 0.0
                         )
                 if hotkeys:
                     settings = desktop.settings()
@@ -454,6 +459,7 @@ def run(args):
                         acknowledged,
                     )
                     if hotkeys.notice:
+                        print(hotkeys.notice, flush=True)
                         desktop.publish(message=hotkeys.notice, last_event="rejected")
                         feedback.play("rejected")
                     # Do not queue input while a previous native request is in flight.

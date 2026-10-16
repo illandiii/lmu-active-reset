@@ -344,3 +344,19 @@ collision-rebuild failure followed by compensation, including rejected replaceme
 of a checkpoint by a singular rotation. The core Windows suites and Python tests
 also pass. These fixtures model native collision helpers and do not replace a
 live test. No v15 live reset has yet been recorded.
+
+### First v15 attempt: launcher blocked before restore
+
+Recording `20261016T150448520010Z_physical_reset_host_v15` contains three successful
+saves and fifteen successful preparations, but no restore command and zero physical
+field writes. The user correctly observed no teleport. Both launcher preparation
+gates still required the former 10,077-field plan; the v15 host returned 10,084.
+The native host then detached cleanly on a vehicle lifecycle change, with no
+process crash recorded. This attempt did not exercise the collision correction.
+
+The launcher now selects the expected field count from the admitted revision and
+uses one predicate for both hotkey advancement and the recent-preparation lease.
+Tests exercise v14 and v15 save/prepare/restore sequences, reject the other plan
+size and reject unknown revisions. A mismatched preparation now reports an explicit
+reason instead of silently abandoning F7. No fallback or reduced field validation
+was introduced. A new live attempt remains required.

@@ -1006,13 +1006,6 @@ textarea {
   align-items: center;
   gap: 6px;
 }
-.header-tools .guide-button {
-  padding: 6px 8px;
-  font-size: 11px;
-}
-.titlebar {
-  justify-content: flex-end;
-}
 .window-controls svg {
   width: 16px;
   height: 16px;
@@ -1045,4 +1038,54 @@ textarea {
 }
 .modal-dismiss:hover {
   background: #ffffff15;
+}
+
+.titlebar {
+  justify-content: space-between;
+  padding-left: 8px;
+}
+.help-menu-trigger {
+  -webkit-app-region: no-drag;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 12px;
+  color: #d1d9e6;
+  letter-spacing: normal;
+}
+.help-menu-trigger:hover,
+.help-menu-trigger[data-popup-open] {
+  background: #2a3548;
+}
+.help-menu-positioner {
+  z-index: 110;
+  -webkit-app-region: no-drag;
+}
+.help-menu-popup {
+  min-width: 180px;
+  padding: 5px;
+  border: 1px solid #ffffff24;
+  border-radius: 7px;
+  background: #1b2432;
+  box-shadow: 0 8px 24px #0007;
+  outline: none;
+}
+.help-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 4px;
+  color: #e6edf8;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+.help-menu-item[data-highlighted] {
+  background: #304867;
+}
+.help-menu-item svg {
+  width: 18px;
+  height: 18px;
 }

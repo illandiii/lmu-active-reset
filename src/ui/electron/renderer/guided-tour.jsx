@@ -101,7 +101,7 @@ export function GuidedTour({ saveKey, restoreKey, onTabChange, onFinish }) {
           <Popover.Popup
             className="tour-popup"
             initialFocus={nextButton}
-            finalFocus={() => document.querySelector(".guide-button")}
+            finalFocus={() => document.querySelector(".help-menu-trigger")}
           >
             <Popover.Arrow className="tour-arrow">
               <svg

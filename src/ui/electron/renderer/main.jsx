@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Dialog } from "@base-ui/react/dialog";
 import { Tabs } from "@base-ui/react/tabs";
+import { Menu } from "@base-ui/react/menu";
 import { Icon } from "@iconify/react";
 import restart from "@iconify-icons/solar/restart-linear";
 import layers from "@iconify-icons/solar/layers-linear";
@@ -195,26 +196,38 @@ function App() {
 
   const key = (name) =>
     keyLabel(settings?.[name] || (name === "save_key" ? "F6" : "F7"), keys);
-  const guideButton = (
-    <button
-      className="guide-button"
-      aria-label="Start guided tour"
-      title="Quick guide"
-      disabled={!settings || quitting}
-      onClick={() => {
-        tourStartTab.current = tab;
-        setModal(null);
-        setTour(true);
-      }}
-    >
-      <Glyph icon={help} />
-      <span>Guide</span>
-    </button>
-  );
+  function startGuide() {
+    tourStartTab.current = tab;
+    setModal(null);
+    // Let the menu release focus before the tour takes it.
+    requestAnimationFrame(() => setTour(true));
+  }
   return (
     <>
       <div className="titlebar">
-        <span />
+        <Menu.Root>
+          <Menu.Trigger
+            className="help-menu-trigger"
+            disabled={!settings || quitting}
+          >
+            Aiuto
+          </Menu.Trigger>
+          <Menu.Portal>
+            <Menu.Positioner
+              className="help-menu-positioner"
+              side="bottom"
+              align="start"
+              sideOffset={4}
+              collisionPadding={8}
+            >
+              <Menu.Popup className="help-menu-popup">
+                <Menu.Item className="help-menu-item" onClick={startGuide}>
+                  <Glyph icon={help} /> Guida
+                </Menu.Item>
+              </Menu.Popup>
+            </Menu.Positioner>
+          </Menu.Portal>
+        </Menu.Root>
         <div className="window-controls">
           <button aria-label="Minimize" onClick={() => api.minimize()}>
             <svg viewBox="0 0 16 16">
@@ -271,7 +284,6 @@ function App() {
             >
               <Glyph icon={gear} />
             </button>
-            {guideButton}
           </div>
         </header>
         <main className="scroll-area">

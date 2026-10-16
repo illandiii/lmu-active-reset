@@ -164,8 +164,12 @@ try {
       );
     });
   }
+  async function openGuide() {
+    await page.getByRole("button", { name: "Aiuto", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Guida", exact: true }).click();
+  }
   async function completeTour() {
-    await page.getByRole("button", { name: "Start guided tour" }).click();
+    await openGuide();
     for (const [index, target] of tourTargets.entries()) {
       await page
         .locator(`[data-tour="${target}"][data-tour-active="true"]`)
@@ -203,7 +207,7 @@ try {
     await page.locator(".tour-popup").waitFor({ state: "hidden" });
     assert.equal(await page.locator("[data-tour-active]").count(), 0);
     await page.waitForFunction(() =>
-      document.activeElement?.classList.contains("guide-button"),
+      document.activeElement?.classList.contains("help-menu-trigger"),
     );
   }
   await completeTour();
@@ -214,7 +218,7 @@ try {
     "true",
   );
   await page.getByRole("tab", { name: "Overlay", exact: true }).click();
-  await page.getByRole("button", { name: "Start guided tour" }).click();
+  await openGuide();
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await page
     .getByRole("button", { name: "Previous step", exact: true })
@@ -229,7 +233,7 @@ try {
     "true",
   );
   await page.getByRole("tab", { name: "Active Reset", exact: true }).click();
-  await page.getByRole("button", { name: "Start guided tour" }).click();
+  await openGuide();
   await page.getByRole("button", { name: "Skip", exact: true }).click();
   await page.locator(".tour-popup").waitFor({ state: "hidden" });
   assert.equal(await page.locator("[data-tour-active]").count(), 0);

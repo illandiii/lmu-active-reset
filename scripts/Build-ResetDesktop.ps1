@@ -9,7 +9,7 @@ $work = Join-Path $projectRoot 'work'
 [IO.Directory]::CreateDirectory((Join-Path $projectRoot 'bin')) | Out-Null
 [IO.Directory]::CreateDirectory((Join-Path $projectRoot 'compatibility')) | Out-Null
 if (@(Get-Process -Name 'Le Mans Ultimate', 'diagnostic-14200' -ErrorAction SilentlyContinue).Count) {
-    throw 'Close LMU and Active Reset before rebuilding their local binaries.'
+    throw 'Close LMU and Sector before rebuilding their local binaries.'
 }
 $profilePath = Join-Path $projectRoot 'compatibility/steam-25661166-telemetry.json'
 $profile = Get-Content -LiteralPath $profilePath -Raw | ConvertFrom-Json
@@ -37,4 +37,4 @@ $profile.diagnostic_sha256 = (Get-FileHash $diagnostic -Algorithm SHA256).Hash
 $profile | Add-Member -NotePropertyName continuous_capture -NotePropertyValue $true -Force
 [IO.File]::WriteAllText($profilePath, ($profile | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
 & (Join-Path $PSScriptRoot 'Test-ResetGui.ps1') -IncludeWpf
-Write-Output 'Desktop build ready. Start-Reset.cmd opens the automatic GUI.'
+Write-Output 'Desktop build ready. Start-Sector.cmd opens the automatic GUI.'

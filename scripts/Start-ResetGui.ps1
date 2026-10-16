@@ -1,11 +1,17 @@
 param(
     [string]$PythonPath,
     [switch]$Preview,
-    [switch]$ValidateOnly
+    [switch]$ValidateOnly,
+    [string]$PreviewImage,
+    [switch]$SmokeTest
 )
 $ErrorActionPreference = 'Stop'
+if ($SmokeTest -and -not $Preview) { throw 'SmokeTest requires Preview; it never connects to LMU.' }
 $projectRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'ResetGui.Settings.ps1')
+. (Join-Path $PSScriptRoot 'ResetGui.Status.ps1')
+. (Join-Path $PSScriptRoot 'ResetGui.Instance.ps1')
+if ($SmokeTest) { . (Join-Path $PSScriptRoot 'ResetGui.SmokeTest.ps1') }
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName PresentationCore
 Add-Type -AssemblyName WindowsBase
@@ -28,12 +34,15 @@ $window.Add_SourceInitialized({
     } catch { } # Older Windows still renders the dark content with native chrome.
 })
 $ui = @{}
-foreach ($name in @('LayoutRoot', 'StatusDot', 'StatusTitle', 'CheckpointState', 'LastEvent',
+foreach ($name in @('LayoutRoot', 'BrandMark', 'StatusDot', 'StatusTitle', 'CheckpointState', 'CheckpointSummary', 'LastEvent',
     'StatusDetail', 'SaveKey', 'RestoreKey', 'KeyHint', 'SoundEnabled', 'PreviewSave',
     'PreviewRestore', 'SoundPreviews', 'SettingsHint', 'OpenLogs')) {
     $ui[$name] = $window.FindName($name)
     if ($null -eq $ui[$name]) { throw "Missing UI element: $name" }
 }
+$logoPath = Join-Path $projectRoot 'assets/sector-logo.png'
+$ui.BrandMark.Source = [Windows.Media.Imaging.BitmapImage]::new([uri]$logoPath)
+$window.Icon = [Windows.Media.Imaging.BitmapImage]::new([uri](Join-Path $projectRoot 'assets/sector.ico'))
 foreach ($number in 1..24) {
     $ui.SaveKey.Items.Add("F$number") | Out-Null
     $ui.RestoreKey.Items.Add("F$number") | Out-Null
@@ -41,9 +50,25 @@ foreach ($number in 1..24) {
 if ($ValidateOnly) {
     $ui.SaveKey.SelectedItem = 'F6'
     $ui.RestoreKey.SelectedItem = 'F7'
-    $window.Measure([Windows.Size]::new(580, 650))
-    $window.Arrange([Windows.Rect]::new(0, 0, 580, 650))
+    $window.Measure([Windows.Size]::new(580, 780))
+    $window.Arrange([Windows.Rect]::new(0, 0, 580, 780))
     $window.UpdateLayout()
+    if ($PreviewImage) {
+        $window.Content.Measure([Windows.Size]::new(580, 780))
+        $window.Content.Arrange([Windows.Rect]::new(0, 0, 580, 780))
+        $window.Content.UpdateLayout()
+        $visual = [Windows.Media.DrawingVisual]::new()
+        $drawing = $visual.RenderOpen()
+        $drawing.DrawRectangle($window.Resources['Surface'], $null, [Windows.Rect]::new(0, 0, 580, 780))
+        $drawing.Close()
+        $bitmap = [Windows.Media.Imaging.RenderTargetBitmap]::new(580, 780, 96, 96, [Windows.Media.PixelFormats]::Pbgra32)
+        $bitmap.Render($visual)
+        $bitmap.Render($window.Content)
+        $encoder = [Windows.Media.Imaging.PngBitmapEncoder]::new()
+        $encoder.Frames.Add([Windows.Media.Imaging.BitmapFrame]::Create($bitmap))
+        $output = [IO.File]::Create($PreviewImage)
+        try { $encoder.Save($output) } finally { $output.Dispose() }
+    }
     Write-Output 'PASS: WPF window, named controls, dropdowns and layout loaded.'
     return
 }
@@ -99,6 +124,19 @@ $script:nextHeartbeat = [datetime]::MinValue
 $script:startupError = $null
 $audioDirectory = Join-Path $projectRoot 'work/ui-audio'
 $script:audioPlayer = $null
+$script:tray = $null
+$script:showRequest = $null
+$script:instance = $null
+
+# Reopening the launcher reveals the running app instead of creating another host.
+if (-not $Preview) {
+    $script:instance = Open-ResetGuiInstance
+    $script:showRequest = $script:instance.ShowRequest
+    if (-not $script:instance.IsOwner) {
+        Close-ResetGuiInstance $script:instance
+        return
+    }
+}
 
 function Save-Preferences {
     $candidate = [pscustomobject]@{
@@ -164,20 +202,11 @@ function Read-SessionStatus {
     if ($snapshot.sequence -eq $script:lastSequence) { return }
     $script:lastSequence = $snapshot.sequence
     $script:lastSnapshot = $snapshot
-    $ui.CheckpointState.Text = if ($snapshot.checkpoint) { 'Checkpoint saved' } else { 'No checkpoint' }
-    if ($snapshot.message) { $ui.LastEvent.Text = $snapshot.message }
-    switch ($snapshot.phase) {
-        'waiting' { Set-Status 'Waiting for driving' 'LMU detected. Waiting for offline Practice.' }
-        'starting' { Set-Status 'Connecting' 'Checking the game and vehicle.' }
-        'active' { Set-Status 'Connected' 'Checkpoint stays available until the vehicle is reset.' 'Accent' }
-        'paused' {
-            $detail = if ($snapshot.checkpoint) { 'Checkpoint retained while driving is paused.' } else { 'Waiting for offline Practice driving.' }
-            Set-Status 'Waiting for driving' $detail
-        }
-        'stopping' { Set-Status 'Disconnecting' 'Finishing the current operation.' }
-        'stopped' { Set-Status 'Waiting for LMU' 'The app connects automatically.' }
-        'error' { Set-Status 'Unable to connect' $snapshot.message 'Signal' }
-    }
+    $view = Get-ResetStatusView $snapshot
+    $ui.CheckpointState.Text = $view.Checkpoint
+    $ui.CheckpointSummary.Text = $view.Summary
+    if ($view.Message) { $ui.LastEvent.Text = $view.Message }
+    Set-Status $view.Title $view.Detail $view.Tone
 }
 
 function Request-Stop {
@@ -186,6 +215,56 @@ function Request-Stop {
         Set-Status 'Disconnecting' 'Finishing the current operation.'
     }
 }
+
+function Show-SectorWindow {
+    $window.Show()
+    $window.WindowState = [Windows.WindowState]::Normal
+    $window.Activate() | Out-Null
+}
+
+function Request-Exit {
+    $script:closingRequested = $true
+    if ($script:child -and -not $script:child.HasExited) {
+        Show-SectorWindow
+        Request-Stop
+    } else {
+        $script:canClose = $true
+        $window.Close()
+    }
+}
+
+function Show-CloseChoice([string]$TestChoice) {
+    $reader = [Xml.XmlReader]::Create((Join-Path $projectRoot 'src/reset_close_dialog.xaml'))
+    try { $dialog = [Windows.Markup.XamlReader]::Load($reader) } finally { $reader.Close() }
+    $dialog.Owner = $window
+    $dialog.Resources = $window.Resources
+    $dialog.Tag = 'cancel'
+    $dialog.FindName('KeepRunning').Add_Click({ $dialog.Tag = 'background'; $dialog.DialogResult = $true })
+    $dialog.FindName('QuitSector').Add_Click({ $dialog.Tag = 'quit'; $dialog.DialogResult = $true })
+    if ($SmokeTest) {
+        $dialog.Opacity = 0
+        $dialog.Dispatcher.BeginInvoke([Action]{
+            $button = if ($TestChoice -eq 'background') { 'KeepRunning' } else { 'QuitSector' }
+            $dialog.FindName($button).RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+        }) | Out-Null
+    }
+    $dialog.ShowDialog() | Out-Null
+    return $dialog.Tag
+}
+
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+$script:tray = [Windows.Forms.NotifyIcon]::new()
+$script:tray.Icon = [Drawing.Icon]::new((Join-Path $projectRoot 'assets/sector.ico'))
+$script:tray.Text = 'Sector'
+$trayMenu = [Windows.Forms.ContextMenuStrip]::new()
+$openItem = $trayMenu.Items.Add('Open Sector')
+$openItem.Add_Click({ Show-SectorWindow })
+$quitItem = $trayMenu.Items.Add('Quit Sector')
+$quitItem.Add_Click({ Request-Exit })
+$script:tray.ContextMenuStrip = $trayMenu
+$script:tray.Add_DoubleClick({ Show-SectorWindow })
+$script:tray.Visible = $true
 
 if (-not $Preview) {
     try {
@@ -202,14 +281,21 @@ if (-not $Preview) {
         Set-Status 'Setup required' $script:startupError 'Signal'
     }
 } else {
-    $window.Title = 'Active Reset - Preview'
+    $window.Title = 'Sector - Preview'
     Set-Status 'Waiting for LMU' 'The app connects automatically when you start driving.'
 }
 
 $timer = [Windows.Threading.DispatcherTimer]::new()
 $timer.Interval = [timespan]::FromMilliseconds(250)
+$script:smokeStep = 0
+$script:smokeFailure = $null
 $timer.Add_Tick({
     try {
+        if ($SmokeTest) {
+            Invoke-ResetGuiSmokeStep
+            return
+        }
+        if ($script:showRequest -and $script:showRequest.WaitOne(0)) { Show-SectorWindow }
         if ($Preview) { return }
         if ($script:child) {
             if (-not $script:child.HasExited -and [datetime]::UtcNow -ge $script:nextHeartbeat) {
@@ -222,8 +308,9 @@ $timer.Add_Tick({
                 $script:child.Dispose()
                 $script:child = $null
                 $ui.CheckpointState.Text = 'No checkpoint'
+                $ui.CheckpointSummary.Text = 'Save a new checkpoint after reconnecting.'
                 if ($exitCode -ne 0 -and $script:lastSnapshot.phase -ne 'error') {
-                    Set-Status 'Unable to connect' 'Open logs for details. Reopen Active Reset after fixing the issue.' 'Signal'
+                    Set-Status 'Unable to connect' 'Open logs for details. Reopen Sector after fixing the issue.' 'Signal'
                 }
                 if ($script:closingRequested) {
                     $script:canClose = $true
@@ -264,22 +351,53 @@ $timer.Add_Tick({
         $script:child = Start-Process $PythonPath -ArgumentList $quoted -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $logDirectory "$logName.log") -RedirectStandardError (Join-Path $logDirectory "$logName.error.log")
         Set-Status 'Waiting for driving' 'LMU detected. Waiting for offline Practice.'
     } catch {
+        if ($SmokeTest) {
+            $script:smokeFailure = $_.Exception.Message
+            Request-Exit
+            return
+        }
         Set-Status 'Connection error' $_.Exception.Message 'Signal'
         # Keep the timer alive so closing can still cooperatively stop the child.
     }
 })
 $window.Add_Closing({
     param($sender, $event)
-    if ($script:canClose -or -not $script:child -or $script:child.HasExited) { return }
+    if ($script:canClose) { return }
     $event.Cancel = $true
-    $script:closingRequested = $true
-    Request-Stop
+    if ($script:closingRequested) { return }
+    switch (Show-CloseChoice) {
+        'background' { $window.Hide() }
+        'quit' {
+            # Defer Close until the current Closing event has returned.
+            $window.Dispatcher.BeginInvoke([Action]{ Request-Exit }) | Out-Null
+        }
+    }
 })
 $window.Add_Closed({
     $timer.Stop()
-    if ($script:audioPlayer) { $script:audioPlayer.Dispose() }
-    if ($script:audioProcess) { $script:audioProcess.Dispose() }
+    $application.Shutdown()
 })
 $window.Add_Loaded({ $ui.SaveKey.Focus() | Out-Null })
-$timer.Start()
-$window.ShowDialog() | Out-Null
+# A hidden main window must keep the dispatcher and the host heartbeat alive.
+$application = [Windows.Application]::new()
+$application.ShutdownMode = [Windows.ShutdownMode]::OnExplicitShutdown
+if ($SmokeTest) { $window.Opacity = 0; $window.ShowInTaskbar = $false }
+try {
+    $timer.Start()
+    $application.Run($window) | Out-Null
+} finally {
+    $timer.Stop()
+    Request-Stop
+    if ($script:audioPlayer) { $script:audioPlayer.Dispose() }
+    if ($script:audioProcess) { $script:audioProcess.Dispose() }
+    $script:tray.Visible = $false
+    $script:tray.Icon.Dispose()
+    $script:tray.Dispose()
+    $trayMenu.Dispose()
+    Close-ResetGuiInstance $script:instance
+}
+if ($SmokeTest) {
+    if ($script:smokeFailure) { throw $script:smokeFailure }
+    if ($script:smokeStep -ne 3) { throw 'Window smoke test ended prematurely.' }
+    Write-Output 'PASS: background/quit choices, hide/reopen, controller status and dispatcher shutdown.'
+}

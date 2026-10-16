@@ -47,6 +47,31 @@ class DesktopTests(unittest.TestCase):
         self.session.publish(phase="active")
         self.assertTrue(json.loads((self.path / "status.json").read_text())["checkpoint"])
 
+    def test_checkpoint_summary_uses_acknowledgements_and_survives_failed_save(self):
+        self.session.command(1)
+        self.assertFalse(self.session.state["checkpoint"])
+        self.session.report({"action": 1, "result": 0, "id": 1, "speed": 25.0})
+        self.assertEqual(self.session.state["saved_speed_kmh"], 90.0)
+        self.assertEqual(self.session.state["saved_at"], 1000)
+        self.session.command(2)
+        self.session.report({"action": 2, "result": 0, "id": 2})
+        self.assertEqual(self.session.state["restore_count"], 0)
+        self.session.report({"action": 3, "result": 0, "id": 3})
+        self.session.report({"action": 1, "result": 9, "cause": 3, "id": 4})
+        self.assertEqual(self.session.state["saved_speed_kmh"], 90.0)
+        self.assertEqual(self.session.state["restore_count"], 1)
+        self.session.publish(phase="waiting", checkpoint=False)
+        self.assertIsNone(self.session.state["saved_speed_kmh"])
+        self.assertIsNone(self.session.state["saved_at"])
+        self.assertEqual(self.session.state["restore_count"], 0)
+
+    def test_invalid_speed_does_not_break_status_or_cleanup(self):
+        for speed in (float("nan"), float("inf"), -1, None, "fast", True):
+            self.session.report({"action": 1, "result": 0, "id": 1, "speed": speed})
+            snapshot = json.loads((self.path / "status.json").read_text())
+            self.assertIsNone(snapshot["saved_speed_kmh"])
+            self.assertTrue(snapshot["checkpoint"])
+
     def test_settings_validation_and_atomic_replacement(self):
         self.session.settings_file = self.path / "settings.json"
         values = {"save_key": "F8", "restore_key": "F9", "sound": False}

@@ -1,7 +1,8 @@
-# LMU Active Reset
+# Sector
 
-Experimental checkpoint and physical-state restoration for Le Mans Ultimate,
-developed for offline Practice on Windows x64.
+A sim-racing companion for Le Mans Ultimate, starting with checkpoint and
+physical-state restoration in offline Practice on Windows x64. Telemetry overlays
+are planned; they are not part of this version.
 
 **V15 fixes the collision sweep that launched the car after moving resets.**
 Seven live restores on 16 October verified all 10,084 fields, with current speeds
@@ -19,7 +20,8 @@ are connected to this host. See the [host evidence](docs/PHYSICAL_RESET_HOST.md)
 
 ## Try the local build
 
-Run `Start-Reset.cmd` to open the English, dark-only desktop app. It automatically
+Run `Start-Sector.cmd` to open the English, dark-only desktop app (`Start-Reset.cmd`
+remains an alias). It automatically
 detects LMU and waits for driving in offline Practice without EAC. There are no
 start/stop buttons or session countdown. Release both keys before using them:
 
@@ -27,7 +29,10 @@ start/stop buttons or session countdown. Release both keys before using them:
 - **F7** prepares and restores it after successful native acknowledgement.
 - Change either key (F1–F24) in the GUI; settings persist across launches.
 - Distinct sounds confirm save, restore and rejection; preview or mute them in the GUI.
-- Closing the window requests orderly native shutdown.
+- The checkpoint card shows the acknowledged saved speed and successful restore count.
+- Closing the window offers **Run in background**, **Quit Sector** or **Cancel**.
+- In the background, shortcuts remain active. Reopen from the tray or launcher.
+- Quit waits for native cleanup; a second launcher reveals the existing app.
 
 A checkpoint has no time-based expiry. The v15 host has no session-duration cap;
 vehicle reconstruction, including a reset to the pits, invalidates its checkpoint.
@@ -96,9 +101,11 @@ Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 
 1. Qualify lifecycle transitions and physical stability across more cars and tracks.
 2. Validate lap validity and longer sessions with repeated moving resets.
-3. Validate the desktop UI workflow; the live v15 trials used the hotkey launcher.
+3. Validate the complete desktop workflow during longer live-game sessions.
 
-The desktop UI is implemented; native Windows visual and live validation remain pending.
+The desktop UI passes Windows layout, status and lifecycle smoke tests. The seven
+live v15 reset trials used the same engine through the hotkey launcher; the new
+tray workflow has been tested independently of LMU.
 See [physics thread findings](docs/PHYSICS_THREAD_2026-10-13.md)
 and [restore integration](docs/RESTORE_INTEGRATION_2026-10-13.md).
 The [development archive](docs/README.md) preserves earlier results chronologically;

@@ -5,6 +5,7 @@ prepare or restore, or grant native admission.
 """
 
 import json
+import math
 from pathlib import Path
 import time
 
@@ -14,7 +15,16 @@ class DesktopSession:
         self.directory = Path(directory) if directory else None
         self.clock = clock
         self.settings_file = Path(settings_file) if settings_file else None
-        self.state = {"phase": "waiting", "checkpoint": False, "message": "", "sequence": 0}
+        self.state = {
+            "schema_version": 1,
+            "phase": "waiting",
+            "checkpoint": False,
+            "saved_speed_kmh": None,
+            "saved_at": None,
+            "restore_count": 0,
+            "message": "",
+            "sequence": 0,
+        }
         self.dirty = False
         if self.directory:
             self.directory.mkdir(parents=True, exist_ok=True)
@@ -31,12 +41,14 @@ class DesktopSession:
             return True
 
     def publish(self, **changes):
-        if not self.directory or (
-            not self.dirty and all(self.state.get(k) == v for k, v in changes.items())
-        ):
+        if changes.get("checkpoint") is False:
+            changes.update(saved_speed_kmh=None, saved_at=None, restore_count=0)
+        if not self.dirty and all(self.state.get(k) == v for k, v in changes.items()):
             return
         self.state.update(changes)
         self.state["sequence"] += 1
+        if not self.directory:
+            return
         temporary = self.directory / "status.tmp"
         try:
             temporary.write_text(
@@ -54,6 +66,8 @@ class DesktopSession:
             self.publish(message="Saving checkpoint…")
         elif action == 2:
             self.publish(message="Preparing restore…")
+        elif action == 3:
+            self.publish(message="Restoring checkpoint…")
 
     def settings(self):
         from physical_reset_hotkeys import function_key
@@ -75,7 +89,17 @@ class DesktopSession:
         feedback = report_feedback(row)
         changes = {}
         if row["action"] == 1 and row["result"] == 0:
-            changes["checkpoint"] = True
+            speed = row.get("speed")
+            speed_kmh = (
+                speed * 3.6
+                if type(speed) in (float, int) and math.isfinite(speed) and speed >= 0
+                else None
+            )
+            changes.update(
+                checkpoint=True, saved_speed_kmh=speed_kmh, saved_at=self.clock(), restore_count=0
+            )
+        elif row["action"] == 3 and row["result"] == 0:
+            changes["restore_count"] = self.state["restore_count"] + 1
         if feedback:
             changes.update(message=feedback[1], last_event=feedback[0], report_id=row["id"])
         if changes:

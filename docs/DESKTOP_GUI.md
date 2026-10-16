@@ -1,4 +1,42 @@
-# Automatic desktop UI and continuous host v15
+# Sector desktop UI and continuous host v15
+
+## Current integration
+
+The `codex/desktop-gui` design branch (`8d166d1`) is already an ancestor of main.
+Sector retains its WPF design and connects its settings and status presentation
+to the v15 host used in the successful live resets. Open `Start-Sector.cmd`;
+`Start-Reset.cmd` remains compatible. No onboarding or overlay is added here.
+
+The checkpoint card reads acknowledged state from `status.json`: saved speed,
+successful restores since the last save, connection phase and the last result.
+Pressing a key or completing preparation never increments the restore count.
+A rejected replacement save retains the previous checkpoint and its summary.
+Vehicle invalidation clears the summary. Settings still live in
+`%LOCALAPPDATA%/LMUActiveReset/settings.json` to preserve existing preferences.
+
+Closing the window offers background, quit and cancel. Background hides the
+window while the dispatcher, heartbeat and hotkey process continue running.
+The tray provides Open Sector and Quit Sector. A named mutex allows only one
+desktop controller per Windows session; another launch signals the existing
+window to reopen. Quit requests cooperative host shutdown and waits for the
+child to exit before disposing the tray and application. No game process is killed.
+
+`ResetGui.Status.ps1` contains presentation logic, `ResetGui.Instance.ps1` owns
+the desktop instance lease, and `ResetGui.SmokeTest.ps1` contains isolated window
+tests. The Python `DesktopSession` publishes a versioned snapshot (`schema_version`
+1) through atomic replacement. A future overlay can consume that read-only state
+without becoming a second reset controller. It must not create or refresh the
+desktop heartbeat, grant native admission or infer success from keypresses.
+
+Windows validation: 92 Python unit tests, Ruff checks and formatting, settings
+persistence, process-to-process instance exclusion/reopen signaling, WPF loading,
+background/quit choices, hide/reopen and status rendering all pass. The layout
+was rendered and inspected locally. The original seven live reset trials used
+the hotkey launcher; this desktop/tray integration has not repeated live driving.
+
+The remaining sections preserve the original design and validation history;
+their historical pending items are superseded where the current results above
+or the collision incident report provide later evidence.
 
 ## Product and design
 
@@ -135,5 +173,6 @@ continuous draining, exact loss counts, concurrent slot reuse, a crash during re
 legacy trace decoding and analysis boundaries. V14 is the default local launcher
 version. LMU was not started or attached during these checks.
 
-Closing the window still disconnects and exits; background/tray behavior remains
-separate pending UI work. The physical high-speed reset defect remains open.
+At that stage closing the window disconnected and exited, background/tray work
+was pending, and the high-speed reset defect was still open. See the current
+integration above and `HIGH_SPEED_RESET_INCIDENT.md` for the later v15 results.

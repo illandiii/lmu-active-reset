@@ -39,6 +39,15 @@ try {
       ),
     );
   await settle();
+  const resetTab = await page
+    .getByRole("tab", { name: "Active Reset", exact: true })
+    .boundingBox();
+  const overlayTab = await page
+    .getByRole("tab", { name: "Overlay", exact: true })
+    .boundingBox();
+  assert.ok(Math.abs(resetTab.width - overlayTab.width) < 1);
+  assert.equal(resetTab.height, overlayTab.height);
+  assert.ok(overlayTab.x - (resetTab.x + resetTab.width) >= 5);
   await page.screenshot({ path: path.join(output, "active-reset.png") });
   assert.equal(await page.evaluate(() => typeof window.require), "undefined");
   assert.equal(
@@ -115,7 +124,10 @@ try {
     }),
   );
   assert.equal(invalid.ok, false);
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Modifica", exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: "Impostazioni", exact: true })
+    .click();
   await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
   await settle();
   await page.screenshot({ path: path.join(output, "settings.png") });
@@ -207,7 +219,7 @@ try {
     await page.locator(".tour-popup").waitFor({ state: "hidden" });
     assert.equal(await page.locator("[data-tour-active]").count(), 0);
     await page.waitForFunction(() =>
-      document.activeElement?.classList.contains("help-menu-trigger"),
+      document.activeElement?.classList.contains("guide-menu-trigger"),
     );
   }
   await completeTour();

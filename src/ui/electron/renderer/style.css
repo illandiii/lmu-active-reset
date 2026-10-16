@@ -124,7 +124,10 @@ button,
 }
 .tabs {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
   align-items: center;
   height: 42px;
   margin-left: auto;
@@ -140,6 +143,7 @@ button,
   height: 34px;
   padding: 0 17px;
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 9px;
   color: var(--muted);
@@ -1053,6 +1057,12 @@ textarea {
   font-size: 12px;
   color: #d1d9e6;
   letter-spacing: normal;
+}
+.titlebar-menus {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  -webkit-app-region: no-drag;
 }
 .help-menu-trigger:hover,
 .help-menu-trigger[data-popup-open] {

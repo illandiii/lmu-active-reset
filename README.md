@@ -143,8 +143,8 @@ and [restore integration](docs/RESTORE_INTEGRATION_2026-10-13.md).
 The [development archive](docs/README.md) preserves earlier results chronologically;
 older paths and source hashes refer to the pre-reorganization working tree.
 
-## Windows development release 0.1.2
+## Windows development release 0.1.3
 
-Open `releases/Sector-0.1.2-win-x64/Sector.exe`. Keep the complete folder together;
+Open `releases/Sector-0.1.3-win-x64/Sector.exe`. Keep the complete folder together;
 Node.js and Python do not need to be installed. See [release instructions](docs/RELEASE.md)
 for the repeatable build and packaged-app checks.

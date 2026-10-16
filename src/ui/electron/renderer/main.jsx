@@ -205,29 +205,59 @@ function App() {
   return (
     <>
       <div className="titlebar">
-        <Menu.Root>
-          <Menu.Trigger
-            className="help-menu-trigger"
-            disabled={!settings || quitting}
-          >
-            Aiuto
-          </Menu.Trigger>
-          <Menu.Portal>
-            <Menu.Positioner
-              className="help-menu-positioner"
-              side="bottom"
-              align="start"
-              sideOffset={4}
-              collisionPadding={8}
+        <div className="titlebar-menus">
+          <Menu.Root>
+            <Menu.Trigger
+              className="help-menu-trigger"
+              disabled={!settings || quitting}
             >
-              <Menu.Popup className="help-menu-popup">
-                <Menu.Item className="help-menu-item" onClick={startGuide}>
-                  <Glyph icon={help} /> Guida
-                </Menu.Item>
-              </Menu.Popup>
-            </Menu.Positioner>
-          </Menu.Portal>
-        </Menu.Root>
+              Modifica
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Positioner
+                className="help-menu-positioner"
+                side="bottom"
+                align="start"
+                sideOffset={4}
+                collisionPadding={8}
+              >
+                <Menu.Popup className="help-menu-popup">
+                  <Menu.Item
+                    className="help-menu-item"
+                    onClick={() =>
+                      requestAnimationFrame(() => setModal("settings"))
+                    }
+                  >
+                    <Glyph icon={gear} /> Impostazioni
+                  </Menu.Item>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
+          <Menu.Root>
+            <Menu.Trigger
+              className="help-menu-trigger guide-menu-trigger"
+              disabled={!settings || quitting}
+            >
+              Aiuto
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Positioner
+                className="help-menu-positioner"
+                side="bottom"
+                align="start"
+                sideOffset={4}
+                collisionPadding={8}
+              >
+                <Menu.Popup className="help-menu-popup">
+                  <Menu.Item className="help-menu-item" onClick={startGuide}>
+                    <Glyph icon={help} /> Guida
+                  </Menu.Item>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
+        </div>
         <div className="window-controls">
           <button aria-label="Minimize" onClick={() => api.minimize()}>
             <svg viewBox="0 0 16 16">
@@ -434,7 +464,7 @@ function App() {
             setTour(false);
             setTab(tourStartTab.current);
             requestAnimationFrame(() =>
-              document.querySelector(".guide-button")?.focus(),
+              document.querySelector(".guide-menu-trigger")?.focus(),
             );
           }}
         />

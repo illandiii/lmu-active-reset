@@ -14,6 +14,12 @@ Keep UI presentation separate from native admission and reset sequencing. Deskto
 and future overlay views must display acknowledged state rather than infer success
 from a keypress.
 
+The Electron app lives in `src/ui/electron`. Run `npm run format:check`,
+`npm test`, `npm run build` and `npm run test:ui` there after desktop changes.
+UI smoke tests use an isolated preview profile and never attach to LMU.
+Keep privileged operations in `main/`; the renderer only receives the explicit
+preload API. Do not introduce another hotkey listener in Electron.
+
 Check Python changes with `ruff check src/python tests/python scripts/sector.py`,
 `ruff format --check src/python tests/python scripts/sector.py` and
 `python scripts/sector.py test`. Import cleanup must preserve

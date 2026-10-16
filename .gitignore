@@ -14,3 +14,6 @@
 *.obj
 *.o
 *.dmp
+**/node_modules/
+src/ui/electron/dist/
+src/ui/electron/test-results/

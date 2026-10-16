@@ -5,9 +5,8 @@ artwork at 16, 24, 32, 48, 64, 128 and 256 pixels for Windows. Rebuild the icon 
 `powershell -STA -File scripts/Build-SectorIcon.ps1` from the repository root.
 The desktop header, window icon and notification tray use these assets.
 
-`icons/` contains original outline SVGs for reset, save, layers and sound. The WPF
-resource geometries in `src/ui/reset_gui.xaml` mirror their path data; keep both in
-sync when changing an icon. All use the same stroke width and rounded joins.
+The Electron renderer uses locally bundled Solar Linear icons by 480 Design via
+Iconify (CC BY 4.0). See `src/ui/electron/THIRD_PARTY_NOTICES.md` for attribution.
 
 The logo was generated with the built-in image generation tool on 16 October
 2026. Final generation prompt:

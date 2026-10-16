@@ -20,7 +20,7 @@ are connected to this host. See the [host evidence](docs/PHYSICAL_RESET_HOST.md)
 
 ## Try the local build
 
-Run `Start-Sector.cmd` to open the English, dark-only desktop app (`Start-Reset.cmd`
+Run `Start-Sector.cmd` to open the English, dark-only Electron app (`Start-Reset.cmd`
 remains an alias). It automatically
 detects LMU and waits for driving in offline Practice without EAC. There are no
 start/stop buttons or session countdown. Release both keys before using them:
@@ -39,6 +39,10 @@ start/stop buttons or session countdown. Release both keys before using them:
 
 The top tabs separate **Active Reset** from the **Overlay** placeholder. Scrolling
 uses the app's dark theme. Overlay functionality will be added in a later version.
+The launcher builds the local renderer and installs its locked dependencies on
+first use. Node.js 22.12+ and npm are required, with internet access for initial
+setup. Later launches use local assets. Existing shortcuts and sound preferences
+are retained. For a UI-only preview, run `scripts/Start-ResetGui.ps1 -Preview`.
 
 A checkpoint has no time-based expiry. The v15 host has no session-duration cap;
 vehicle reconstruction, including a reset to the pits, invalidates its checkpoint.
@@ -80,7 +84,7 @@ the subsequent live results are recorded in the
 | `src/native/observers/` | Historical capture modules and their wire layouts |
 | `src/native/telemetry/` | Native telemetry reader |
 | `src/python/sector/` | Python package, split into runtime, desktop, telemetry, observers, analysis, research and replay |
-| `src/ui/` | WPF window layout and vector resources |
+| `src/ui/electron/` | Electron main process, isolated preload, React renderer and desktop tests |
 | `tests/native/`, `tests/python/` | Native fixtures/bridges and Python unit tests |
 | `tools/rea/` | Offline REA JavaScript integration |
 | `scripts/` | PowerShell builds, tests and installation inspection |
@@ -125,9 +129,10 @@ Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
 2. Validate lap validity and longer sessions with repeated moving resets.
 3. Validate the complete desktop workflow during longer live-game sessions.
 
-The desktop UI passes Windows layout, status and lifecycle smoke tests. The seven
+The Electron desktop UI passes Windows layout, status and lifecycle smoke tests. The seven
 live v15 reset trials used the same engine through the hotkey launcher; the new
-tray workflow has been tested independently of LMU.
+tray workflow has been tested independently of LMU. See [desktop architecture,
+design sources and tests](docs/DESKTOP_GUI.md).
 See [physics thread findings](docs/PHYSICS_THREAD_2026-10-13.md)
 and [restore integration](docs/RESTORE_INTEGRATION_2026-10-13.md).
 The [development archive](docs/README.md) preserves earlier results chronologically;

@@ -21,7 +21,7 @@ src/
     research/      Read-only probes, executable inspection and relocation studies
     replay/        Recorded-frame replay and fixture preparation tools
     paths.py       Repository paths independent of the working directory
-  ui/              WPF layout and vector geometry
+  ui/electron/     Electron main/preload, React renderer and desktop tests
 tests/
   native/          Isolated native fixtures and Python fixture bridges
   python/          Python unit and source-layout tests

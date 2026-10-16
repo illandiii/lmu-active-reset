@@ -70,14 +70,14 @@ class DesktopSession:
             self.publish(message="Restoring checkpoint…")
 
     def settings(self):
-        from physical_reset_hotkeys import function_key
+        from physical_reset_hotkeys import virtual_key
 
         if not self.settings_file:
             return None
         try:
             settings = json.loads(self.settings_file.read_text(encoding="utf-8-sig"))
             save, restore = settings["save_key"], settings["restore_key"]
-            if function_key(save) == function_key(restore) or type(settings["sound"]) is not bool:
+            if virtual_key(save) == virtual_key(restore) or type(settings["sound"]) is not bool:
                 return None
             return save.upper(), restore.upper(), settings["sound"]
         except (OSError, ValueError, KeyError, TypeError, AttributeError):

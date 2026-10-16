@@ -22,6 +22,14 @@ try {
     $settings.save_key = 'F1'
     Save-ResetSettings $path $settings
     Assert-True ((Read-ResetSettings $path).save_key -eq 'F1') 'Atomic replacement'
+    $settings.save_key = 'G'
+    $settings.restore_key = 'Space'
+    Save-ResetSettings $path $settings
+    Assert-True ((Read-ResetSettings $path).restore_key -eq 'Space') 'Captured key persistence'
+    $settings.restore_key = 'g'
+    Assert-True (-not (Test-ResetSettings $settings)) 'Case-insensitive duplicate rejection'
+    $settings.restore_key = 'Ctrl+G'
+    Assert-True (-not (Test-ResetSettings $settings)) 'Modifier combination rejection'
     [IO.File]::WriteAllText($path, '{broken')
     Assert-True ((Read-ResetSettings $path).save_key -eq 'F6') 'Malformed settings recovery'
     $xml = [xml][IO.File]::ReadAllText((Join-Path (Split-Path -Parent $PSScriptRoot) 'src/reset_gui.xaml'))
@@ -37,8 +45,7 @@ try {
     Assert-True ($failed.Tone -eq 'Signal' -and $failed.Detail -eq 'Native cleanup failed.') 'Native failures reach the UI'
     $stopped = Get-ResetStatusView ([pscustomobject]@{ phase = 'stopped'; checkpoint = $false })
     Assert-True ($stopped.Title -eq 'Disconnected' -and $stopped.Checkpoint -eq 'No checkpoint') 'Stopped state is not connected'
-    $dialog = [xml][IO.File]::ReadAllText((Join-Path (Split-Path -Parent $PSScriptRoot) 'src/reset_close_dialog.xaml'))
-    Assert-True ($null -ne $dialog.Window) 'Close dialog is well-formed'
+    Assert-True ($xml.SelectNodes('//*[local-name()="ComboBox" or local-name()="Popup"]').Count -eq 0) 'No dropdown or separate popup windows'
     $instanceName = 'Local\Sector.Desktop.Test.' + [guid]::NewGuid().ToString('N')
     $instance = Open-ResetGuiInstance $instanceName
     try {

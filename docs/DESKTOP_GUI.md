@@ -7,6 +7,21 @@ Sector retains its WPF design and connects its settings and status presentation
 to the v15 host used in the successful live resets. Open `Start-Sector.cmd`;
 `Start-Reset.cmd` remains compatible. No onboarding or overlay is added here.
 
+The latest layout has pinned Active Reset and Overlay tabs, a themed scrollbar,
+and compact status/shortcut/audio cards. Overlay currently displays Coming soon.
+The Open logs footer and explanatory filler text have been removed. Runtime
+errors remain visible. Four matching SVG source icons in `assets/icons` use the
+same geometry as WPF Paths, so they scale without a browser or SVG dependency.
+
+Shortcut buttons open an embedded capture card. The window consumes the next
+supported key, saves it atomically and updates the running controller through
+the existing settings channel. Escape cancels, duplicates stay in capture, and
+focus loss cancels capture. Modifiers and combinations are rejected. UI and Python
+share `src/reset_keymap.json`, including letters, digits, F1–F24, navigation,
+numpad and OEM punctuation. Punctuation labels use the active keyboard layout.
+Existing F6/F7 preferences remain valid. Key release and game-focus guards still
+apply before any native command is admitted.
+
 The checkpoint card reads acknowledged state from `status.json`: saved speed,
 successful restores since the last save, connection phase and the last result.
 Pressing a key or completing preparation never increments the restore count.
@@ -20,6 +35,8 @@ The tray provides Open Sector and Quit Sector. A named mutex allows only one
 desktop controller per Windows session; another launch signals the existing
 window to reopen. Quit requests cooperative host shutdown and waits for the
 child to exit before disposing the tray and application. No game process is killed.
+The close prompt is a modal layer inside the main window, not another native
+window. Its focus stays inside the prompt while the controller heartbeat continues.
 
 `ResetGui.Status.ps1` contains presentation logic, `ResetGui.Instance.ps1` owns
 the desktop instance lease, and `ResetGui.SmokeTest.ps1` contains isolated window
@@ -27,6 +44,12 @@ tests. The Python `DesktopSession` publishes a versioned snapshot (`schema_versi
 1) through atomic replacement. A future overlay can consume that read-only state
 without becoming a second reset controller. It must not create or refresh the
 desktop heartbeat, grant native admission or infer success from keypresses.
+
+Additional WPF smoke checks cover actual routed keyboard events, duplicate and
+modifier rejection, Escape cancellation, switching tabs, embedded close/cancel,
+and scrollbar position synchronization at the minimum window height. Main, Overlay,
+capture and close states were rendered and inspected. These checks run in Preview
+mode and never connect to LMU or modify the user's saved preferences.
 
 Windows validation: 92 Python unit tests, Ruff checks and formatting, settings
 persistence, process-to-process instance exclusion/reopen signaling, WPF loading,

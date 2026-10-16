@@ -3,7 +3,8 @@ param(
     [switch]$Preview,
     [switch]$ValidateOnly,
     [string]$PreviewImage,
-    [switch]$SmokeTest
+    [switch]$SmokeTest,
+    [ValidateSet("Reset", "Overlay", "Capture", "Close")][string]$PreviewState = "Reset"
 )
 $ErrorActionPreference = 'Stop'
 if ($SmokeTest -and -not $Preview) { throw 'SmokeTest requires Preview; it never connects to LMU.' }
@@ -19,6 +20,8 @@ Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 public static class ResetWindowTheme {
+    [DllImport("user32.dll")]
+    public static extern uint MapVirtualKey(uint code, uint mapType);
     [DllImport("dwmapi.dll")]
     public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 }
@@ -34,34 +37,40 @@ $window.Add_SourceInitialized({
     } catch { } # Older Windows still renders the dark content with native chrome.
 })
 $ui = @{}
-foreach ($name in @('LayoutRoot', 'BrandMark', 'StatusDot', 'StatusTitle', 'CheckpointState', 'CheckpointSummary', 'LastEvent',
-    'StatusDetail', 'SaveKey', 'RestoreKey', 'KeyHint', 'SoundEnabled', 'PreviewSave',
-    'PreviewRestore', 'SoundPreviews', 'SettingsHint', 'OpenLogs')) {
+foreach ($name in @('LayoutRoot', 'MainContent', 'BrandMark', 'StatusDot', 'StatusTitle', 'CheckpointState', 'CheckpointSummary', 'LastEvent',
+    'SaveKey', 'RestoreKey', 'SoundEnabled', 'PreviewSave', 'PreviewRestore', 'SoundPreviews', 'SettingsHint',
+    'ResetTab', 'OverlayTab', 'ResetPanel', 'OverlayPanel', 'ModalLayer', 'CaptureCard', 'CloseCard',
+    'CaptureTitle', 'CaptureHint', 'CancelCapture', 'KeepRunning', 'QuitSector', 'CancelClose')) {
     $ui[$name] = $window.FindName($name)
     if ($null -eq $ui[$name]) { throw "Missing UI element: $name" }
 }
 $logoPath = Join-Path $projectRoot 'assets/sector-logo.png'
 $ui.BrandMark.Source = [Windows.Media.Imaging.BitmapImage]::new([uri]$logoPath)
 $window.Icon = [Windows.Media.Imaging.BitmapImage]::new([uri](Join-Path $projectRoot 'assets/sector.ico'))
-foreach ($number in 1..24) {
-    $ui.SaveKey.Items.Add("F$number") | Out-Null
-    $ui.RestoreKey.Items.Add("F$number") | Out-Null
-}
 if ($ValidateOnly) {
-    $ui.SaveKey.SelectedItem = 'F6'
-    $ui.RestoreKey.SelectedItem = 'F7'
-    $window.Measure([Windows.Size]::new(580, 780))
-    $window.Arrange([Windows.Rect]::new(0, 0, 580, 780))
+    if ($PreviewState -eq 'Overlay') {
+        $ui.OverlayTab.IsChecked = $true
+        $ui.ResetPanel.Visibility = 'Collapsed'
+        $ui.OverlayPanel.Visibility = 'Visible'
+    }
+    if ($PreviewState -in @('Capture', 'Close')) {
+        $ui.ModalLayer.Visibility = 'Visible'
+        $ui.MainContent.IsEnabled = $false
+        if ($PreviewState -eq 'Capture') { $ui.CaptureCard.Visibility = 'Visible' }
+        else { $ui.CloseCard.Visibility = 'Visible' }
+    }
+    $window.Measure([Windows.Size]::new(580, 660))
+    $window.Arrange([Windows.Rect]::new(0, 0, 580, 660))
     $window.UpdateLayout()
     if ($PreviewImage) {
-        $window.Content.Measure([Windows.Size]::new(580, 780))
-        $window.Content.Arrange([Windows.Rect]::new(0, 0, 580, 780))
+        $window.Content.Measure([Windows.Size]::new(580, 660))
+        $window.Content.Arrange([Windows.Rect]::new(0, 0, 580, 660))
         $window.Content.UpdateLayout()
         $visual = [Windows.Media.DrawingVisual]::new()
         $drawing = $visual.RenderOpen()
-        $drawing.DrawRectangle($window.Resources['Surface'], $null, [Windows.Rect]::new(0, 0, 580, 780))
+        $drawing.DrawRectangle($window.Resources['Surface'], $null, [Windows.Rect]::new(0, 0, 580, 660))
         $drawing.Close()
-        $bitmap = [Windows.Media.Imaging.RenderTargetBitmap]::new(580, 780, 96, 96, [Windows.Media.PixelFormats]::Pbgra32)
+        $bitmap = [Windows.Media.Imaging.RenderTargetBitmap]::new(580, 660, 96, 96, [Windows.Media.PixelFormats]::Pbgra32)
         $bitmap.Render($visual)
         $bitmap.Render($window.Content)
         $encoder = [Windows.Media.Imaging.PngBitmapEncoder]::new()
@@ -69,7 +78,7 @@ if ($ValidateOnly) {
         $output = [IO.File]::Create($PreviewImage)
         try { $encoder.Save($output) } finally { $output.Dispose() }
     }
-    Write-Output 'PASS: WPF window, named controls, dropdowns and layout loaded.'
+    Write-Output 'PASS: WPF window, named controls, shortcut buttons and layout loaded.'
     return
 }
 
@@ -108,8 +117,10 @@ $ui.LayoutRoot.Add_SizeChanged({
 
 $settingsPath = Join-Path $env:LOCALAPPDATA 'LMUActiveReset/settings.json'
 $settings = Read-ResetSettings $settingsPath
-$ui.SaveKey.SelectedItem = $settings.save_key
-$ui.RestoreKey.SelectedItem = $settings.restore_key
+$ui.SaveKey.Tag = $settings.save_key
+$ui.SaveKey.Content = (Get-ResetKey $settings.save_key).label
+$ui.RestoreKey.Tag = $settings.restore_key
+$ui.RestoreKey.Content = (Get-ResetKey $settings.restore_key).label
 $ui.SoundEnabled.IsChecked = $settings.sound
 $script:preferences = $settings
 $script:child = $null
@@ -140,58 +151,59 @@ if (-not $Preview) {
 
 function Save-Preferences {
     $candidate = [pscustomobject]@{
-        save_key = [string]$ui.SaveKey.SelectedItem
-        restore_key = [string]$ui.RestoreKey.SelectedItem
+        save_key = [string]$ui.SaveKey.Tag
+        restore_key = [string]$ui.RestoreKey.Tag
         sound = [bool]$ui.SoundEnabled.IsChecked
     }
     if (-not (Test-ResetSettings $candidate)) {
-        $ui.KeyHint.Text = "Choose different keys. Current bindings: $($script:preferences.save_key) / $($script:preferences.restore_key)."
-        $ui.KeyHint.SetResourceReference([Windows.Controls.TextBlock]::ForegroundProperty, 'Signal')
-        $ui.SettingsHint.Text = 'Changes not saved'
-        return
+        $ui.SettingsHint.Text = 'Choose different keys.'
+        $ui.SettingsHint.Visibility = 'Visible'
+        return $false
     }
     try {
         if (-not $Preview) { Save-ResetSettings $settingsPath $candidate }
         $script:preferences = $candidate
-        $ui.KeyHint.Text = 'Choose keys that are not assigned in LMU.'
-        $ui.KeyHint.SetResourceReference([Windows.Controls.TextBlock]::ForegroundProperty, 'Secondary')
-        $ui.SettingsHint.Text = 'Settings saved automatically'
+        $ui.SettingsHint.Text = ''
+        $ui.SettingsHint.Visibility = 'Collapsed'
         $ui.PreviewSave.IsEnabled = $candidate.sound
         $ui.PreviewRestore.IsEnabled = $candidate.sound
+        return $true
     } catch {
         $ui.SettingsHint.Text = 'Settings could not be saved'
         $ui.SettingsHint.ToolTip = $_.Exception.Message
+        $ui.SettingsHint.Visibility = 'Visible'
+        return $false
     }
 }
-$ui.SaveKey.Add_SelectionChanged({ Save-Preferences })
-$ui.RestoreKey.Add_SelectionChanged({ Save-Preferences })
-$ui.SoundEnabled.Add_Checked({ Save-Preferences })
-$ui.SoundEnabled.Add_Unchecked({ Save-Preferences })
-Save-Preferences
+$ui.SoundEnabled.Add_Checked({ Save-Preferences | Out-Null })
+$ui.SoundEnabled.Add_Unchecked({ Save-Preferences | Out-Null })
+Save-Preferences | Out-Null
+. (Join-Path $PSScriptRoot 'ResetGui.Interactions.ps1')
+Initialize-ResetInteractions
 
 function Play-Preview([string]$Name) {
     $path = Join-Path $audioDirectory "$Name.wav"
     if (-not [IO.File]::Exists($path)) {
         $ui.SettingsHint.Text = 'Sound preview is not ready'
+        $ui.SettingsHint.Visibility = 'Visible'
         return
     }
     try {
         if ($script:audioPlayer) { $script:audioPlayer.Dispose() }
         $script:audioPlayer = [Media.SoundPlayer]::new($path)
         $script:audioPlayer.Play()
-    } catch { $ui.SettingsHint.Text = 'Audio device unavailable' }
+    } catch {
+        $ui.SettingsHint.Text = 'Audio device unavailable'
+        $ui.SettingsHint.Visibility = 'Visible'
+    }
 }
 $ui.PreviewSave.Add_Click({ Play-Preview 'save' })
 $ui.PreviewRestore.Add_Click({ Play-Preview 'restore' })
-$ui.OpenLogs.Add_Click({
-    $logDirectory = Join-Path $projectRoot 'logs'
-    [IO.Directory]::CreateDirectory($logDirectory) | Out-Null
-    Start-Process explorer.exe -ArgumentList ('"' + $logDirectory + '"')
-})
 
 function Set-Status([string]$Title, [string]$Detail, [string]$Tone = 'Secondary') {
     $ui.StatusTitle.Text = $Title
-    $ui.StatusDetail.Text = $Detail
+    $ui.StatusTitle.ToolTip = $Detail
+    if ($Tone -eq 'Signal') { $ui.LastEvent.Text = $Detail; $ui.LastEvent.Visibility = 'Visible' }
     $ui.StatusDot.SetResourceReference([Windows.Shapes.Shape]::FillProperty, $Tone)
 }
 function Read-SessionStatus {
@@ -205,7 +217,8 @@ function Read-SessionStatus {
     $view = Get-ResetStatusView $snapshot
     $ui.CheckpointState.Text = $view.Checkpoint
     $ui.CheckpointSummary.Text = $view.Summary
-    if ($view.Message) { $ui.LastEvent.Text = $view.Message }
+    $ui.CheckpointSummary.Visibility = if ($snapshot.checkpoint) { 'Visible' } else { 'Collapsed' }
+    if ($view.Message) { $ui.LastEvent.Text = $view.Message; $ui.LastEvent.Visibility = 'Visible' }
     Set-Status $view.Title $view.Detail $view.Tone
 }
 
@@ -231,25 +244,6 @@ function Request-Exit {
         $script:canClose = $true
         $window.Close()
     }
-}
-
-function Show-CloseChoice([string]$TestChoice) {
-    $reader = [Xml.XmlReader]::Create((Join-Path $projectRoot 'src/reset_close_dialog.xaml'))
-    try { $dialog = [Windows.Markup.XamlReader]::Load($reader) } finally { $reader.Close() }
-    $dialog.Owner = $window
-    $dialog.Resources = $window.Resources
-    $dialog.Tag = 'cancel'
-    $dialog.FindName('KeepRunning').Add_Click({ $dialog.Tag = 'background'; $dialog.DialogResult = $true })
-    $dialog.FindName('QuitSector').Add_Click({ $dialog.Tag = 'quit'; $dialog.DialogResult = $true })
-    if ($SmokeTest) {
-        $dialog.Opacity = 0
-        $dialog.Dispatcher.BeginInvoke([Action]{
-            $button = if ($TestChoice -eq 'background') { 'KeepRunning' } else { 'QuitSector' }
-            $dialog.FindName($button).RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
-        }) | Out-Null
-    }
-    $dialog.ShowDialog() | Out-Null
-    return $dialog.Tag
 }
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -308,7 +302,7 @@ $timer.Add_Tick({
                 $script:child.Dispose()
                 $script:child = $null
                 $ui.CheckpointState.Text = 'No checkpoint'
-                $ui.CheckpointSummary.Text = 'Save a new checkpoint after reconnecting.'
+                $ui.CheckpointSummary.Visibility = 'Collapsed'
                 if ($exitCode -ne 0 -and $script:lastSnapshot.phase -ne 'error') {
                     Set-Status 'Unable to connect' 'Open logs for details. Reopen Sector after fixing the issue.' 'Signal'
                 }
@@ -326,7 +320,7 @@ $timer.Add_Tick({
         if ($games.Count -ne 1) {
             $script:blockedIdentity = $null
             Set-Status 'Waiting for LMU' $(if ($games.Count -gt 1) { 'Keep one LMU instance open.' } else { 'The app connects automatically when LMU starts.' })
-            $ui.LastEvent.Text = "Press $($script:preferences.save_key) on track to save a checkpoint."
+            $ui.LastEvent.Visibility = 'Collapsed'
             return
         }
         $gameIdentity = "$($games[0].Id):$($games[0].StartTime.ToUniversalTime().Ticks)"
@@ -365,13 +359,7 @@ $window.Add_Closing({
     if ($script:canClose) { return }
     $event.Cancel = $true
     if ($script:closingRequested) { return }
-    switch (Show-CloseChoice) {
-        'background' { $window.Hide() }
-        'quit' {
-            # Defer Close until the current Closing event has returned.
-            $window.Dispatcher.BeginInvoke([Action]{ Request-Exit }) | Out-Null
-        }
-    }
+    Show-SectorModal 'close'
 })
 $window.Add_Closed({
     $timer.Stop()
@@ -398,6 +386,6 @@ try {
 }
 if ($SmokeTest) {
     if ($script:smokeFailure) { throw $script:smokeFailure }
-    if ($script:smokeStep -ne 3) { throw 'Window smoke test ended prematurely.' }
-    Write-Output 'PASS: background/quit choices, hide/reopen, controller status and dispatcher shutdown.'
+    if ($script:smokeStep -ne 4) { throw 'Window smoke test ended prematurely.' }
+    Write-Output 'PASS: tabs, shortcut capture, embedded dialogs, scrolling, background/quit and controller status.'
 }

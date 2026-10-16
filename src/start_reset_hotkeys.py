@@ -90,12 +90,12 @@ def main():
     if not args.offline_launch_confirmed or not args.allow_writes:
         parser.error("Offline launch confirmation and write opt-in required")
     from reset_desktop_session import DesktopSession
-    from physical_reset_hotkeys import function_key
+    from physical_reset_hotkeys import virtual_key
 
     args.desktop = DesktopSession(args.gui_session, settings_file=args.settings_file)
     handle = None
     try:
-        if function_key(args.save_key) == function_key(args.restore_key):
+        if virtual_key(args.save_key) == virtual_key(args.restore_key):
             raise ValueError("Choose different keys for save and restore.")
         from audit_snapshot_25661166 import audit
         from run_physical_reset_host_25661166 import run, process_exit_code, k

@@ -112,8 +112,10 @@ class WindowsKeys:
         )
 
 
-def function_key(name):
-    name = name.upper()
-    if not name.startswith("F") or not name[1:].isdigit() or not 1 <= int(name[1:]) <= 24:
-        raise ValueError("Use a function key F1..F24")
-    return 0x6F + int(name[1:])
+def virtual_key(name):
+    """Resolve persisted key names through the same map used by the desktop."""
+    from reset_keymap import KEY_CODES
+
+    if not isinstance(name, str) or name.upper() not in KEY_CODES:
+        raise ValueError("Choose a supported single keyboard key")
+    return KEY_CODES[name.upper()]

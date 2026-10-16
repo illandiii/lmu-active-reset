@@ -79,7 +79,7 @@ class DesktopTests(unittest.TestCase):
         self.assertEqual(self.session.settings(), ("F8", "F9", False))
         for invalid in (
             dict(values, restore_key="F8"),
-            dict(values, save_key="A"),
+            dict(values, save_key="Ctrl+G"),
             dict(values, sound="false"),
             dict(values, restore_key=None),
         ):

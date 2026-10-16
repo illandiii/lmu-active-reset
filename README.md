@@ -27,12 +27,18 @@ start/stop buttons or session countdown. Release both keys before using them:
 
 - **F6** saves the checkpoint.
 - **F7** prepares and restores it after successful native acknowledgement.
-- Change either key (F1–F24) in the GUI; settings persist across launches.
+- Select a shortcut and press its new key; settings persist across launches.
+  Letters, digits, function keys, navigation and numpad keys are supported.
+  Escape cancels capture; modifiers and combinations are not assigned.
 - Distinct sounds confirm save, restore and rejection; preview or mute them in the GUI.
 - The checkpoint card shows the acknowledged saved speed and successful restore count.
-- Closing the window offers **Run in background**, **Quit Sector** or **Cancel**.
+- Closing the window offers **Run in background**, **Quit Sector** or **Cancel**
+  in a popup inside the app.
 - In the background, shortcuts remain active. Reopen from the tray or launcher.
 - Quit waits for native cleanup; a second launcher reveals the existing app.
+
+The top tabs separate **Active Reset** from the **Overlay** placeholder. Scrolling
+uses the app's dark theme. Overlay functionality will be added in a later version.
 
 A checkpoint has no time-based expiry. The v15 host has no session-duration cap;
 vehicle reconstruction, including a reset to the pits, invalidates its checkpoint.

@@ -1,0 +1,507 @@
+[
+  {
+    "name": "F1",
+    "virtual_key": 112,
+    "label": "F1"
+  },
+  {
+    "name": "F2",
+    "virtual_key": 113,
+    "label": "F2"
+  },
+  {
+    "name": "F3",
+    "virtual_key": 114,
+    "label": "F3"
+  },
+  {
+    "name": "F4",
+    "virtual_key": 115,
+    "label": "F4"
+  },
+  {
+    "name": "F5",
+    "virtual_key": 116,
+    "label": "F5"
+  },
+  {
+    "name": "F6",
+    "virtual_key": 117,
+    "label": "F6"
+  },
+  {
+    "name": "F7",
+    "virtual_key": 118,
+    "label": "F7"
+  },
+  {
+    "name": "F8",
+    "virtual_key": 119,
+    "label": "F8"
+  },
+  {
+    "name": "F9",
+    "virtual_key": 120,
+    "label": "F9"
+  },
+  {
+    "name": "F10",
+    "virtual_key": 121,
+    "label": "F10"
+  },
+  {
+    "name": "F11",
+    "virtual_key": 122,
+    "label": "F11"
+  },
+  {
+    "name": "F12",
+    "virtual_key": 123,
+    "label": "F12"
+  },
+  {
+    "name": "F13",
+    "virtual_key": 124,
+    "label": "F13"
+  },
+  {
+    "name": "F14",
+    "virtual_key": 125,
+    "label": "F14"
+  },
+  {
+    "name": "F15",
+    "virtual_key": 126,
+    "label": "F15"
+  },
+  {
+    "name": "F16",
+    "virtual_key": 127,
+    "label": "F16"
+  },
+  {
+    "name": "F17",
+    "virtual_key": 128,
+    "label": "F17"
+  },
+  {
+    "name": "F18",
+    "virtual_key": 129,
+    "label": "F18"
+  },
+  {
+    "name": "F19",
+    "virtual_key": 130,
+    "label": "F19"
+  },
+  {
+    "name": "F20",
+    "virtual_key": 131,
+    "label": "F20"
+  },
+  {
+    "name": "F21",
+    "virtual_key": 132,
+    "label": "F21"
+  },
+  {
+    "name": "F22",
+    "virtual_key": 133,
+    "label": "F22"
+  },
+  {
+    "name": "F23",
+    "virtual_key": 134,
+    "label": "F23"
+  },
+  {
+    "name": "F24",
+    "virtual_key": 135,
+    "label": "F24"
+  },
+  {
+    "name": "A",
+    "virtual_key": 65,
+    "label": "A"
+  },
+  {
+    "name": "B",
+    "virtual_key": 66,
+    "label": "B"
+  },
+  {
+    "name": "C",
+    "virtual_key": 67,
+    "label": "C"
+  },
+  {
+    "name": "D",
+    "virtual_key": 68,
+    "label": "D"
+  },
+  {
+    "name": "E",
+    "virtual_key": 69,
+    "label": "E"
+  },
+  {
+    "name": "F",
+    "virtual_key": 70,
+    "label": "F"
+  },
+  {
+    "name": "G",
+    "virtual_key": 71,
+    "label": "G"
+  },
+  {
+    "name": "H",
+    "virtual_key": 72,
+    "label": "H"
+  },
+  {
+    "name": "I",
+    "virtual_key": 73,
+    "label": "I"
+  },
+  {
+    "name": "J",
+    "virtual_key": 74,
+    "label": "J"
+  },
+  {
+    "name": "K",
+    "virtual_key": 75,
+    "label": "K"
+  },
+  {
+    "name": "L",
+    "virtual_key": 76,
+    "label": "L"
+  },
+  {
+    "name": "M",
+    "virtual_key": 77,
+    "label": "M"
+  },
+  {
+    "name": "N",
+    "virtual_key": 78,
+    "label": "N"
+  },
+  {
+    "name": "O",
+    "virtual_key": 79,
+    "label": "O"
+  },
+  {
+    "name": "P",
+    "virtual_key": 80,
+    "label": "P"
+  },
+  {
+    "name": "Q",
+    "virtual_key": 81,
+    "label": "Q"
+  },
+  {
+    "name": "R",
+    "virtual_key": 82,
+    "label": "R"
+  },
+  {
+    "name": "S",
+    "virtual_key": 83,
+    "label": "S"
+  },
+  {
+    "name": "T",
+    "virtual_key": 84,
+    "label": "T"
+  },
+  {
+    "name": "U",
+    "virtual_key": 85,
+    "label": "U"
+  },
+  {
+    "name": "V",
+    "virtual_key": 86,
+    "label": "V"
+  },
+  {
+    "name": "W",
+    "virtual_key": 87,
+    "label": "W"
+  },
+  {
+    "name": "X",
+    "virtual_key": 88,
+    "label": "X"
+  },
+  {
+    "name": "Y",
+    "virtual_key": 89,
+    "label": "Y"
+  },
+  {
+    "name": "Z",
+    "virtual_key": 90,
+    "label": "Z"
+  },
+  {
+    "name": "D0",
+    "virtual_key": 48,
+    "label": "0"
+  },
+  {
+    "name": "D1",
+    "virtual_key": 49,
+    "label": "1"
+  },
+  {
+    "name": "D2",
+    "virtual_key": 50,
+    "label": "2"
+  },
+  {
+    "name": "D3",
+    "virtual_key": 51,
+    "label": "3"
+  },
+  {
+    "name": "D4",
+    "virtual_key": 52,
+    "label": "4"
+  },
+  {
+    "name": "D5",
+    "virtual_key": 53,
+    "label": "5"
+  },
+  {
+    "name": "D6",
+    "virtual_key": 54,
+    "label": "6"
+  },
+  {
+    "name": "D7",
+    "virtual_key": 55,
+    "label": "7"
+  },
+  {
+    "name": "D8",
+    "virtual_key": 56,
+    "label": "8"
+  },
+  {
+    "name": "D9",
+    "virtual_key": 57,
+    "label": "9"
+  },
+  {
+    "name": "NumPad0",
+    "virtual_key": 96,
+    "label": "NumPad0"
+  },
+  {
+    "name": "NumPad1",
+    "virtual_key": 97,
+    "label": "NumPad1"
+  },
+  {
+    "name": "NumPad2",
+    "virtual_key": 98,
+    "label": "NumPad2"
+  },
+  {
+    "name": "NumPad3",
+    "virtual_key": 99,
+    "label": "NumPad3"
+  },
+  {
+    "name": "NumPad4",
+    "virtual_key": 100,
+    "label": "NumPad4"
+  },
+  {
+    "name": "NumPad5",
+    "virtual_key": 101,
+    "label": "NumPad5"
+  },
+  {
+    "name": "NumPad6",
+    "virtual_key": 102,
+    "label": "NumPad6"
+  },
+  {
+    "name": "NumPad7",
+    "virtual_key": 103,
+    "label": "NumPad7"
+  },
+  {
+    "name": "NumPad8",
+    "virtual_key": 104,
+    "label": "NumPad8"
+  },
+  {
+    "name": "NumPad9",
+    "virtual_key": 105,
+    "label": "NumPad9"
+  },
+  {
+    "name": "Space",
+    "virtual_key": 32,
+    "label": "Space"
+  },
+  {
+    "name": "Enter",
+    "virtual_key": 13,
+    "label": "Enter"
+  },
+  {
+    "name": "Tab",
+    "virtual_key": 9,
+    "label": "Tab"
+  },
+  {
+    "name": "Backspace",
+    "virtual_key": 8,
+    "label": "Backspace"
+  },
+  {
+    "name": "Insert",
+    "virtual_key": 45,
+    "label": "Insert"
+  },
+  {
+    "name": "Delete",
+    "virtual_key": 46,
+    "label": "Delete"
+  },
+  {
+    "name": "Home",
+    "virtual_key": 36,
+    "label": "Home"
+  },
+  {
+    "name": "End",
+    "virtual_key": 35,
+    "label": "End"
+  },
+  {
+    "name": "PageUp",
+    "virtual_key": 33,
+    "label": "PageUp"
+  },
+  {
+    "name": "PageDown",
+    "virtual_key": 34,
+    "label": "PageDown"
+  },
+  {
+    "name": "Left",
+    "virtual_key": 37,
+    "label": "Left"
+  },
+  {
+    "name": "Up",
+    "virtual_key": 38,
+    "label": "Up"
+  },
+  {
+    "name": "Right",
+    "virtual_key": 39,
+    "label": "Right"
+  },
+  {
+    "name": "Down",
+    "virtual_key": 40,
+    "label": "Down"
+  },
+  {
+    "name": "Multiply",
+    "virtual_key": 106,
+    "label": "Multiply"
+  },
+  {
+    "name": "Add",
+    "virtual_key": 107,
+    "label": "Add"
+  },
+  {
+    "name": "Subtract",
+    "virtual_key": 109,
+    "label": "Subtract"
+  },
+  {
+    "name": "Decimal",
+    "virtual_key": 110,
+    "label": "Decimal"
+  },
+  {
+    "name": "Divide",
+    "virtual_key": 111,
+    "label": "Divide"
+  },
+  {
+    "name": "Oem1",
+    "virtual_key": 186,
+    "label": ";"
+  },
+  {
+    "name": "OemPlus",
+    "virtual_key": 187,
+    "label": "="
+  },
+  {
+    "name": "OemComma",
+    "virtual_key": 188,
+    "label": ","
+  },
+  {
+    "name": "OemMinus",
+    "virtual_key": 189,
+    "label": "-"
+  },
+  {
+    "name": "OemPeriod",
+    "virtual_key": 190,
+    "label": "."
+  },
+  {
+    "name": "Oem2",
+    "virtual_key": 191,
+    "label": "/"
+  },
+  {
+    "name": "Oem3",
+    "virtual_key": 192,
+    "label": "`"
+  },
+  {
+    "name": "Oem4",
+    "virtual_key": 219,
+    "label": "["
+  },
+  {
+    "name": "Oem5",
+    "virtual_key": 220,
+    "label": "\\"
+  },
+  {
+    "name": "Oem6",
+    "virtual_key": 221,
+    "label": "]"
+  },
+  {
+    "name": "Oem7",
+    "virtual_key": 222,
+    "label": "'"
+  },
+  {
+    "name": "Oem102",
+    "virtual_key": 226,
+    "label": "OEM 102"
+  }
+]

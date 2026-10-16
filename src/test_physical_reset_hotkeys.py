@@ -2,7 +2,7 @@ import unittest
 from physical_reset_hotkeys import (
     HotkeyCommands,
     expected_restore_fields,
-    function_key,
+    virtual_key,
     preparation_ready,
 )
 
@@ -102,10 +102,14 @@ class HotkeyTests(unittest.TestCase):
         self.assertEqual(self.poll(save=True)["action"], 1)
 
     def test_key_configuration(self):
-        self.assertEqual(function_key("f6"), 0x75)
-        for key in ("A", "F0", "F25"):
+        self.assertEqual(virtual_key("f6"), 0x75)
+        self.assertEqual(virtual_key("g"), 0x47)
+        self.assertEqual(virtual_key("Space"), 0x20)
+        self.assertEqual(virtual_key("D8"), 0x38)
+        self.assertEqual(virtual_key("NumPad8"), 0x68)
+        for key in ("Shift", "Escape", "Ctrl+F6", "F0", "F25", None):
             with self.assertRaises(ValueError):
-                function_key(key)
+                virtual_key(key)
 
 
 if __name__ == "__main__":

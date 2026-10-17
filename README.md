@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/sector-lmu/Sector"><img src="https://img.shields.io/badge/Star_this_repo-181717?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="Star this repo"></a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/sector-lmu/Sector/stargazers"><img src="https://img.shields.io/github/stars/sector-lmu/Sector?style=for-the-badge&amp;label=Stars&amp;color=73B7FF" alt="GitHub stars"></a>
+  <a href="https://github.com/sector-lmu/Sector/stargazers"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2Fsector-lmu%2FSector&amp;query=%24.stargazers_count&amp;style=for-the-badge&amp;label=Stars&amp;color=73B7FF" alt="GitHub stars"></a>
   &nbsp;&nbsp;&nbsp;
   <a href="https://ko-fi.com/illandiii"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&amp;logo=ko-fi&amp;logoColor=white" alt="Support Sector on Ko-fi"></a>
   &nbsp;&nbsp;&nbsp;

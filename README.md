@@ -5,113 +5,115 @@
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/illandiii)
 [![License: MIT](https://img.shields.io/badge/License-MIT-73B7FF?style=for-the-badge)](LICENSE)
 
-A Windows companion for **Le Mans Ultimate**, with physical checkpoints and
-customizable telemetry overlays. Current development version: **0.1.6**.
+**Practice your driving and keep useful race information in view.**
+
+Sector is a Windows app for **Le Mans Ultimate**. Save a point on track and return
+to it to practice a corner or section again. Add customizable widgets over the
+game to see standings, lap times, pedal inputs and more.
+
+## 📥 Install Sector
+
+You need **Windows 64-bit** and an installed copy of **Le Mans Ultimate**.
+
+1. Open the [Releases page](https://github.com/sector-lmu/Sector/releases) and look
+   for a Windows download named `Sector-<version>-win-x64.zip` under **Assets**.
+2. Download the ZIP, right-click it in Windows and choose **Extract All**.
+3. Open the extracted folder and double-click **`Sector.exe`**.
+
+Sector runs directly from its folder: there is no installer and no additional
+software to install. Keep the entire folder together; you can create a shortcut
+to `Sector.exe` on your desktop.
+
+If a release has no Windows ZIP attached, a ready-to-use package is not available
+there yet. GitHub's **Source code** downloads contain project files, not the
+ready-to-use app.
+
+## 🚦 First launch
+
+Sector looks for your LMU installation automatically. Confirm the folder it finds,
+or use the folder picker to select it yourself. The correct folder contains
+`Le Mans Ultimate.exe`.
+
+If you do not know where LMU is installed, find it in your Steam Library, open
+its **Manage → Browse local files** option and use that folder in Sector.
+
+You can then choose a short guided tour. Open it again at any time through
+**Aiuto → Guida** in Sector's top menu.
 
 ## 🏁 Active Reset
 
-Save a checkpoint, keep driving, then restore the saved vehicle state: position,
-orientation, velocity and the physical subsystems covered by the reset host.
-Restoring a checkpoint saved at 80 km/h restores that saved velocity, even if
-you request the reset at 200 km/h.
+Active Reset lets you repeat the same part of a track without driving a full lap
+back to it. A **checkpoint** is a saved point that includes your car's position,
+direction and driving state at that moment.
 
-| Default key | Action |
+1. Start LMU **without Easy Anti-Cheat (EAC)** and enter an **offline Practice** session.
+2. Enter **GUIDA** and wait for Sector to connect.
+3. Return to the game. At the point you want to practice from, press **F6** to save.
+4. Keep driving, then press **F7** to return to that checkpoint.
+
+The car returns with the saved driving state, including its saved speed. Saving
+again replaces the checkpoint, so you can choose a new section to practice.
+If Sector reports that the checkpoint is no longer available, save a new one.
+
+### Change the keys and sounds
+
+Open **Active Reset**, click the key you want to change and press its replacement
+on your keyboard. Choose keys that are not already assigned to an action in LMU.
+Release both keys before using them in the game.
+
+Confirmation sounds tell you when a save or restore succeeds, or when a request
+is rejected. You can preview or mute them on the same page.
+
+## 📊 Overlay
+
+Overlays are small widgets displayed over the game. Choose the information you
+want to keep in view:
+
+| Widget | What it shows |
 | --- | --- |
-| **F6** | Save a checkpoint |
-| **F7** | Restore the checkpoint |
+| **Leaderboard** | Standings and car classes |
+| **Relative** | Nearby cars and estimated gaps |
+| **Weather** | Available weather information |
+| **Delta** | How your current lap compares with the reference lap |
+| **Inputs** | Pedals, steering, gear and speed |
+| **Laps** | Lap history and available usage information |
+| **Session** | Session and player information |
 
-Click either shortcut in **Active Reset** and press a new key to reassign it.
-Confirmation sounds are configurable on the same page. Sector waits for driving
-in offline Practice without EAC; checkpoints and results follow native
-acknowledgements. Keys remain available to LMU, so choose unused game bindings.
+Open **Overlay**, enable the widgets you want and turn on **Overlays**.
+Use **Edit layout** to move and resize them, then select **Lock layout** when
+finished. Once locked, mouse clicks pass through to the game.
 
-There is no speed, distance or checkpoint-age cap. Compatibility, vehicle identity,
-lifecycle and physical-state checks still apply. Rebuilding the vehicle can
-invalidate a checkpoint; a failed save does not silently replace a valid one.
+Each widget has its own options. You can change size and transparency, hide
+columns or logos, and remove elements such as the clutch input. To choose a
+monitor, open **Modifica → Impostazioni → Overlay**.
 
-## 📊 Telemetry overlays
+Run LMU in **windowed or borderless mode**. The live widgets appear when you are
+in a session with the game in the foreground. The editor can show sample data
+while you arrange your layout; unavailable live values appear as a dash.
 
-Seven widgets: **Leaderboard · Relative · Weather · Delta · Inputs · Laps · Session**.
+## Keep Sector running in the background
 
-- Toggle widgets, columns and sections, including clutch input and manufacturer logos.
-- Set position, size, opacity and supported widget-specific options.
-- Use **Edit layout** to drag and resize widgets in real time, then **Lock layout**.
-- Choose a monitor in **Modifica → Impostazioni → Overlay**.
+Closing the window gives you three choices:
 
-Locked overlays pass mouse input through to the game. They appear when LMU is in
-the foreground with a loaded session and fresh telemetry. Use windowed or
-borderless mode. Missing telemetry is shown as unavailable; editor samples are
-never substituted into the live HUD. See [overlay data and limitations](docs/OVERLAYS.md).
+- **Run in background** keeps Sector and its shortcuts running while hiding the window.
+- **Quit Sector** closes the app and stops its features.
+- **Cancel** returns to the window.
 
-## Get started
+To reopen Sector, use its icon in the Windows notification area beside the clock,
+or launch `Sector.exe` again.
 
-With a built portable package, open **`Sector.exe`** and keep the complete extracted
-folder together. Node.js and Python are bundled; users do not need to install them.
+## Need help?
 
-1. Confirm the detected LMU folder or select it manually on first launch.
-2. Choose the optional tutorial, available again through **Aiuto → Guida**.
-3. For Active Reset, start LMU without EAC, load offline Practice and enter **GUIDA**.
-4. Wait for the connection, focus LMU and release both shortcut keys before using them.
+See the [user guide](docs/README.md) for setup help, common problems and updating
+Sector. You can also open **Aiuto → Guida** inside the app.
 
-Closing the window asks whether to run in the background, quit Sector or cancel.
-The tray or a second launch reopens the existing app. Background mode keeps the
-listener active; quitting requests cooperative native cleanup.
+## Support Sector
 
-Portable outputs are local under `releases/Sector-0.1.6-win-x64/` and excluded from
-Git. A source download is not a ready-to-run portable package.
-See [build and packaging](docs/RELEASE.md) for prerequisites.
+If Sector is useful to you, give the repository a star. You can also support
+its development with a **[voluntary donation on Ko-fi](https://ko-fi.com/illandiii)**.
 
-## Verification status
-
-The v15 host completed **seven live moving resets** on 16 October 2026, verifying
-10,084 fields and rebuilding four contacts each time. Current speeds reached
-242.61 km/h and checkpoint distances reached 797.36 m. The user confirmed
-teleports including while cornering. The recorded first 20 physics steps per
-reset showed no recurrence of the immediate collision jump.
-
-This evidence does not qualify every car, track, damage state or long session.
-Desktop and overlay automation uses isolated previews; complete live overlay
-validation remains pending. See [current reset status](docs/PHYSICAL_RESET_STATUS.md),
-[test coverage](docs/TEST_RESULTS.md) and the [collision investigation](docs/HIGH_SPEED_RESET_INCIDENT.md).
-
-## Development
-
-Work is committed to **`dev`**. **`prod`** is the default branch and receives only
-explicitly approved promotions. The documentation on each branch describes that
-branch's state.
-
-For a UI-only preview on Windows with Node.js 22.12+ and npm:
-
-```powershell
-./scripts/launch/Start-ResetGui.ps1 -Preview
-```
-
-The source launcher installs locked dependencies and builds the renderer when
-needed. First setup needs internet access. Preview does not attach to LMU.
-The real reset backend additionally requires locally verified native binaries,
-compatibility profiles and Python. Those prerequisites are not part of a public clone.
-
-| Path | Purpose |
-| --- | --- |
-| `src/native/` | Physics, checkpoints, transactions, runtime and telemetry |
-| `src/python/sector/` | Supervision, diagnostics, capture analysis and replay |
-| `src/ui/electron/` | Desktop, overlays, onboarding and release builder |
-| `tests/` | Native fixtures and Python tests |
-| `scripts/` | Maintained launch, build, test and development commands |
-| `docs/` | Current guides and an indexed research archive |
-| `assets/` | Sector logo and Windows icon |
-| `third_party/` | Vendored dependencies with their original notices |
-
-See [contributing](CONTRIBUTING.md), [source layout](docs/SOURCE_LAYOUT.md) and the
-[documentation index](docs/README.md). Captures, generated binaries, proprietary
-game files, local compatibility manifests and toolchains stay outside Git.
-
-## Support and license
-
-If Sector is useful to you, give the repository a star. You can also support its
-development through a **[voluntary donation on Ko-fi](https://ko-fi.com/illandiii)**.
-
-Sector's original code and documentation are licensed under [MIT](LICENSE).
-Dependencies and third-party assets retain their own terms; manufacturer marks
-belong to their respective owners. See [third-party notices](src/ui/electron/THIRD_PARTY_NOTICES.md).
 Sector is an independent project and is not affiliated with Le Mans Ultimate.
+Its original code and documentation use the [MIT license](LICENSE); third-party
+assets retain their [own terms and attribution](src/ui/electron/THIRD_PARTY_NOTICES.md).
+
+Interested in contributing? See the [developer guide](CONTRIBUTING.md).

@@ -40,14 +40,18 @@ its **Manage → Browse local files** option and use that folder in Sector.
 You can then choose a short guided tour. Open it again at any time through
 **Aiuto → Guida** in Sector's top menu.
 
+**Active Reset requires LMU's Offline mode.** Select **Offline** in the game,
+then start a **Practice** session. LMU must also be launched without
+**Easy Anti-Cheat (EAC)**.
+
 ## 🏁 Active Reset
 
 Active Reset lets you repeat the same part of a track without driving a full lap
 back to it. A **checkpoint** is a saved point that includes your car's position,
 direction and driving state at that moment.
 
-1. Start LMU **without Easy Anti-Cheat (EAC)** and enter an **offline Practice** session.
-2. Enter **GUIDA** and wait for Sector to connect.
+1. Start LMU **without Easy Anti-Cheat (EAC)** and select **Offline** mode.
+2. Load a **Practice** session, enter **GUIDA** and wait for Sector to connect.
 3. Return to the game. At the point you want to practice from, press **F6** to save.
 4. Keep driving, then press **F7** to return to that checkpoint.
 

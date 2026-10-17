@@ -10,9 +10,14 @@ On first launch, confirm the LMU folder Sector finds. If no folder is found,
 select the folder containing `Le Mans Ultimate.exe` yourself. You can find it
 through Steam: open LMU's **Manage → Browse local files** option in your Library.
 
-For Active Reset, LMU must be running **without Easy Anti-Cheat (EAC)** in an
-**offline Practice** session. Enter **GUIDA** to drive. Sector can remain open
-while you load the session; it connects automatically when the game is ready.
+**Active Reset requires LMU's Offline mode.** To prepare the game:
+
+1. Launch LMU **without Easy Anti-Cheat (EAC)**.
+2. Select **Offline** mode in LMU.
+3. Start a **Practice** session and enter **GUIDA** to drive.
+
+Sector can remain open while you load the session; it connects automatically
+when the game is ready.
 
 For overlays, use **windowed or borderless mode** in LMU's display settings.
 
@@ -78,7 +83,7 @@ is not available from the game reader; you can hide those sections.
 ### Sector is waiting for LMU
 
 Check that LMU is running from the folder you selected during setup. For Active
-Reset, load offline Practice without EAC and enter **GUIDA**. Keep Sector open
+Reset, select **Offline** mode in LMU, load **Practice** without EAC and enter **GUIDA**. Keep Sector open
 while the session loads, then check the status on the Active Reset page.
 
 ### The shortcut does nothing

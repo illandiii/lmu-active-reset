@@ -11,7 +11,7 @@
     "start": "electron .",
     "preview": "electron . --preview",
     "test": "node --test tests/*.test.mjs",
-    "test:ui": "node tests/electron-smoke.mjs && node tests/overlay-smoke.mjs",
+    "test:ui": "node tests/electron-smoke.mjs && node tests/overlay-smoke.mjs && node tests/home-smoke.mjs",
     "test:onboarding": "node tests/onboarding-smoke.mjs",
     "format": "prettier --write build main renderer shared tests *.json *.js *.html",
     "format:check": "prettier --check build main renderer shared tests *.json *.js *.html",

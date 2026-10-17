@@ -17,6 +17,8 @@ import { Preferences, AudioFeedback } from "./preferences.jsx";
 import { OverlayEditor } from "./overlays/editor.jsx";
 import { GuidedTour } from "./guided-tour.jsx";
 import { Onboarding } from "./onboarding.jsx";
+import { Home } from "./home.jsx";
+import home from "@iconify-icons/solar/home-2-linear";
 import help from "@iconify-icons/solar/question-circle-linear";
 import "@fontsource/manrope/latin-400.css";
 import "@fontsource/manrope/latin-500.css";
@@ -38,7 +40,13 @@ function App() {
   const [settings, setSettings] = useState(null);
   const [keys, setKeys] = useState([]);
   const [status, setStatus] = useState({ phase: "idle" });
-  const [tab, setTab] = useState("reset");
+  const [tab, setTab] = useState("home");
+  const [game, setGame] = useState({
+    running: false,
+    launching: false,
+    error: "",
+  });
+  const [preview, setPreview] = useState(true);
   const [modal, setModal] = useState(null);
   const [error, setError] = useState("");
   const [captureHint, setCaptureHint] = useState(
@@ -71,6 +79,11 @@ function App() {
   useEffect(() => {
     let live = true;
     let receivedStatus = false;
+    let receivedGame = false;
+    const gameOff = api.onGame((value) => {
+      receivedGame = true;
+      if (live) setGame(value);
+    });
     const statusOff = api.onStatus((value) => {
       receivedStatus = true;
       if (live) setStatus(value);
@@ -84,6 +97,8 @@ function App() {
       .then((data) => {
         if (!live) return;
         setSettings(data.settings);
+        setPreview(data.preview);
+        if (!receivedGame) setGame(data.game);
         setOnboarding(data.onboarding);
         setKeys(data.keys);
         setError(data.settingsError);
@@ -95,6 +110,7 @@ function App() {
     return () => {
       live = false;
       statusOff();
+      gameOff();
       closeOff();
       audio.current?.pause();
     };
@@ -298,6 +314,10 @@ function App() {
             </span>
           </div>
           <Tabs.List className="tabs" aria-label="Features">
+            <Tabs.Tab value="home">
+              <Glyph icon={home} />
+              Home
+            </Tabs.Tab>
             <Tabs.Tab value="reset">
               <Glyph icon={restart} />
               Active Reset
@@ -310,6 +330,19 @@ function App() {
           </Tabs.List>
         </header>
         <main className="scroll-area">
+          <Tabs.Panel value="home" className="page home-page">
+            <Home
+              game={game}
+              preview={preview}
+              view={view}
+              status={status}
+              saveKey={key("save_key")}
+              restoreKey={key("restore_key")}
+              disabled={!settings || pending || quitting}
+              onNavigate={setTab}
+              onCapture={openCapture}
+            />
+          </Tabs.Panel>
           <Tabs.Panel value="reset" className="page">
             <div className="page-heading">
               <div>

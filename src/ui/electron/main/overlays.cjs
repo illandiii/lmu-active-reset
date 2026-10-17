@@ -34,6 +34,7 @@ class Overlays {
       definitions: store.definitions,
       displays: screen.getAllDisplays().map((d) => ({
         id: d.id,
+        primary: d.id === screen.getPrimaryDisplay().id,
         label: d.label || `${d.size.width} \u00d7 ${d.size.height}`,
         bounds: d.bounds,
       })),
@@ -141,8 +142,9 @@ class Overlays {
   sync() {
     if (this.closed) return;
     const active = this.ready() && (this.config.enabled || this.editing);
-    if (active && !this.preview) this.telemetry.start();
-    else if (!active && !this.telemetry.stopped) this.telemetry.stop();
+    // Home uses session telemetry even when all overlay windows are disabled.
+    if (this.ready() && !this.preview) this.telemetry.start();
+    else if (!this.telemetry.stopped) this.telemetry.stop();
     for (const id of Object.keys(store.definitions)) {
       const setting = this.config.widgets[id];
       let win = this.windows.get(id);

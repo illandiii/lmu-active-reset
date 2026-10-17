@@ -37,11 +37,18 @@ an isolated profile under `work/electron-preview`, not the real preferences.
 
 | Location | Controls |
 | --- | --- |
+| Home | Session summary, shared reset shortcuts, overlay layout and Launch LMU |
 | Active Reset | Checkpoint availability, save/restore shortcuts and confirmation sounds |
 | Overlay | Widget visibility, layout editor and per-widget configuration |
 | Edit → Settings | Reduced motion and overlay display selection |
 | Help → Guide | Optional guided tour with anchored popups and arrows |
 | Window close | Run in background, Quit Sector or Cancel |
+
+Home is the initial tab. Launch LMU starts the validated installation's executable
+with its own working directory and no shell. Process discovery prevents duplicate
+launches and confirms the running state; preview mode cannot start the game.
+The session card uses the same read-only telemetry reader as overlays, including
+when overlay windows are disabled. Missing session values stay empty.
 
 The connection/result status bar belongs to Active Reset. There is no connection
 banner on the Overlay page. The optional tour never triggers a save or restore;

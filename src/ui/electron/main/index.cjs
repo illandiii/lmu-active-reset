@@ -17,6 +17,7 @@ const { promisify } = require("node:util");
 const { Overlays } = require("./overlays.cjs");
 const { Runtime, resolvePython, discoverGame } = require("./runtime.cjs");
 const setupStore = require("./onboarding.cjs");
+const { GameLauncher } = require("./game-launcher.cjs");
 const {
   defaults,
   keys,
@@ -73,8 +74,17 @@ const setupFile =
     : path.join(path.dirname(settingsFile), "onboarding.json");
 let setup = setupStore.readSetup(setupFile);
 const setupReady = () => (preview && !onboardingSmoke) || setup.completed;
-const discoverInstallation = () =>
-  setupReady() ? discoverGame(setup.lmuPath) : Promise.resolve([]);
+const gameLauncher = new GameLauncher({
+  installation: () => setup.lmuPath,
+  discover: discoverGame,
+  preview,
+});
+const discoverInstallation = async () => {
+  if (!setupReady()) return [];
+  const games = await discoverGame(setup.lmuPath);
+  gameLauncher.observe(games);
+  return games;
+};
 let preferences = { ...defaults };
 let settingsError = "";
 try {
@@ -94,6 +104,10 @@ let quitting = false;
 let canQuit = false;
 let audioReady;
 let overlays;
+gameLauncher.on("state", (state) => {
+  if (window && !window.isDestroyed())
+    window.webContents.send("sector:game", state);
+});
 
 function showWindow() {
   if (!window || window.isDestroyed()) return;
@@ -108,6 +122,7 @@ async function quit() {
   showWindow();
   try {
     overlays?.stop();
+    gameLauncher.stop();
     await runtime.stop();
     canQuit = true;
     app.quit();
@@ -138,9 +153,11 @@ function installBridge() {
     keys,
     status: runtime.state,
     preview,
+    game: gameLauncher.state,
     settingsError,
     onboarding: { required: !setupReady(), folder: setup.lmuPath },
   }));
+  handle("sector:launch-game", () => gameLauncher.launch());
   handle("sector:setup-detect", async () => {
     if (preview)
       return onboardingSmoke && process.env.SECTOR_TEST_LMU

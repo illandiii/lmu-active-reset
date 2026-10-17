@@ -20,7 +20,7 @@ Sector is a Windows app for **Le Mans Ultimate**. Save a point on track and retu
 to it to practice a corner or section again. Add customizable widgets over the
 game to see standings, lap times, pedal inputs and more.
 
-![Sector Active Reset page with checkpoint controls, keyboard shortcuts and confirmation sounds](docs/media/active-reset.png)
+![Sector Home with session information, reset shortcuts and overlay layout](docs/media/home.png)
 
 ## 📥 Install Sector
 
@@ -50,6 +50,14 @@ its **Manage → Browse local files** option and use that folder in Sector.
 
 You can then choose a short guided tour. Open it again at any time through
 **Help → Guide** in Sector's top menu.
+
+The **Home** tab brings together your session, checkpoint and overlay layout.
+Choose **Launch LMU** to open the game from the installation folder you confirmed.
+Steam must be available. The button shows when LMU is already running.
+
+From Home, click a shortcut to reassign it, open **Active Reset**, or use
+**Edit layout** and **Overlays on/off** to manage your widgets. Session figures
+update from the game; unavailable values appear as `-`.
 
 **Active Reset requires LMU's Offline mode.** Select **Offline** in the game,
 then start a **Practice** session. LMU must also be launched without

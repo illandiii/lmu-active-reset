@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld("sector", {
   editOverlays: (value) => ipcRenderer.invoke("sector:overlays-edit", value),
   onOverlays: (callback) => subscribe("sector:overlays", callback),
   initialize: () => ipcRenderer.invoke("sector:initialize"),
+  launchGame: () => ipcRenderer.invoke("sector:launch-game"),
+  onGame: (callback) => subscribe("sector:game", callback),
   detectInstallations: () => ipcRenderer.invoke("sector:setup-detect"),
   browseInstallation: () => ipcRenderer.invoke("sector:setup-browse"),
   confirmInstallation: (folder) =>

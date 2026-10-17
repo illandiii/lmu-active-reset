@@ -49,7 +49,7 @@ async function launch(detect = true) {
   page.on("pageerror", (error) => errors.push(error.message));
   // The modal makes the underlying controls inaccessible until setup finishes.
   await page.waitForFunction(() => {
-    const button = document.querySelector(".key-button");
+    const button = document.querySelector(".home-key");
     return button && !button.disabled;
   });
   // Keep Chromium's compositor active while checking dialogs and screenshots.

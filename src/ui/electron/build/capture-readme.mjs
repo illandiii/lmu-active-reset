@@ -51,6 +51,9 @@ try {
     );
   };
   await settle();
+  await page.screenshot({ path: path.join(output, "home.png") });
+  await page.getByRole("tab", { name: "Active Reset", exact: true }).click();
+  await settle();
   await page.screenshot({ path: path.join(output, "active-reset.png") });
   await page.getByRole("tab", { name: "Overlay", exact: true }).click();
   await page.getByRole("button", { name: "Inputs", exact: true }).click();

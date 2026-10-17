@@ -23,6 +23,7 @@ try {
   const page = await app.firstWindow();
   page.setDefaultTimeout(15000);
   page.on("pageerror", (error) => errors.push(error.message));
+  await page.getByRole("tab", { name: "Active Reset", exact: true }).click();
   await page
     .getByRole("button", { name: "Change save shortcut, F6", exact: true })
     .waitFor();

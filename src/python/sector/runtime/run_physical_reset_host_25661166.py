@@ -370,8 +370,12 @@ def run(args):
                 if desktop.stopped():
                     outcome = "user_stopped"
                     break
+                desktop_action = desktop.take_request(
+                    idle=bool(hotkeys) and not hotkeys.pending and ipc.completed_id == sent_id
+                )
                 observation = context_attempt(ipc, hotkeys, reasons)
                 if observation is None:
+                    desktop.finish_request()
                     desktop.publish(phase="paused", readiness="Waiting for game data")
                     prepared_at = 0.0
                     time.sleep(0.05)
@@ -391,6 +395,7 @@ def run(args):
                 ipc.heartbeat_ms = now
                 reasons[decision["reason"]] = reasons.get(decision["reason"], 0) + 1
                 if decision["context_decision"] == "forbidden":
+                    desktop.finish_request()
                     if decision["reason"] in ("monitor_or_not_realtime", "player_not_in_control"):
                         # Monitor/focus transitions alone do not age or erase a checkpoint.
                         ipc.permit_writes = 0
@@ -459,7 +464,12 @@ def run(args):
                         modifiers,
                         time.monotonic(),
                         acknowledged,
+                        desktop_action=desktop_action,
                     )
+                    if desktop.request and not hotkeys.pending and not command:
+                        desktop.finish_request(
+                            error=hotkeys.notice or "Reset canceled or acknowledgement expired."
+                        )
                     if hotkeys.notice:
                         print(hotkeys.notice, flush=True)
                         desktop.publish(message=hotkeys.notice, last_event="rejected")
@@ -499,7 +509,7 @@ def run(args):
                     ipc.request_tick = now
                     ipc.request_id = request_id  # Publish last.
                     sent_id = request_id
-                    desktop.command(action)
+                    desktop.command(action, request_id=sent_id)
                 time.sleep(0.05)
     except KeyboardInterrupt:
         outcome = "user_stopped"
@@ -507,6 +517,7 @@ def run(args):
     except Exception as error:
         failure = f"{type(error).__name__}: {error}"
     finally:
+        desktop.finish_request(error="Reset listener disconnected.")
         desktop.publish(phase="stopping", readiness="Disconnecting")
         if ipc is not None:
             ipc.allow = 0

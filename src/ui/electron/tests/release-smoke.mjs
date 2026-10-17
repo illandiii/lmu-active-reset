@@ -47,7 +47,7 @@ try {
   assert.equal(await page.locator(".word-stroke").count(), 8);
   await page.keyboard.press("Escape");
   await page
-    .getByRole("button", { name: "Change save shortcut, F6", exact: true })
+    .getByRole("button", { name: "Save checkpoint", exact: true })
     .waitFor();
   await app.evaluate(() => global.sectorTest.window().showInactive());
   assert.equal(await app.evaluate(({ app }) => app.getVersion()), version);
@@ -58,6 +58,23 @@ try {
   );
   const shippedPython = await app.evaluate(() => process.env.SECTOR_PYTHON);
   assert.ok(shippedPython.endsWith("python\\python.exe"));
+  assert.equal(
+    (await page.evaluate(() => window.sector.reset("save"))).ok,
+    false,
+  );
+  await page.getByRole("button", { name: "Help", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Changelog", exact: true }).click();
+  const changelog = page.getByRole("dialog", {
+    name: "Changelog",
+    exact: true,
+  });
+  await changelog
+    .getByRole("heading", {
+      name: new RegExp(`^${version.replaceAll(".", "\\.")}\\s*Latest$`),
+    })
+    .waitFor();
+  await changelog.getByRole("button", { name: "Done", exact: true }).click();
+  await changelog.waitFor({ state: "hidden" });
   await page.getByRole("tab", { name: "Overlay", exact: true }).click();
   await page
     .getByRole("switch", { name: "Enable overlays", exact: true })

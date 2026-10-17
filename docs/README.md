@@ -103,19 +103,20 @@ is not available from the game reader; you can hide those sections.
 
 ## Home
 
-The **Home** tab shows your current session, checkpoint shortcuts and overlay
+The **Home** tab shows your current session, checkpoint actions and overlay
 layout. **Launch LMU** opens the game from the folder chosen during setup;
 keep Steam available. It does not select a game mode for you: choose **Offline**
 and start **Practice** for Active Reset. Session data updates even with overlays off.
 
-- Click a shortcut on Home to change its key.
-- **Open Active Reset** opens the reset controls.
+- **Save checkpoint** and **Restore checkpoint** perform the action while the game is ready in driving.
+- **Open Active Reset** lets you change the assigned keys and confirmation sounds.
 - **Edit layout** opens the overlay editor and unlocks the widgets.
 - **Overlays on/off** uses the same setting as the Overlay tab.
 
 ## Settings, guide and background mode
 
 - Open **Edit → Settings** for app settings and overlay display selection.
+- Open **Help → Changelog** for the changes in each version, newest first.
 - Enable **Reduce motion** there if you prefer fewer interface animations.
 
 The Sector launch animation appears only when starting the app. Click or press

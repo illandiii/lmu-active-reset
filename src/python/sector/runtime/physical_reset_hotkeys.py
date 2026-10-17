@@ -26,6 +26,7 @@ class HotkeyCommands:
         self.pending = None
         self.next_id = 0
         self.notice = None
+        self.desktop_pending = False
 
     def rebind(self):
         """Require a fresh release without discarding an existing checkpoint."""
@@ -39,11 +40,16 @@ class HotkeyCommands:
         self.pending = (self.next_id, action, now)
         return {"id": self.next_id, "action": action}
 
-    def poll(self, focused, allowed, save, restore, modifiers, now, report=None):
+    def poll(
+        self, focused, allowed, save, restore, modifiers, now, report=None, desktop_action=None
+    ):
         self.notice = None
-        eligible = focused and allowed and not modifiers
+        if not self.pending:
+            self.desktop_pending = False
+        keyboard_eligible = focused and allowed and not modifiers
+        eligible = allowed and (keyboard_eligible or self.desktop_pending)
         edge = 0
-        if not eligible or (save and restore):
+        if not keyboard_eligible or self.desktop_pending or (save and restore):
             self.armed = False
         elif not save and not restore:
             self.armed = True
@@ -58,7 +64,8 @@ class HotkeyCommands:
                 self.pending = None
                 self.saved = self.saved or report["result"] == 0
                 return {}
-            # A preparation never survives focus/context loss or a slow ack.
+            # Keyboard preparation requires focus; all sources require context
+            # and a timely acknowledgement before any restore can be issued.
             if not eligible or now - issued > 2:
                 self.pending = None
                 return {}
@@ -75,6 +82,12 @@ class HotkeyCommands:
                         f"(expected {self.expected_fields})."
                     )
             return {}
+        # A validated desktop click has its own intent; game focus is only needed
+        # for keyboard edges. Both sources share native IDs and preparation gates.
+        if desktop_action in ("save", "restore") and allowed:
+            self.desktop_pending = True
+            self.armed = False
+            edge = 1 if desktop_action == "save" else 2
         if edge == 1:
             return self.issue(1, now)
         if edge == 2 and self.saved:

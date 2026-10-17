@@ -1,0 +1,90 @@
+[
+  {
+    "version": "0.2.0",
+    "changes": [
+      "Save and restore checkpoints directly from Home. Edit shortcuts in Active Reset.",
+      "Overlay toggles no longer disable unrelated Home buttons.",
+      "Added this version history under Help > Changelog."
+    ]
+  },
+  {
+    "version": "0.1.11",
+    "changes": [
+      "Removed Sample labels from overlay previews and layout handles.",
+      "Simplified the idle connection footer."
+    ]
+  },
+  {
+    "version": "0.1.10",
+    "changes": [
+      "Added the Sector launch animation with animated lettering.",
+      "The animation plays only at startup and supports skipping and reduced motion."
+    ]
+  },
+  {
+    "version": "0.1.9",
+    "changes": [
+      "Deployment maps follow the selected LMH or LMDh vehicle.",
+      "Removed the deployment-step rectangles from the Hybrid widget."
+    ]
+  },
+  {
+    "version": "0.1.8",
+    "changes": [
+      "Added the Hybrid widget with battery, electric power and map recommendations.",
+      "Updated the leaderboard with tyre compounds and virtual energy; player rows stay inside their class.",
+      "Added brake-lock forecasting and kept all four tyres visible."
+    ]
+  },
+  {
+    "version": "0.1.7",
+    "changes": [
+      "Added Brake lock, Tyres and Stint planner widgets with telemetry and estimated flat spots."
+    ]
+  },
+  {
+    "version": "0.1.6",
+    "changes": [
+      "Added Home with session details, checkpoint status, overlay controls and an LMU launcher.",
+      "Refined overlay switches, display selection and layout controls.",
+      "Widget resizing now updates continuously while dragging.",
+      "Updated documentation, licensing and app screenshots."
+    ]
+  },
+  {
+    "version": "0.1.5",
+    "changes": ["Animated first-run setup and guided-tour popups."]
+  },
+  {
+    "version": "0.1.4",
+    "changes": [
+      "Added first-run setup with automatic LMU folder detection and manual selection.",
+      "Added an optional introductory guide after setup."
+    ]
+  },
+  {
+    "version": "0.1.3",
+    "changes": [
+      "Added Edit > Settings.",
+      "Aligned the Active Reset and Overlay tabs with equal sizing and spacing."
+    ]
+  },
+  {
+    "version": "0.1.2",
+    "changes": ["Added the Help menu with access to Guide."]
+  },
+  {
+    "version": "0.1.1",
+    "changes": [
+      "Connected overlay widgets to game telemetry and expanded column customization.",
+      "Refined layout sizing, transparent logos, window controls and the close dialog."
+    ]
+  },
+  {
+    "version": "0.1.0",
+    "changes": [
+      "First portable Sector desktop release for Windows.",
+      "Active Reset shortcuts, customizable telemetry overlays, settings, guide and background operation."
+    ]
+  }
+]

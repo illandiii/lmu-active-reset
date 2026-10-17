@@ -31,20 +31,29 @@ try {
     (await page.evaluate(() => window.sector.launchGame())).ok,
     false,
   );
-  await page
-    .getByRole("button", { name: "Change save shortcut, F6", exact: true })
-    .click();
-  await page.keyboard.press("G");
-  await page.getByRole("dialog").waitFor({ state: "hidden" });
-  await page
-    .getByRole("button", { name: "Change save shortcut, G", exact: true })
-    .waitFor();
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Save checkpoint", exact: true })
+      .isDisabled(),
+    true,
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Restore checkpoint", exact: true })
+      .isDisabled(),
+    true,
+  );
   await page
     .getByRole("button", { name: "Open Active Reset", exact: true })
     .click();
   await page
     .getByRole("heading", { name: "Active Reset.", exact: true })
     .waitFor();
+  await page
+    .getByRole("button", { name: "Change save shortcut, F6", exact: true })
+    .click();
+  await page.keyboard.press("G");
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
   await page
     .getByRole("button", { name: "Change save shortcut, G", exact: true })
     .waitFor();
@@ -98,6 +107,96 @@ try {
   await page.getByText("Checkpoint saved", { exact: true }).waitFor();
   await page.getByText("Spa-Francorchamps", { exact: true }).waitFor();
   await page.getByText("2:18.412", { exact: true }).waitFor();
+  const saveButton = page.getByRole("button", {
+    name: "Save checkpoint",
+    exact: true,
+  });
+  const restoreButton = page.getByRole("button", {
+    name: "Restore checkpoint",
+    exact: true,
+  });
+  await saveButton.click();
+  await page
+    .getByRole("alert")
+    .getByText("Reset is unavailable in this session.", { exact: true })
+    .waitFor();
+  assert.equal(await page.getByRole("dialog").count(), 0);
+  await restoreButton.click();
+  await page
+    .getByRole("alert")
+    .getByText("Reset is unavailable in this session.", { exact: true })
+    .waitFor();
+  assert.equal(await page.getByRole("dialog").count(), 0);
+  // Hold the overlay save open to catch unrelated buttons being disabled/replaced.
+  await app.evaluate(() => {
+    const overlays = global.sectorTest.overlays();
+    const save = overlays.save.bind(overlays);
+    overlays.save = async (config) => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      return save(config);
+    };
+  });
+  await page.evaluate(() => {
+    window.originalHomeButtons = [
+      ...document.querySelectorAll(
+        ".home-key, .home-open-reset, .home-overlay-actions button",
+      ),
+    ];
+    window.buttonChanges = [];
+    window.buttonObserver = new MutationObserver((changes) =>
+      window.buttonChanges.push(...changes.map((c) => c.attributeName)),
+    );
+    window.originalHomeButtons.forEach((button) =>
+      window.buttonObserver.observe(button, {
+        attributes: true,
+        attributeFilter: ["disabled"],
+      }),
+    );
+  });
+  await page
+    .getByRole("switch", { name: "Enable overlays", exact: true })
+    .click();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector(".home-overlay-toggle")
+        .getAttribute("aria-busy") === "false",
+  );
+  assert.deepEqual(await page.evaluate(() => window.buttonChanges), []);
+  assert.equal(
+    await page.evaluate(() =>
+      window.originalHomeButtons.every((button) => button.isConnected),
+    ),
+    true,
+  );
+  await page.evaluate(() => window.buttonObserver.disconnect());
+  await page
+    .getByRole("switch", { name: "Enable overlays", exact: true })
+    .click();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector(".home-overlay-toggle")
+        .getAttribute("aria-busy") === "false",
+  );
+  await page.getByRole("button", { name: "Help", exact: true }).click();
+  await page.getByRole("separator").waitFor();
+  await page.getByRole("menuitem", { name: "Changelog", exact: true }).click();
+  const changelog = page.getByRole("dialog", {
+    name: "Changelog",
+    exact: true,
+  });
+  await changelog.getByRole("heading", { name: /0\.2\.0\s*Latest/ }).waitFor();
+  assert.equal(await changelog.locator(".changelog-list section").count(), 13);
+  await changelog
+    .getByRole("heading", { name: "0.1.0", exact: true })
+    .scrollIntoViewIfNeeded();
+  await changelog.locator(".changelog-list").evaluate((el) => {
+    el.scrollTop = 0;
+  });
+  await page.screenshot({ path: path.join(output, "changelog.png") });
+  await changelog.getByRole("button", { name: "Done", exact: true }).click();
+  await changelog.waitFor({ state: "hidden" });
   assert.equal(
     await app.evaluate(() => global.sectorTest.overlays().windows.size),
     0,
@@ -141,7 +240,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS Home: live session, checkpoint, shared shortcuts, overlay controls, layout preview, compact window and preview isolation.",
+    "PASS Home: reset actions, Active Reset shortcuts, independent overlay controls, changelog, live session, layout and preview isolation.",
   );
 } finally {
   await app.close();

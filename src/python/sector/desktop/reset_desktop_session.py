@@ -1,7 +1,6 @@
-"""Atomic desktop status snapshots and cooperative stop/GUI-liveness requests.
+"""Atomic desktop status, explicit reset requests and cooperative shutdown.
 
-This channel only observes reports and requests shutdown. It cannot issue a save,
-prepare or restore, or grant native admission.
+Desktop requests never grant native admission and use the hotkey preparation gates.
 """
 
 import json
@@ -26,6 +25,9 @@ class DesktopSession:
             "sequence": 0,
         }
         self.dirty = False
+        self.request = None
+        self.request_native_id = None
+        self.seen_requests = set()
         if self.directory:
             self.directory.mkdir(parents=True, exist_ok=True)
 
@@ -61,7 +63,61 @@ class DesktopSession:
             # Keep the old snapshot and retry on the next publish.
             self.dirty = True
 
-    def command(self, action):
+    def take_request(self, idle):
+        if not self.directory:
+            return None
+        path = self.directory / "command.json"
+        try:
+            request = json.loads(path.read_text(encoding="utf-8"))
+            path.unlink()
+        except FileNotFoundError:
+            return None
+        except (OSError, ValueError):
+            return None
+        if not isinstance(request, dict) or not isinstance(request.get("id"), str):
+            return None
+        request_id = request["id"]
+        if request_id in self.seen_requests:
+            return None
+        self.seen_requests.add(request_id)
+        stamp = request.get("created_at_ms")
+        valid = (
+            request.get("schema_version") == 1
+            and request.get("action") in ("save", "restore")
+            and request.get("host") == self.state.get("log_prefix")
+            and self.state.get("phase") == "active"
+            and type(stamp) in (int, float)
+            and math.isfinite(stamp)
+            and 0 <= self.clock() * 1000 - stamp <= 2000
+            and idle
+            and not self.request
+            and not self.stopped()
+        )
+        if not valid:
+            self.publish(
+                desktop_request={
+                    "id": request_id,
+                    "ok": False,
+                    "error": "Reset request expired or the session is not ready.",
+                }
+            )
+            return None
+        self.request = request
+        self.request_native_id = None
+        return request["action"]
+
+    def finish_request(self, ok=False, error="Reset canceled because the session is not ready."):
+        if self.request:
+            result = {"id": self.request["id"], "ok": ok}
+            if not ok:
+                result["error"] = error
+            self.request = None
+            self.request_native_id = None
+            self.publish(desktop_request=result)
+
+    def command(self, action, request_id=None):
+        if self.request:
+            self.request_native_id = request_id
         if action == 1:
             self.publish(message="Saving checkpoint…")
         elif action == 2:
@@ -104,3 +160,10 @@ class DesktopSession:
             changes.update(message=feedback[1], last_event=feedback[0], report_id=row["id"])
         if changes:
             self.publish(**changes)
+        if self.request and row["id"] == self.request_native_id:
+            if row["result"] != 0:
+                self.finish_request(
+                    error=feedback[1] if feedback else "Reset rejected by the native host."
+                )
+            elif row["action"] in (1, 3):
+                self.finish_request(ok=True)

@@ -17,11 +17,18 @@ counts and build-specific experiments are preserved in the [research archive](ar
 | Startup | `npm run test:startup` | SVG drawing, automatic exit, click/key skip, reduced motion and no replay on background restore or reload |
 | Portable package | `npm run test:release` | Actual EXE in preview, version, bundled Python imports, UI and no active reset listener |
 
-The 0.1.10 startup update passed 41 Node unit tests, desktop, Home, overlay,
-onboarding and startup smoke suites, formatting, renderer build and packaged EXE
-smoke checks. The unchanged native SDK reader last passed its self-test and
+The 0.2.0 Home update passed 43 Node unit tests, 98 Python tests, desktop, Home,
+overlay and onboarding smoke suites, formatting, renderer build and packaged EXE
+smoke checks. Startup-specific coverage last passed with 0.1.10.
+The unchanged native SDK reader last passed its self-test and
 serialization fixture with 0.1.9. These are recorded development results, not an
 automatically updated CI status.
+
+Desktop reset fixtures cover single-use requests, duplicate/busy rejection,
+host identity, expiry, shutdown and native acknowledgement correlation. Home
+checks verify that overlay toggles preserve other buttons, clicks do not open
+key capture, and every release is accessible in Help > Changelog. The new
+desktop click path has not yet been exercised in a live LMU session.
 
 Deployment-map fixtures cover LMH and LMDh model recognition, both SDK encodings,
 range boundaries, valid recommendation steps, unknown vehicles and clearing

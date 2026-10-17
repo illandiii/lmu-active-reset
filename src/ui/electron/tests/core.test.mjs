@@ -231,3 +231,58 @@ test("overlapping ticks cannot launch competing listeners", async (t) => {
   await first;
   assert.equal(spawned.length, 1);
 });
+
+test("desktop reset requests require active context and finish only on their native acknowledgement", async (t) => {
+  const { runtime, report, spawned } = fixture(t);
+  assert.equal((await runtime.requestReset("save")).ok, false);
+  await runtime.tick();
+  runtime.publish({ phase: "active", log_prefix: "host-1" });
+  assert.equal((await runtime.requestReset("restore")).ok, false);
+  assert.equal((await runtime.requestReset("prepare")).ok, false);
+  const pending = runtime.requestReset("save");
+  const command = JSON.parse(
+    fs.readFileSync(path.join(runtime.session, "command.json"), "utf8"),
+  );
+  assert.equal(command.action, "save");
+  assert.equal(command.host, "host-1");
+  assert.equal(command.created_at_ms, 1000);
+  assert.equal(runtime.state.checkpoint, false);
+  assert.equal((await runtime.requestReset("save")).ok, false);
+  report({ desktop_request: { id: "different", ok: true } });
+  runtime.readStatus();
+  assert.ok(runtime.resetRequest);
+  report({
+    sequence: 2,
+    checkpoint: true,
+    desktop_request: { id: command.id, ok: true },
+  });
+  runtime.readStatus();
+  assert.equal((await pending).ok, true);
+  assert.equal(
+    fs.existsSync(path.join(runtime.session, "command.json")),
+    false,
+  );
+  const restore = runtime.requestReset("restore");
+  assert.equal(
+    JSON.parse(fs.readFileSync(path.join(runtime.session, "command.json")))
+      .action,
+    "restore",
+  );
+  spawned[0].child.emit("close", 1);
+  assert.equal((await restore).ok, false);
+  assert.equal(runtime.resetRequest, null);
+});
+
+test("desktop request timeout deletes the unconsumed command without retry", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const { runtime } = fixture(t);
+  await runtime.tick();
+  runtime.publish({ phase: "active", log_prefix: "host-1" });
+  const result = runtime.requestReset("save");
+  t.mock.timers.tick(7000);
+  assert.match((await result).error, /timed out/);
+  assert.equal(
+    fs.existsSync(path.join(runtime.session, "command.json")),
+    false,
+  );
+});

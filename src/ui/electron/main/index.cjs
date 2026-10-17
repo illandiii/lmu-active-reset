@@ -165,6 +165,11 @@ function installBridge() {
     };
   });
   handle("sector:launch-game", () => gameLauncher.launch());
+  handle("sector:reset", (action) =>
+    preview || quitting || !setupReady()
+      ? { ok: false, error: "Reset is unavailable in this session." }
+      : runtime.requestReset(action),
+  );
   handle("sector:setup-detect", async () => {
     if (preview)
       return onboardingSmoke && process.env.SECTOR_TEST_LMU

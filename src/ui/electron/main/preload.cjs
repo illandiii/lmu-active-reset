@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("sector", {
   onOverlays: (callback) => subscribe("sector:overlays", callback),
   initialize: () => ipcRenderer.invoke("sector:initialize"),
   launchGame: () => ipcRenderer.invoke("sector:launch-game"),
+  reset: (action) => ipcRenderer.invoke("sector:reset", action),
   onGame: (callback) => subscribe("sector:game", callback),
   detectInstallations: () => ipcRenderer.invoke("sector:setup-detect"),
   browseInstallation: () => ipcRenderer.invoke("sector:setup-browse"),

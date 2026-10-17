@@ -89,6 +89,70 @@ class Runtime extends EventEmitter {
     void this.tick();
   }
 
+  requestReset(action) {
+    const reject = (error) => Promise.resolve({ ok: false, error });
+    if (!["save", "restore"].includes(action))
+      return reject("Unknown reset action.");
+    if (
+      this.stopping ||
+      !this.child ||
+      this.state.phase !== "active" ||
+      !this.state.log_prefix
+    )
+      return reject("Enter driving before saving or restoring.");
+    if (this.resetRequest)
+      return reject("A reset operation is already in progress.");
+    if (action === "restore" && !this.state.checkpoint)
+      return reject("Save a checkpoint before restoring.");
+    const request = {
+      schema_version: 1,
+      id: randomUUID(),
+      action,
+      host: this.state.log_prefix,
+      created_at_ms: this.now(),
+    };
+    return new Promise((resolve) => {
+      const file = path.join(this.session, "command.json");
+      const temporary = `${file}.tmp`;
+      this.resetRequest = {
+        id: request.id,
+        resolve,
+        file,
+        timer: setTimeout(
+          () =>
+            this.finishReset({
+              ok: false,
+              error: "Reset acknowledgement timed out.",
+            }),
+          7000,
+        ),
+      };
+      try {
+        fs.writeFileSync(temporary, JSON.stringify(request));
+        fs.renameSync(temporary, file);
+      } catch (error) {
+        this.finishReset({ ok: false, error: error.message });
+      } finally {
+        fs.rmSync(temporary, { force: true });
+      }
+    });
+  }
+
+  finishReset(result) {
+    const pending = this.resetRequest;
+    if (!pending) return;
+    this.resetRequest = null;
+    clearTimeout(pending.timer);
+    // Delete only our own unconsumed request. Never retry a timed-out reset.
+    try {
+      if (JSON.parse(fs.readFileSync(pending.file, "utf8")).id === pending.id)
+        fs.rmSync(pending.file);
+    } catch {
+      /* The supervisor may already have consumed it. */
+    }
+    pending.resolve(result);
+  }
+
   async tick() {
     if (this.busy) return;
     this.busy = true;
@@ -188,6 +252,7 @@ class Runtime extends EventEmitter {
     child.once("close", (code) => {
       if (this.child !== child) return;
       this.readStatus();
+      this.finishReset({ ok: false, error: "Reset listener disconnected." });
       this.child = null;
       const previousError = this.state.phase === "error";
       this.publish({
@@ -216,6 +281,11 @@ class Runtime extends EventEmitter {
         return;
       this.sequence = value.sequence;
       this.publish(value);
+      if (
+        value.desktop_request?.id === this.resetRequest?.id &&
+        this.resetRequest
+      )
+        this.finishReset(value.desktop_request);
     } catch {
       /* Atomic replacement can briefly race a reader on Windows. */
     }
@@ -223,6 +293,7 @@ class Runtime extends EventEmitter {
 
   async stop() {
     this.stopping = true;
+    this.finishReset({ ok: false, error: "Sector is closing." });
     if (!this.child) {
       this.dispose();
       return;
@@ -240,6 +311,7 @@ class Runtime extends EventEmitter {
   }
 
   dispose() {
+    this.finishReset({ ok: false, error: "Reset listener stopped." });
     clearInterval(this.timer);
     this.timer = null;
   }

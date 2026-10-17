@@ -19,6 +19,8 @@ import { GuidedTour } from "./guided-tour.jsx";
 import { Onboarding } from "./onboarding.jsx";
 import { Home } from "./home.jsx";
 import { StartupSplash } from "./startup-splash.jsx";
+import { Changelog } from "./changelog.jsx";
+import history from "@iconify-icons/solar/history-linear";
 import home from "@iconify-icons/solar/home-2-linear";
 import help from "@iconify-icons/solar/question-circle-linear";
 import "@fontsource/manrope/latin-400.css";
@@ -287,6 +289,13 @@ function App() {
                   <Menu.Item className="help-menu-item" onClick={startGuide}>
                     <Glyph icon={help} /> Guide
                   </Menu.Item>
+                  <Menu.Separator className="help-menu-separator" />
+                  <Menu.Item
+                    className="help-menu-item"
+                    onClick={() => setModal("changelog")}
+                  >
+                    <Glyph icon={history} /> Changelog
+                  </Menu.Item>
                 </Menu.Popup>
               </Menu.Positioner>
             </Menu.Portal>
@@ -353,7 +362,6 @@ function App() {
               restoreKey={key("restore_key")}
               disabled={!settings || pending || quitting}
               onNavigate={setTab}
-              onCapture={openCapture}
             />
           </Tabs.Panel>
           <Tabs.Panel value="reset" className="page">
@@ -537,40 +545,57 @@ function App() {
           <Dialog.Backdrop className="modal-backdrop" />
           <Dialog.Viewport className="modal-viewport">
             <Dialog.Popup
-              className="modal"
+              className={`modal${shownModal === "changelog" ? " changelog-modal" : ""}`}
               ref={modalRef}
               initialFocus={modalRef}
             >
               <div className="modal-icon">
                 <Glyph
                   icon={
-                    shownModal === "settings"
-                      ? gear
-                      : shownModal === "close"
-                        ? monitor
-                        : keyboard
+                    shownModal === "changelog"
+                      ? history
+                      : shownModal === "settings"
+                        ? gear
+                        : shownModal === "close"
+                          ? monitor
+                          : keyboard
                   }
                 />
               </div>
               <Dialog.Title>
-                {shownModal === "settings"
-                  ? "Settings"
-                  : shownModal === "close"
-                    ? "Keep Sector running?"
-                    : shownModal === "save_key"
-                      ? "Set save shortcut"
-                      : "Set restore shortcut"}
+                {shownModal === "changelog"
+                  ? "Changelog"
+                  : shownModal === "settings"
+                    ? "Settings"
+                    : shownModal === "close"
+                      ? "Keep Sector running?"
+                      : shownModal === "save_key"
+                        ? "Set save shortcut"
+                        : "Set restore shortcut"}
               </Dialog.Title>
               <Dialog.Description
-                className={shownModal === "settings" ? "sr-only" : undefined}
+                className={
+                  ["settings", "changelog"].includes(shownModal)
+                    ? "sr-only"
+                    : undefined
+                }
               >
-                {shownModal === "settings"
-                  ? "Appearance and overlay display preferences."
-                  : shownModal === "close"
-                    ? "Keep your shortcuts active in the background, or quit Sector."
-                    : captureHint}
+                {shownModal === "changelog"
+                  ? "Changes in each Sector update."
+                  : shownModal === "settings"
+                    ? "Appearance and overlay display preferences."
+                    : shownModal === "close"
+                      ? "Keep your shortcuts active in the background, or quit Sector."
+                      : captureHint}
               </Dialog.Description>
-              {shownModal === "settings" ? (
+              {shownModal === "changelog" ? (
+                <>
+                  <Changelog />
+                  <Dialog.Close className="secondary settings-done">
+                    Done
+                  </Dialog.Close>
+                </>
+              ) : shownModal === "settings" ? (
                 <>
                   <Preferences
                     settings={settings}

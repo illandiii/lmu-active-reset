@@ -1,6 +1,6 @@
 # Sector desktop
 
-Sector 0.1.11 uses Electron, React and a locally built Vite renderer. The Python
+Sector 0.2.0 uses Electron, React and a locally built Vite renderer. The Python
 supervisor and v15 native host own reset commands; the desktop displays their
 acknowledged state. See [overlays](OVERLAYS.md) for the separate telemetry path.
 
@@ -37,11 +37,12 @@ an isolated profile under `work/electron-preview`, not the real preferences.
 
 | Location | Controls |
 | --- | --- |
-| Home | Session summary, shared reset shortcuts, overlay layout and Launch LMU |
+| Home | Session summary, Save/Restore actions, overlay layout and Launch LMU |
 | Active Reset | Checkpoint availability, save/restore shortcuts and confirmation sounds |
 | Overlay | Widget visibility, layout editor and per-widget configuration |
 | Edit → Settings | Reduced motion and overlay display selection |
 | Help → Guide | Optional guided tour with anchored popups and arrows |
+| Help → Changelog | Scrollable version history, newest first |
 | Window close | Run in background, Quit Sector or Cancel |
 
 Home is the initial tab. Launch LMU starts the validated installation's executable
@@ -58,7 +59,7 @@ motion setting.
 
 ### Shortcuts and feedback
 
-F6 saves; F7 restores. Click a shortcut and press the desired key. Escape or focus
+F6 saves; F7 restores. In Active Reset, click a shortcut and press the desired key. Escape or focus
 loss cancels capture. Duplicates, held repeats and modifier combinations are
 rejected. Tab navigates the dialog; its **Use Tab** button explicitly assigns Tab.
 The shared key map covers letters, digits, F1–F24, navigation, numpad and OEM keys.
@@ -89,7 +90,16 @@ The main process discovers LMU, starts the Python supervisor through
 `scripts/sector.py runtime.start_reset_hotkeys`, maintains a heartbeat and reads
 versioned status snapshots. The supervisor waits for eligible driving, validates
 compatibility and owns native lifecycle checks and key polling. Electron does
-not register global reset shortcuts or expose a renderer save/restore command.
+not register global reset shortcuts. Home exposes only explicit save/restore
+requests through the trusted desktop IPC bridge; preview mode rejects them.
+
+Each request has a unique ID, the active native host identity and a two-second
+admission window. The supervisor consumes it once, rejects busy or ineligible
+contexts and uses the same command IDs and prepare/restore gates as the hotkeys.
+Desktop intent does not require game keyboard focus, but still requires admitted
+offline driving. Only a matching native acknowledgement confirms success. The
+desktop waits up to seven seconds and never automatically retries a request.
+Session changes, shutdown and lost context cancel pending requests.
 
 A single-instance lock prevents duplicate desktop listeners. Background mode
 keeps the heartbeat active and locks the overlay layout. The tray or another

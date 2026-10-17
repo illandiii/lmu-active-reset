@@ -22,6 +22,88 @@ class DesktopTests(unittest.TestCase):
         (self.path / "heartbeat").touch()
         os.utime(self.path / "heartbeat", (1000, 1000))
 
+    def click(self, name, **patch):
+        command = dict(
+            schema_version=1, id=name, action=name, host="fixture", created_at_ms=1000000
+        )
+        command.update(patch)
+        (self.path / "command.json").write_text(json.dumps(command))
+        return command
+
+    def test_desktop_clicks_use_acknowledged_save_prepare_restore_without_game_focus(self):
+        self.session.publish(phase="active", log_prefix="fixture")
+        keys = HotkeyCommands()
+        self.click("save")
+        action = self.session.take_request(idle=True)
+        command = keys.poll(False, True, False, False, False, 0, desktop_action=action)
+        self.session.command(command["action"], command["id"])
+        self.assertFalse(self.session.state["checkpoint"])
+        saved = dict(id=command["id"], action=1, result=0, speed=10)
+        self.session.report(saved)
+        keys.poll(False, True, False, False, False, 0.1, saved)
+        self.assertTrue(self.session.state["desktop_request"]["ok"])
+        self.click("restore")
+        command = keys.poll(
+            False,
+            True,
+            False,
+            False,
+            False,
+            0.2,
+            desktop_action=self.session.take_request(idle=True),
+        )
+        self.assertEqual(command["action"], 2)
+        self.session.command(2, command["id"])
+        prepared = dict(id=command["id"], action=2, result=0, fields=10084)
+        self.session.report(prepared)
+        self.assertIsNotNone(self.session.request)
+        command = keys.poll(False, True, False, False, False, 0.3, prepared)
+        self.assertEqual(command["action"], 3)
+        self.session.command(3, command["id"])
+        self.session.report(dict(id=command["id"], action=3, result=0))
+        self.assertTrue(self.session.state["desktop_request"]["ok"])
+        self.assertEqual(self.session.state["restore_count"], 1)
+        self.click("restore")
+        self.assertIsNone(self.session.take_request(idle=True))
+
+    def test_desktop_requests_reject_stale_context_busy_and_wrong_host(self):
+        self.session.publish(phase="active", log_prefix="fixture")
+        for index, changes in enumerate(
+            [
+                dict(created_at_ms=997999),
+                dict(created_at_ms=1000001),
+                dict(host="old-host"),
+                dict(action="prepare"),
+                dict(created_at_ms=None),
+            ]
+        ):
+            self.click("save", id=str(index), **changes)
+            self.assertIsNone(self.session.take_request(idle=True))
+            self.assertFalse(self.session.state["desktop_request"]["ok"])
+        self.click("save", id="busy")
+        self.assertIsNone(self.session.take_request(idle=False))
+        self.session.publish(phase="paused")
+        self.click("save", id="paused")
+        self.assertIsNone(self.session.take_request(idle=True))
+        self.session.publish(phase="active")
+        self.assertIsNone(self.session.take_request(idle=True))
+
+    def test_desktop_preparation_still_requires_context_timely_ack_and_full_plan(self):
+        for allowed, now, fields, result in [
+            (False, 0.1, 10084, 0),
+            (True, 3, 10084, 0),
+            (True, 0.1, 10077, 0),
+            (True, 0.1, 10084, 9),
+        ]:
+            keys = HotkeyCommands()
+            keys.saved = True
+            command = keys.poll(False, True, False, False, False, 0, desktop_action="restore")
+            self.assertEqual(command["action"], 2)
+            ack = dict(id=command["id"], action=2, result=result, fields=fields)
+            self.assertEqual(keys.poll(False, allowed, False, False, False, now, ack), {})
+            self.assertIsNone(keys.pending)
+            self.assertEqual(keys.poll(False, True, False, False, False, now + 0.1, ack), {})
+
     def test_checkpoint_does_not_expire_with_healthy_gui(self):
         self.session.report({"action": 1, "result": 0, "id": 1})
         for now in (1000, 1000 + 301, 1000 + 86400):

@@ -34,7 +34,7 @@ try {
   const page = await app.firstWindow();
   page.on("pageerror", (error) => errors.push(error.message));
   await page
-    .getByRole("button", { name: "Change save shortcut, F6", exact: true })
+    .getByRole("button", { name: "Save checkpoint", exact: true })
     .waitFor();
   await app.evaluate(() => {
     if (global.sectorTest.hasListener())

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import play from "@iconify-icons/solar/play-linear";
 import check from "@iconify-icons/solar/check-circle-linear";
@@ -66,11 +66,11 @@ export function Home({
   restoreKey,
   disabled,
   onNavigate,
-  onCapture,
 }) {
   const [state, setState] = useState(null);
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState({});
+  const inFlight = useRef(new Set());
   useEffect(() => {
     let live = true,
       received = false;
@@ -92,8 +92,10 @@ export function Home({
     };
   }, []);
 
-  async function action(callback) {
-    setBusy(true);
+  async function action(name, callback) {
+    if (inFlight.current.has(name)) return;
+    inFlight.current.add(name);
+    setBusy((current) => ({ ...current, [name]: true }));
     setError("");
     try {
       const result = await callback();
@@ -101,7 +103,8 @@ export function Home({
     } catch (e) {
       setError(e.message);
     } finally {
-      setBusy(false);
+      inFlight.current.delete(name);
+      setBusy((current) => ({ ...current, [name]: false }));
     }
   }
 
@@ -130,7 +133,7 @@ export function Home({
     ? Object.values(state.config.widgets).filter((w) => w.enabled).length
     : 0;
   const total = state ? Object.keys(state.definitions).length : 0;
-  const blocked = disabled || busy;
+  const resetBlocked = disabled || busy.reset || status.phase !== "active";
   return (
     <div className="home-content">
       <div className="home-heading">
@@ -139,9 +142,11 @@ export function Home({
         </h1>
         <button
           className={`home-launch ${running ? "is-running" : ""}`}
-          disabled={blocked || preview || running || game.launching}
+          disabled={
+            disabled || busy.launch || preview || running || game.launching
+          }
           title={preview ? "Game launch is unavailable in preview" : undefined}
-          onClick={() => action(() => api.launchGame())}
+          onClick={() => action("launch", () => api.launchGame())}
         >
           <Icon icon={running ? check : play} aria-hidden="true" />
           {running
@@ -200,18 +205,18 @@ export function Home({
           <div className="home-keys">
             <button
               className="home-key"
-              disabled={blocked}
-              onClick={() => onCapture("save_key")}
-              aria-label={`Change save shortcut, ${saveKey}`}
+              disabled={resetBlocked}
+              onClick={() => action("reset", () => api.reset("save"))}
+              aria-label="Save checkpoint"
             >
               <kbd>{saveKey}</kbd>
               <span>Save checkpoint</span>
             </button>
             <button
               className="home-key"
-              disabled={blocked}
-              onClick={() => onCapture("restore_key")}
-              aria-label={`Change restore shortcut, ${restoreKey}`}
+              disabled={resetBlocked || !view.saved}
+              onClick={() => action("reset", () => api.reset("restore"))}
+              aria-label="Restore checkpoint"
             >
               <kbd>{restoreKey}</kbd>
               <span>Restore checkpoint</span>
@@ -246,9 +251,9 @@ export function Home({
           <div className="home-overlay-actions">
             <button
               className="home-button"
-              disabled={blocked || !state}
+              disabled={disabled || busy.layout || !state}
               onClick={() =>
-                action(async () => {
+                action("layout", async () => {
                   await api.editOverlays(true);
                   onNavigate("overlay");
                 })
@@ -261,9 +266,10 @@ export function Home({
               role="switch"
               aria-label="Enable overlays"
               aria-checked={state?.config.enabled || false}
-              disabled={blocked || !state}
+              disabled={disabled || !state}
+              aria-busy={Boolean(busy.overlays)}
               onClick={() =>
-                action(() =>
+                action("overlays", () =>
                   api.saveOverlays({
                     ...state.config,
                     enabled: !state.config.enabled,

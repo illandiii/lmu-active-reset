@@ -94,3 +94,14 @@ old filenames; historical reports are indexed in [the archive](archive/README.md
 These directories, dependency caches and the renderer build output are ignored.
 Do not delete local evidence or compatibility inputs as generic cleanup: they
 can be required to reproduce a native result or build.
+
+Compiled binaries, runtime data (`.dat`, `.bin`, `.pak`, `.asar`), archives and
+debug symbols are also ignored if generated outside those directories. The
+source repository retains code, build/test scripts, configuration and lockfiles,
+licenses, bundled UI fonts/artwork and documentation media. The unused original
+logo reference sheet stays local; widgets import `logos-transparent.png`.
+
+`scripts/build/` and `src/ui/electron/build/` contain maintained source scripts,
+not compiled output, and must remain tracked. A portable release still needs its
+runtime DLLs and data files: excluding them from Git does not remove them from
+the release package. Distribute the complete portable folder to users.

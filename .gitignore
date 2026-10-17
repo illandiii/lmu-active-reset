@@ -1,22 +1,86 @@
+# Local toolchains, captures, generated compatibility profiles and inventories.
 /work/
 /bin/
 /logs/
 /analysis/
 /compatibility/
 /*.json
-/.env
-/.env.*
-**/__pycache__/
-*.pyc
+
+# Portable packages and generated build output, not build scripts.
+# Keep scripts/build/ and src/ui/electron/build/ tracked: both contain source.
+/releases/
+/build/
+/dist/
+/out/
+/src/ui/electron/dist/
+/src/ui/electron/test-results/
+/src/ui/electron/playwright-report/
+**/CMakeFiles/
+**/cmake-build-*/
+**/CMakeCache.txt
+**/.zig-cache/
+**/zig-cache/
+**/zig-out/
+
+# Compiled binaries, linker output and debug symbols, wherever generated.
 *.dll
 *.exe
-*.pdb
 *.obj
 *.o
-*.dmp
-**/node_modules/
-src/ui/electron/dist/
-src/ui/electron/test-results/
+*.a
+*.lib
+*.so
+*.dylib
+*.pdb
+*.ilk
+*.exp
+*.idb
+*.pch
+*.gch
 
-/releases/
-/.ruff_cache/
+# Packaged runtime data and installers belong in releases, not the source tree.
+# These files can be essential inside a portable package; do not strip that package.
+*.dat
+*.bin
+*.pak
+*.asar
+*.msi
+*.msix
+*.appx
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+
+# Installed dependencies, Python environments and caches.
+**/node_modules/
+**/__pycache__/
+*.py[cod]
+**/.venv/
+**/venv/
+**/.ruff_cache/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.vite/
+
+# Local diagnostics, coverage and temporary files.
+*.log
+*.dmp
+*.tmp
+*.bak
+*.tsbuildinfo
+.coverage
+.coverage.*
+coverage/
+htmlcov/
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Machine-local secrets and preferences.
+/.env
+/.env.*
+
+# Original reference sheet; the app imports logos-transparent.png instead.
+/src/ui/electron/renderer/overlays/logos.png

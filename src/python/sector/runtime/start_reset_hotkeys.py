@@ -22,6 +22,9 @@ def driving_ready(state, game):
         and game.get("inMonitor") is False
         and game.get("playerVehicleLoaded") is True
         and game.get("isReplayActive") is False
+        # LMU retains vehicle control while paused, but no physics callbacks
+        # run then. Wait before loading a host whose owner discovery is bounded.
+        and game.get("MultiStintState") == "DRIVING"
     )
 
 

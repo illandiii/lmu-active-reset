@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.2.8",
+    "changes": [
+      "Wait for LMU to leave pause before connecting Active Reset, even when the player still controls the car.",
+      "Includes the aerodynamic recovery from 0.2.7; live validation and visible bodywork repair remain pending."
+    ]
+  },
+  {
     "version": "0.2.7",
     "changes": [
       "Active Reset now includes impact-altered aerodynamic coefficients and their dependent calculations.",

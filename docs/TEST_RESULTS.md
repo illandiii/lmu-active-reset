@@ -3,6 +3,20 @@
 This page separates automated checks from live-game observations. Historical
 counts and build-specific experiments are preserved in the [research archive](archive/README.md).
 
+## Paused startup: 0.2.8
+
+The first 0.2.7 connection attempt returned native status/error `4/112` before
+any save, restore or physical write. LMU reported `MultiStintState=PAUSED`
+while `inControlOfVehicle=true` and `inMonitor=false`; SDK simulation time
+remained unchanged. The native owner-discovery timeout expired, and the
+shutdown summary confirmed every original hook target was restored.
+
+The launcher now requires `MultiStintState=DRIVING` before loading the host.
+Its two-sample admission restarts when pause or missing state interrupts the
+sequence. The regression reproduces that sequence, and all 110 Python tests
+pass. Native v20 is unchanged. Aerodynamic recovery is still awaiting a live
+test; this failed startup is not a failed restore or an aero test result.
+
 ## Impact recovery: 0.2.6 live result and 0.2.7 candidate
 
 The Oreca 07 / Monza 0.2.6 trial passed ordinary and settled-impact reset:

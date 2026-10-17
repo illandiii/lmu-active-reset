@@ -1,6 +1,6 @@
 # Physical reset: current status
 
-**Development desktop: 0.2.7. Native host: v20 for the verified Steam 25661166 /
+**Development desktop: 0.2.8. Native host: v20 for the verified Steam 25661166 /
 app build 14200 compatibility profile.** Matching the display version alone is
 insufficient: runtime admission also checks the pinned identities and hashes.
 The 0.2.5 impact trial crashed LMU. V19 passed the subsequent ordinary and

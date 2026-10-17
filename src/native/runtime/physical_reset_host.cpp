@@ -3,15 +3,15 @@
 // physics boundary under all three lifetime scopes. Hooks remain after fatal recovery.
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include "physical_reset_host_25661166.h"
+#include "physical_reset_host.h"
 #include "physical_reset_trace.h"
 #include "reset_host_policy.h"
-#include "../restore/vehicle_restore_adapter_25661166.h"
+#include "../restore/vehicle_restore_adapter.h"
 #include "active_reset_boundary.h"
 #include "native_lifetime_handoff.h"
-#include "native_lifecycle_hooks_25661166.h"
-#include "physical_reset_targets_25661166.h"
-#include "verified_game_25661166.h"
+#include "vehicle_lifecycle_hooks.h"
+#include "reset_hook_targets.h"
+#include "game_compatibility.h"
 #include "MinHook.h"
 #include <cmath>
 #include <cstring>
@@ -24,6 +24,10 @@ static uintptr_t base, owner_root, physics_root, scoring_root, tires[4];
 static uintptr_t worker_lock, control_lock, gate_lock;
 static DWORD physics_thread;
 static NativeLifecycleEpoch lifecycle;
+#if LMU_RESET_HOST_REVISION >= 21
+static GraphicsLifetime graphics_lifetime;
+#endif
+static bool bodywork_report_ready;
 static NativeLifetimeHandoff *handoff;
 static NativeLifetimePin native_pin;
 static NativeLifecyclePin epoch_pin;
@@ -317,6 +321,19 @@ static void publish(uint64_t id) {
     report.saves = runtime->control.saves;
     report.loads = runtime->control.loads;
     InterlockedIncrement64(&ipc->report_sequence);
+#if LMU_RESET_HOST_REVISION >= 21
+    const auto bodywork = bodywork_report_ready ? vehicle_restore_adapter_bodywork_report(adapter)
+                                                : sector_bodywork::Report{};
+    ipc->bodywork_result = static_cast<uint64_t>(bodywork.result);
+    ipc->bodywork_components = bodywork.components;
+    ipc->bodywork_meshes = bodywork.meshes;
+    ipc->bodywork_vertex_bytes = bodywork.vertex_bytes;
+    ipc->bodywork_attempted_writes = bodywork.attempted_writes;
+    ipc->bodywork_verified_writes = bodywork.verified_writes;
+    ipc->bodywork_recovery_writes = bodywork.recovery_writes;
+    if (report.result && bodywork.result != sector_bodywork::Result::ok)
+        report.cause = 92000 + static_cast<uint64_t>(bodywork.result);
+#endif
     ipc->report = report;
     MemoryBarrier();
     InterlockedIncrement64(&ipc->report_sequence);
@@ -416,6 +433,8 @@ static void WINAPI boundary(uint64_t input) {
     const uint64_t issued = static_cast<uint64_t>(number(&ipc->request_tick));
     const uint64_t now = GetTickCount64();
     const bool pending = id && id > last_id;
+    if (boundary_depth == 1 && GetCurrentThreadId() == physics_thread)
+        bodywork_report_ready = false;
     bool acquired = false;
     if (pending && boundary_depth == 1 && GetCurrentThreadId() == physics_thread && lease() &&
         seen_time && issued <= now && now - issued <= 1500)
@@ -444,6 +463,7 @@ static void WINAPI boundary(uint64_t input) {
             if (!report.readable)
                 report.cause = pinned(nullptr, &context) ? diagnostic->binding_status : 90004;
             if (report.readable && vehicle_restore_adapter_bind(adapter, &context)) {
+                bodywork_report_ready = true;
                 trace_body = diagnostic_bindings.address[0];
                 if (action == HOST_SAVE || action == HOST_RESTORE) {
                     trace_request = id;
@@ -572,7 +592,7 @@ static DWORD WINAPI worker(void *) {
     gate_lock = g();
 #else
     uintptr_t vehicle = 0;
-    if (!verified_game_25661166() || !field(base + 0x1e194c8, owner_root) ||
+    if (!game_compatibility() || !field(base + 0x1e194c8, owner_root) ||
         !field(owner_root + 0x159a8, physics_root) || !field(owner_root, vehicle)) {
         ipc->error = 100;
         ipc->status = 4;
@@ -600,6 +620,9 @@ static DWORD WINAPI worker(void *) {
         }
 #endif
     native_lifecycle_init(&lifecycle);
+#if LMU_RESET_HOST_REVISION >= 21
+    graphics_lifetime_init(&graphics_lifetime);
+#endif
     context = {{GetCurrentProcessId(), 1, physics_root, 25661166}, 1, physics_root, 0, {}};
     uintptr_t objects[]{base + 0xcd1f40, scoring_root, tires[0]};
     runtime = new (std::nothrow) ResetNativeRuntime{};
@@ -677,6 +700,13 @@ static DWORD WINAPI worker(void *) {
         ipc->status = 4;
         return 0;
     }
+#if LMU_RESET_HOST_REVISION >= 21
+    if (!graphics_lifetime_hooks_create(base, owner_root + 0x38, &graphics_lifetime)) {
+        ipc->error = 115;
+        ipc->status = 4;
+        return 0;
+    }
+#endif
     handoff = native_handoff_create(worker_lock, control_lock, gate_lock);
     if (!handoff || MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
         ipc->error = 106;
@@ -707,6 +737,16 @@ static DWORD WINAPI worker(void *) {
 #if LMU_RESET_HOST_REVISION >= 15
     host.collision_vehicle = owner_root + 8;
     host.rebuild_collision = rebuild_collision;
+#endif
+#if LMU_RESET_HOST_REVISION >= 21
+    host.graphics = owner_root + 0x38;
+    host.graphics_lifetime = &graphics_lifetime;
+    host.finalization_failed = [](void *) {
+        simulation_fence_quarantine(&fence);
+        runtime->control.quarantined = runtime->flow.quarantined = 1;
+        runtime->control.checkpoint_valid = 0;
+        InterlockedExchange(&fatal, 1);
+    };
 #endif
     adapter = vehicle_restore_adapter_create(&host);
 #ifdef LMU_RESET_HOST_FIXTURE

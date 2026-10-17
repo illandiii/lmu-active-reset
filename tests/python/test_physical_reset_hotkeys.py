@@ -51,6 +51,7 @@ class HotkeyTests(unittest.TestCase):
         self.assertIsNone(expected_restore_fields(18))
         self.assertIsNone(expected_restore_fields(19))
         self.assertIsNone(expected_restore_fields(20))
+        self.assertIsNone(expected_restore_fields(21))
         for count in (10084, 10122, 10085, 10123, 11000):
             self.keys = HotkeyCommands()
             self.saved()
@@ -121,7 +122,7 @@ class HotkeyTests(unittest.TestCase):
         self.assertEqual(self.poll(report=report), {})
         self.assertIn("complete native preflight required", self.keys.notice)
         self.assertTrue(self.keys.saved)
-        for revision in (0, 21):
+        for revision in (0, 22):
             with self.assertRaises(ValueError):
                 expected_restore_fields(revision)
 

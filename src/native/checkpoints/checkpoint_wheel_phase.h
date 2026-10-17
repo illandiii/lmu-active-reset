@@ -1,7 +1,7 @@
 #ifndef LMU_CHECKPOINT_WHEEL_PHASE_H
 #define LMU_CHECKPOINT_WHEEL_PHASE_H
 #include "../physics/wheel_restore_core.h"
-#include "../restore/restore_plan_25661166.h"
+#include "../restore/vehicle_restore_plan.h"
 typedef struct WheelPhase {
     WheelSavedSpin spin;
     uint32_t hub_index, wheel_index;

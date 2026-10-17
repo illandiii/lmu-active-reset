@@ -1,10 +1,11 @@
-#include "../../src/native/restore/vehicle_restore_adapter_25661166.h"
+#include "../../src/native/restore/vehicle_restore_adapter.h"
 #include "../../src/native/runtime/active_reset_boundary.h"
 #include "../../src/native/runtime/native_lifetime_handoff.h"
 #include "vehicle_contact_fixture_model.h"
-#include "../../src/native/restore/aero_restore_25661166.h"
+#include "../../src/native/restore/aerodynamic_state.h"
 #include <memory>
 #include <cstdlib>
+#include "bodywork_fixture_model.h"
 
 static SnapshotFrame source_frame;
 static RestoreBindings source_bindings;
@@ -148,15 +149,26 @@ int main(int argc, char **argv) {
     InitializeCriticalSection(&game_lock);
     InitializeCriticalSection(&control_lock);
     InitializeCriticalSection(&gate_lock);
+    SimulationFence fence{};
     VehicleRestoreHost host{0x12345678 - 0x1aa4090,
                             reinterpret_cast<uintptr_t>(&game_lock),
                             reinterpret_cast<uintptr_t>(&control_lock),
                             GetCurrentThreadId(),
-                            nullptr,
+                            &fence,
                             lifetime,
                             refresh};
     host.collision_vehicle = reinterpret_cast<uintptr_t>(collision_vehicle);
     host.rebuild_collision = rebuild_fixture_collision;
+    unsigned char graphics_root[0x1b00]{};
+    BodyworkFixtureModel bodywork_model;
+    bodywork_model.bind(graphics_root);
+    GraphicsLifetime graphics_lifetime;
+    graphics_lifetime_init(&graphics_lifetime);
+    host.graphics = reinterpret_cast<uintptr_t>(graphics_root);
+    host.graphics_lifetime = &graphics_lifetime;
+    host.finalization_failed = [](void *user) {
+        simulation_fence_quarantine(static_cast<SimulationFence *>(user));
+    };
     source_bindings.address[RESTORE_COLLISION_EXPORT_SLOT] = host.collision_vehicle + 0x159e8;
     put(collision_vehicle + 0x15a50, float{1250});
     put(collision_vehicle + 0x15a24, float{80});
@@ -171,7 +183,6 @@ int main(int argc, char **argv) {
                                            reinterpret_cast<uintptr_t>(score));
     auto runtime = std::make_unique<ResetNativeRuntime>();
     runtime->control.owner_thread = GetCurrentThreadId();
-    SimulationFence fence{};
     uintptr_t objects[]{0x1234, reinterpret_cast<uintptr_t>(score),
                         reinterpret_cast<uintptr_t>(tire[0])};
     uintptr_t tires[4];
@@ -252,6 +263,7 @@ int main(int argc, char **argv) {
     source_frame.terminal_failure = 1;
     assert(dispatch(2, RESET_SAVE).control_result == CONTROL_SAVE_FAILED);
     load_frame(argv[2]);
+    bodywork_model.damage();
     write_fixture_aero(fixture_aero(true));
     // Native suspension damage changes the body-B axis, not only the row
     // basis. A quarter-turn gives an independently known alignment error.
@@ -337,6 +349,9 @@ int main(int argc, char **argv) {
     assert(result.forwarded == (fault != 2));
     assert(runtime->control.loads == (fault == 0 ? 1 : 0));
     if (fault != 2) {
+        assert(bodywork_model.restored() == (fault == 0));
+        if (fault)
+            assert(bodywork_model.vertices[27] == static_cast<unsigned char>(27 ^ 0xff));
         const auto expected_aero = fixture_aero(fault != 0);
         for (unsigned i = 0; i < AERO_FIELD_COUNT; ++i)
             assert(get<double>(reinterpret_cast<void *>(source_bindings.address[104] +

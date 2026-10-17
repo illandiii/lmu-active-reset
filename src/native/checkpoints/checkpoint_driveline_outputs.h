@@ -1,6 +1,6 @@
 #ifndef LMU_CHECKPOINT_DRIVELINE_OUTPUTS_H
 #define LMU_CHECKPOINT_DRIVELINE_OUTPUTS_H
-#include "../restore/restore_bindings_25661166.h"
+#include "../restore/vehicle_memory_bindings.h"
 /* ECD670 copies ADA710 outputs [1..4] into these HDV fields. REA evidence:
  * analysis/rea-25661166/live-code/ecd670.json. Names intentionally remain offsets.
  * This does not cover gearbox/clutch internals or terminal damage state. */

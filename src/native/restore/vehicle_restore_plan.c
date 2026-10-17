@@ -1,4 +1,4 @@
-#include "restore_plan_25661166.h"
+#include "vehicle_restore_plan.h"
 #include <math.h>
 #include <string.h>
 static int append(RestorePlan *p, const RestoreBackend *b, uint32_t slot, uint32_t offset,
@@ -23,7 +23,7 @@ static int append(RestorePlan *p, const RestoreBackend *b, uint32_t slot, uint32
         if (!append(work, b, (uint32_t)(slot), (offset), &(value), (uint32_t)sizeof(value)))       \
             return RESTORE_FIELD_FORBIDDEN;                                                        \
     } while (0)
-int restore_plan_25661166(const EngineBank *bank, const EnginePreparation *prepared, uint64_t epoch,
+int vehicle_restore_plan(const EngineBank *bank, const EnginePreparation *prepared, uint64_t epoch,
                           const RestoreBackend *b, RestorePlan *work, RestorePlan *out) {
     if (!bank || !prepared || !b || !b->context || !b->allowed || !b->read || !work || !out ||
         work == out || !epoch)

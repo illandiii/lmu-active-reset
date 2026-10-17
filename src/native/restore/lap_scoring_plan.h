@@ -7,5 +7,5 @@
  * the object/session binding frozen through execution and any rollback.
  * This prepares owned memory only; no native scoring writer is supplied. */
 int scoring_field_allowed_25661166(uint32_t slot, uint32_t offset, uint32_t size);
-int scoring_plan_25661166(const LapGuardFlags *, uint64_t epoch, RestorePlan *);
+int lap_scoring_plan(const LapGuardFlags *, uint64_t epoch, RestorePlan *);
 #endif

@@ -1,5 +1,5 @@
 #include "../../src/native/restore/restore_flow.h"
-#include "../../src/native/restore/restore_joint_25661166.h"
+#include "../../src/native/restore/physical_scoring_transaction.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
@@ -196,7 +196,7 @@ int main(void) {
         init();
         mode = failure_mode;
         RestoreField *failure = &plan.fields[plan.count++];
-        *failure = (RestoreField){0};
+        memset(failure, 0, sizeof(*failure));
         failure->object_slot = RESTORE_SCORING_SLOT;
         failure->field_offset = 0xd4;
         failure->size = 4;
@@ -210,7 +210,7 @@ int main(void) {
     }
     // Stale failure state cannot be cleared; no writes precede complete preflight.
     init();
-    plan.fields[4] = (RestoreField){0};
+    memset(&plan.fields[4], 0, sizeof(plan.fields[4]));
     plan.fields[4].object_slot = RESTORE_SCORING_SLOT;
     plan.fields[4].field_offset = 0xd4;
     plan.fields[4].size = 4;

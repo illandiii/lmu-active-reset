@@ -2,7 +2,7 @@
 #define main adapter_reference_main
 #include "vehicle_restore_adapter_fixture.cpp"
 #undef main
-#include "../../src/native/runtime/physical_reset_host_25661166.h"
+#include "../../src/native/runtime/physical_reset_host.h"
 #include "../../src/native/runtime/physical_reset_trace.h"
 
 static unsigned char host_owner[0x18000];
@@ -11,6 +11,47 @@ static volatile LONG original_boundaries, lifecycle_calls;
 static int mismatched_reads;
 static bool suppress_player_callback;
 static bool inject_collision_jump;
+static BodyworkFixtureModel host_bodywork;
+static volatile LONG graphics_calls;
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureGraphicsClear(void *) {
+    InterlockedIncrement(&graphics_calls);
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureGraphicsLoad(void *) {
+    InterlockedIncrement(&graphics_calls);
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void *WINAPI
+FixtureGraphicsConstruct(void *p) {
+    InterlockedIncrement(&graphics_calls);
+    return p;
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureGraphicsDestroy(void *) {
+    InterlockedIncrement(&graphics_calls);
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureGraphicsPublish(void *,
+                                                                                         void *) {
+    InterlockedIncrement(&graphics_calls);
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI
+FixtureGraphicsComponentClear(void *) {
+    InterlockedIncrement(&graphics_calls);
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI
+FixtureGraphicsComponentLoad(void *, void *, void *, void *) {
+    InterlockedIncrement(&graphics_calls);
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureGraphicsImpact(void *,
+                                                                                        float,
+                                                                                        void *,
+                                                                                        void *) {
+    InterlockedIncrement(&graphics_calls);
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI FixtureGraphicsRepair(void *) {
+    InterlockedIncrement(&graphics_calls);
+}
+extern "C" __declspec(dllexport) __declspec(noinline) void WINAPI
+FixtureGraphicsReset(void *, unsigned char) {
+    InterlockedIncrement(&graphics_calls);
+}
 static unsigned correction_calls, collision_prepare_calls;
 #if LMU_RESET_HOST_REVISION >= 15
 static unsigned collision_rebuild_calls, spatial_calls, removed_pairs;
@@ -247,6 +288,7 @@ static int run_fixture(int argc, char **argv) {
     largest_restored_sweep = 0;
     monitor_restored_sweep = false;
     std::memset(host_owner, 0, sizeof(host_owner));
+    host_bodywork.bind(host_owner + 0x38);
     auto *physical = reinterpret_cast<unsigned char *>(source_bindings.address[104]);
     auto *body = reinterpret_cast<unsigned char *>(source_bindings.address[0]);
     for (unsigned i = 0; i < 3; ++i) {
@@ -325,6 +367,7 @@ static int run_fixture(int argc, char **argv) {
                 saved.readable);
     assert(saved.result == CONTROL_OK && saved.saves == 1 && !saved.forward_writes);
     assert(saved.speed >= 80);
+    host_bodywork.damage();
     for (size_t i = 0; i < source_frame.total_count; ++i)
         source_frame.bodies[i].position_world[0] += 1000;
     source_frame.bodies[0].velocity_world[0] = -100;
@@ -359,6 +402,11 @@ static int run_fixture(int argc, char **argv) {
     assert(restored.result == CONTROL_OK && restored.loads == 1 &&
            restored.forward_writes == expected_fields && restored.contact_mask == 15);
     assert(restored.verified_fields == expected_fields && restored.mismatched_fields == 0);
+#if LMU_RESET_HOST_REVISION >= 21
+    assert(host_bodywork.restored() && ipc->bodywork_result == 0 && ipc->bodywork_meshes == 1);
+    assert(ipc->bodywork_vertex_bytes == 176 && ipc->bodywork_attempted_writes > 0 &&
+           ipc->bodywork_attempted_writes == ipc->bodywork_verified_writes);
+#endif
 #if LMU_RESET_HOST_REVISION >= 15
     assert(collision_rebuild_calls == 1 && spatial_calls == 1 && removed_pairs == 1);
     assert(largest_restored_sweep < .001);
@@ -433,6 +481,17 @@ static int run_fixture(int argc, char **argv) {
            ipc->physical_field_write_attempts == expected_fields);
     assert(mismatch.pins == restored.pins + 1); // No retry/failover.
     mismatched_reads = 0;
+#if LMU_RESET_HOST_REVISION >= 21
+    // Same addresses after publication must not make an old model checkpoint valid.
+    void(WINAPI *volatile graphics_publish)(void *, void *) = FixtureGraphicsPublish;
+    graphics_publish(host_bodywork.component, nullptr);
+    auto stale_graphics = request(ipc, 6, HOST_RESTORE);
+    assert(stale_graphics.result != CONTROL_OK && stale_graphics.cause == 92007);
+    assert(stale_graphics.forward_writes == 0 &&
+           ipc->physical_field_write_attempts == expected_fields);
+    auto refreshed_graphics = request(ipc, 7, HOST_SAVE);
+    assert(refreshed_graphics.result == CONTROL_OK && refreshed_graphics.saves == 2);
+#endif
     void(WINAPI *volatile reconstruct)(void *) = FixtureReconstruct;
     reconstruct(reinterpret_cast<void *>(source_bindings.address[104]));
     // A pit reconstruction invalidates the checkpoint even without another key.

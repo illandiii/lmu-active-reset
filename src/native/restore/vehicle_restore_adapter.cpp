@@ -1,6 +1,6 @@
-#include "vehicle_restore_adapter_25661166.h"
-#include "vehicle_checkpoint_25661166.h"
-#include "aero_restore_25661166.h"
+#include "vehicle_restore_adapter.h"
+#include "vehicle_checkpoint.h"
+#include "aerodynamic_state.h"
 #include "../runtime/native_lock_witness.h"
 #include <cmath>
 #include <cstring>
@@ -26,6 +26,11 @@ struct VehicleRestoreAdapter {
     float saved_collision_mass;
     double saved_position[3], saved_orientation[9];
     double saved_velocity[3], saved_omega[3];
+    std::unique_ptr<sector_bodywork::Transaction> bodywork;
+    sector_bodywork::Checkpoint saved_bodywork;
+    uint64_t graphics_generation = 0;
+    bool bodywork_applied = false;
+    sector_bodywork::Report bodywork_report;
 #ifdef LMU_VEHICLE_ADAPTER_FIXTURE
     VehicleFixtureReader reader = vehicle_read_25661166;
     uintptr_t fixture_scoring;
@@ -62,11 +67,65 @@ static int owner(void *user, uint64_t epoch) {
            GetCurrentThreadId() == adapter->host.owner_thread &&
            native_lock_witness(adapter->host.native_lock).held_by_caller &&
            native_lock_witness(adapter->host.control_lock).held_by_caller &&
-           adapter->host.pinned(adapter->host.user, &adapter->context);
+           adapter->host.pinned(adapter->host.user, &adapter->context) &&
+           (!adapter->held || !adapter->bodywork ||
+            graphics_pin_valid(adapter->host.graphics_lifetime, adapter->graphics_generation));
 }
 
 static bool same_identity(const ResetIdentity &a, const ResetIdentity &b) {
     return std::memcmp(&a, &b, sizeof(a)) == 0;
+}
+
+static bool graphics_pinned(void *user) {
+    auto *a = static_cast<VehicleRestoreAdapter *>(user);
+    return owner(a, a->context.epoch) &&
+           graphics_pin_valid(a->host.graphics_lifetime, a->graphics_generation);
+}
+static uint64_t graphics_generation(void *user) {
+    return static_cast<VehicleRestoreAdapter *>(user)->graphics_generation;
+}
+static bool graphics_read(void *, uintptr_t address, void *out, size_t size) {
+    SIZE_T count = 0;
+    return ReadProcessMemory(GetCurrentProcess(), reinterpret_cast<void *>(address), out, size,
+                             &count) &&
+           count == size;
+}
+static bool graphics_write(void *, uintptr_t address, const void *value, size_t size) {
+    // Do not let WriteProcessMemory temporarily change a protected page. The
+    // admitted CPU buffers and metadata must already be ordinary writable RAM.
+    uintptr_t cursor = address;
+    while (cursor < address + size) {
+        MEMORY_BASIC_INFORMATION page{};
+        if (VirtualQuery(reinterpret_cast<void *>(cursor), &page, sizeof(page)) != sizeof(page) ||
+            page.State != MEM_COMMIT ||
+            (page.Protect != PAGE_READWRITE && page.Protect != PAGE_WRITECOPY))
+            return false;
+        const auto end = reinterpret_cast<uintptr_t>(page.BaseAddress) + page.RegionSize;
+        if (end <= cursor)
+            return false;
+        cursor = end;
+    }
+    SIZE_T count = 0;
+    return WriteProcessMemory(GetCurrentProcess(), reinterpret_cast<void *>(address), value, size,
+                              &count) &&
+           count == size;
+}
+static bool graphics_lock(void *, uintptr_t address) {
+    return TryEnterCriticalSection(reinterpret_cast<CRITICAL_SECTION *>(address)) != 0;
+}
+static void graphics_unlock(void *, uintptr_t address) {
+    LeaveCriticalSection(reinterpret_cast<CRITICAL_SECTION *>(address));
+}
+static bool pin_graphics(VehicleRestoreAdapter *a) {
+    a->bodywork_report = {};
+    if (graphics_try_pin(a->host.graphics_lifetime, &a->graphics_generation))
+        return true;
+    a->bodywork_report.result = sector_bodywork::Result::busy;
+    return false;
+}
+static void release_graphics(VehicleRestoreAdapter *a) {
+    graphics_release_pin(a->host.graphics_lifetime);
+    a->graphics_generation = 0;
 }
 
 static bool read_current(VehicleRestoreAdapter *adapter) {
@@ -125,6 +184,16 @@ static int capture(void *user, const ResetIdentity *identity) {
         vehicle_checkpoint_validate(adapter->workspace, &adapter->current) ||
         !prepare_contacts(adapter) || !owner(adapter, adapter->context.epoch))
         return 1;
+    sector_bodywork::Checkpoint next_bodywork;
+    if (adapter->bodywork) {
+        if (!pin_graphics(adapter))
+            return 1;
+        const auto result = adapter->bodywork->capture(adapter->host.graphics, next_bodywork);
+        adapter->bodywork_report = adapter->bodywork->report();
+        release_graphics(adapter);
+        if (result != sector_bodywork::Result::ok)
+            return 1;
+    }
     // Publish only after every subsystem validates. A failed replacement keeps
     // the previous checkpoint and identity intact.
     if (adapter->host.collision_vehicle) {
@@ -147,6 +216,8 @@ static int capture(void *user, const ResetIdentity *identity) {
         adapter->saved_collision_mass = mass;
     }
     adapter->saved = adapter->current;
+    if (adapter->bodywork)
+        adapter->saved_bodywork = std::move(next_bodywork);
     adapter->saved_aero = adapter->current_aero;
     std::memcpy(adapter->saved_deformation, adapter->current_deformation,
                 sizeof(adapter->saved_deformation));
@@ -354,6 +425,18 @@ static int enter(void *user, uint64_t epoch) {
     auto *adapter = static_cast<VehicleRestoreAdapter *>(user);
     if (adapter->held || !owner(user, epoch))
         return 0;
+    adapter->bodywork_applied = false;
+    if (adapter->bodywork) {
+        if (!pin_graphics(adapter))
+            return 0;
+        const auto result =
+            adapter->bodywork->begin(adapter->host.graphics, adapter->saved_bodywork);
+        adapter->bodywork_report = adapter->bodywork->report();
+        if (result != sector_bodywork::Result::ok) {
+            release_graphics(adapter);
+            return 0;
+        }
+    }
     adapter->held = true;
     return 1;
 }
@@ -362,6 +445,16 @@ static int contacts(void *user, uint64_t epoch, int original) {
     auto *adapter = static_cast<VehicleRestoreAdapter *>(user);
     if (!adapter->held || !owner(user, epoch) || (original != 0 && original != 1))
         return 0;
+    if (adapter->bodywork) {
+        const auto previous = adapter->bodywork_report.result;
+        const auto result = original ? adapter->bodywork->rollback() : adapter->bodywork->apply();
+        adapter->bodywork_report = adapter->bodywork->report();
+        if (original && result == sector_bodywork::Result::ok)
+            adapter->bodywork_report.result = previous;
+        adapter->bodywork_applied = !original && result == sector_bodywork::Result::ok;
+        if (result != sector_bodywork::Result::ok)
+            return 0;
+    }
     ContactBatch batch = adapter->contacts.batch;
     if (!original)
         std::memcpy(batch.angular, adapter->saved_angular, sizeof(batch.angular));
@@ -374,8 +467,21 @@ static int contacts(void *user, uint64_t epoch, int original) {
             adapter->host.rebuild_collision(adapter->host.user, adapter->host.collision_vehicle));
 }
 
-static void leave(void *user, int) {
-    static_cast<VehicleRestoreAdapter *>(user)->held = false;
+static void leave(void *user, int resumable) {
+    auto *a = static_cast<VehicleRestoreAdapter *>(user);
+    if (a->bodywork) {
+        const auto previous = a->bodywork_report.result;
+        const auto result = a->bodywork->finish(resumable && a->bodywork_applied);
+        a->bodywork_report = a->bodywork->report();
+        if (result == sector_bodywork::Result::ok)
+            a->bodywork_report.result = previous;
+        else {
+            a->quarantined = true;
+            a->host.finalization_failed(a->host.user);
+        }
+        release_graphics(a);
+    }
+    a->held = false;
 }
 
 static void quarantine(void *user, int) {
@@ -385,12 +491,25 @@ static void quarantine(void *user, int) {
 VehicleRestoreAdapter *vehicle_restore_adapter_create(const VehicleRestoreHost *host) {
     if (!host || !host->module_base || !host->native_lock || !host->control_lock ||
         host->native_lock == host->control_lock || !host->owner_thread || !host->pinned ||
-        !host->refresh || (bool(host->collision_vehicle) != bool(host->rebuild_collision)))
+        !host->refresh || (bool(host->collision_vehicle) != bool(host->rebuild_collision)) ||
+        (bool(host->graphics) != bool(host->graphics_lifetime)) ||
+        (host->graphics && !host->finalization_failed))
         return nullptr;
     auto *adapter = new (std::nothrow) VehicleRestoreAdapter{};
     if (!adapter)
         return nullptr;
     adapter->host = *host;
+    if (host->graphics) {
+        try {
+            adapter->bodywork =
+                std::make_unique<sector_bodywork::Transaction>(sector_bodywork::Backend{
+                    adapter, graphics_pinned, graphics_generation, graphics_read, graphics_write,
+                    graphics_lock, graphics_unlock});
+        } catch (const std::bad_alloc &) {
+            delete adapter;
+            return nullptr;
+        }
+    }
     adapter->workspace = vehicle_checkpoint_workspace_create();
     if (!adapter->workspace) {
         delete adapter;
@@ -411,6 +530,7 @@ bool vehicle_restore_adapter_bind(VehicleRestoreAdapter *adapter,
     if (!adapter || adapter->held || adapter->quarantined)
         return false;
     adapter->bound = false;
+    adapter->bodywork_report = {};
     if (!context || !context->epoch || !context->physics || !context->identity.process ||
         !context->identity.session || !context->identity.vehicle ||
         !context->identity.configuration || !std::isfinite(context->simulation_time))
@@ -433,6 +553,10 @@ ResetNativeAdapter vehicle_restore_adapter_ops(VehicleRestoreAdapter *adapter) {
 
 ContactBatchReport vehicle_restore_adapter_contact_report(const VehicleRestoreAdapter *adapter) {
     return adapter ? adapter->contacts.report : ContactBatchReport{};
+}
+sector_bodywork::Report
+vehicle_restore_adapter_bodywork_report(const VehicleRestoreAdapter *adapter) {
+    return adapter ? adapter->bodywork_report : sector_bodywork::Report{};
 }
 
 #ifdef LMU_VEHICLE_ADAPTER_FIXTURE

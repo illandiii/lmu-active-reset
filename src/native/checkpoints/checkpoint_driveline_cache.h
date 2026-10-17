@@ -1,6 +1,6 @@
 #ifndef LMU_CHECKPOINT_DRIVELINE_CACHE_H
 #define LMU_CHECKPOINT_DRIVELINE_CACHE_H
-#include "../restore/restore_bindings_25661166.h"
+#include "../restore/vehicle_memory_bindings.h"
 typedef struct DrivelineCache {
     double torque[3];
     uint32_t drive_type, reserved;

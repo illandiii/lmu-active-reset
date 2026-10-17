@@ -16,6 +16,6 @@ enum RestoreObjectSlot {
  * Backend object slots must be frozen, typed, non-aliased for emitted ranges,
  * and tied to the validated native capture. No game pointer is accepted here.
  * Workspace and output must be separate; output is published only on success. */
-int restore_plan_25661166(const EngineBank *, const EnginePreparation *, uint64_t,
+int vehicle_restore_plan(const EngineBank *, const EnginePreparation *, uint64_t,
                           const RestoreBackend *, RestorePlan *workspace, RestorePlan *output);
 #endif

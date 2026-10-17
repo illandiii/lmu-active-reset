@@ -5,7 +5,7 @@ import unittest
 from urllib.error import URLError
 
 from sector.runtime.physical_reset_hotkeys import HotkeyCommands
-from sector.runtime.run_physical_reset_host_25661166 import (
+from sector.runtime.reset_host_runner import (
     IPC,
     context_attempt,
     final_acknowledgement,

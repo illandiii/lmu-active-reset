@@ -78,7 +78,7 @@ for (const name of ["src/python", "assets/sector.ico", "scripts/sector.py"])
 for (const name of [
   "diagnostic-14200.exe",
   "overlay-reader.exe",
-  "lmu-physical-reset-v20-25661166.dll",
+  "lmu-physical-reset-v21-25661166.dll",
 ])
   copy(path.join(root, "bin", name), path.join(runtime, "bin", name));
 fs.mkdirSync(path.join(runtime, "compatibility"), { recursive: true });
@@ -107,13 +107,13 @@ const telemetry = JSON.parse(
 );
 const host = JSON.parse(
   fs.readFileSync(
-    path.join(runtime, "compatibility/steam-25661166-physical-reset-v20.json"),
+    path.join(runtime, "compatibility/steam-25661166-physical-reset-v21.json"),
   ),
 );
 if (
   sha(path.join(runtime, "bin/diagnostic-14200.exe")) !==
     telemetry.diagnostic_sha256.toLowerCase() ||
-  sha(path.join(runtime, "bin/lmu-physical-reset-v20-25661166.dll")) !==
+  sha(path.join(runtime, "bin/lmu-physical-reset-v21-25661166.dll")) !==
     host.dll_sha256.toLowerCase()
 )
   throw new Error("Runtime binary/profile mismatch");

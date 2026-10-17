@@ -111,7 +111,7 @@ sostituiscono nel piano quelli derivati, mantenendo il collegamento alla sequenz
 salvata. Sono 223 frame in 29,68 s, tutti accettati, e 6.467 verifiche negative.
 La cattura dei settori NON include la griglia interna dei nodi pneumatico.
 
-`restore_plan_25661166` e `native_cache_plan` producono un piano di 821 campi,
+`vehicle_restore_plan` e `native_cache_plan` producono un piano di 821 campi,
 19.648 byte, per la vettura osservata. `restore_transaction` esegue il piano su
 memoria di prova, verifica ogni scrittura e ripristina i valori precedenti in
 caso di errore, inclusa una scrittura parzialmente riuscita. Test superati:
@@ -119,7 +119,7 @@ fallimento parziale in ogni posizione della fixture, falso successo del backend,
 perdita di contesto, rollback fallito segnalato, dati correnti diversi, limiti e
 sovrapposizioni. Il test del piano reale verifica anche i byte non interessati.
 
-`restore_bindings_25661166` aggiunge una lista tipizzata degli esatti offset e
+`vehicle_memory_bindings` aggiunge una lista tipizzata degli esatti offset e
 dimensioni ammessi, con controllo delle sovrapposizioni degli indirizzi assoluti
 fra slot diversi. L'osservatore v13 usa riferimenti congelati e questo filtro.
 Il backend nativo resta di sola lettura: callback di scrittura assente.
@@ -246,7 +246,7 @@ preservano next_timed/off_track. Giro fermo a 8 e flag costanti: **nessuna prova
 di transizione giro, invalidazione reale o conservazione record**. Il tempo
 mediano di 6,8 microsecondi comprende anche l'update originale.
 
-`restore_native_memory_25661166` implementa il backend Win32 nel processo
+`native_memory_backend` implementa il backend Win32 nel processo
 corrente: verifica thread, congela i binding, ammette solo campi tipizzati e
 pagine dati scrivibili, scrive/rilegge e mantiene i riferimenti originali durante
 il rollback. È collegato solo alla libreria fixture. I test eseguono tutti i

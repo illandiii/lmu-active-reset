@@ -20,49 +20,49 @@ def audit(pid):
     host_profiles = []
     registry = {
         "lmu-physical-reset-v8-25661166.dll": (
-            "sector.runtime.run_physical_reset_host_25661166",
+            "sector.runtime.reset_host_runner",
             "steam-25661166-physical-reset-v8.json",
             "LMU_PhysicalReset25661166_v8_",
             0x4C4D555253543038,
         ),
         "lmu-physical-reset-v7-25661166.dll": (
-            "sector.runtime.run_physical_reset_host_25661166",
+            "sector.runtime.reset_host_runner",
             "steam-25661166-physical-reset-v7.json",
             "LMU_PhysicalReset25661166_v7_",
             0x4C4D555253543037,
         ),
         "lmu-physical-reset-v6-25661166.dll": (
-            "sector.runtime.run_physical_reset_host_25661166",
+            "sector.runtime.reset_host_runner",
             "steam-25661166-physical-reset-v6.json",
             "LMU_PhysicalReset25661166_v6_",
             0x4C4D555253543036,
         ),
         "lmu-physical-reset-v5-25661166.dll": (
-            "sector.runtime.run_physical_reset_host_25661166",
+            "sector.runtime.reset_host_runner",
             "steam-25661166-physical-reset-v5.json",
             "LMU_PhysicalReset25661166_v5_",
             0x4C4D555253543035,
         ),
         "lmu-physical-reset-v4-25661166.dll": (
-            "sector.runtime.run_physical_reset_host_25661166",
+            "sector.runtime.reset_host_runner",
             "steam-25661166-physical-reset-v4.json",
             "LMU_PhysicalReset25661166_v4_",
             0x4C4D555253543034,
         ),
         "lmu-physical-reset-v3-25661166.dll": (
-            "sector.runtime.run_physical_reset_host_25661166",
+            "sector.runtime.reset_host_runner",
             "steam-25661166-physical-reset-v3.json",
             "LMU_PhysicalReset25661166_v3_",
             0x4C4D555253543033,
         ),
         "lmu-physical-reset-v2-25661166.dll": (
-            "sector.runtime.run_physical_reset_host_25661166",
+            "sector.runtime.reset_host_runner",
             "steam-25661166-physical-reset-v2.json",
             "LMU_PhysicalReset25661166_v2_",
             0x4C4D555253543032,
         ),
         "lmu-physical-reset-v1-25661166.dll": (
-            "sector.runtime.run_physical_reset_host_25661166",
+            "sector.runtime.reset_host_runner",
             "steam-25661166-physical-reset-v1.json",
             "LMU_PhysicalReset25661166_v1_",
             0x4C4D555253543031,
@@ -316,7 +316,8 @@ def audit(pid):
         profile = resident_profile(entry, manifest, PROJECT)
         if host:
             host_profiles.append(profile)
-        IPC = importlib.import_module(module).IPC
+        ipc_module = importlib.import_module(module)
+        IPC = ipc_module.ipc_type_for_magic(magic) if host else ipc_module.IPC
         mapping = k.OpenFileMappingW(4, False, f"Local\\{prefix}{pid}")
         view = None
         try:

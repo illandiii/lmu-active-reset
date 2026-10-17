@@ -2,7 +2,7 @@
 #define LMU_VEHICLE_CHECKPOINT_25661166_H
 #include "../observers/vehicle_snapshot_25661166.h"
 extern "C" {
-#include "restore_joint_25661166.h"
+#include "physical_scoring_transaction.h"
 }
 
 // Allocate once outside the physics callback. No allocation or game writes are

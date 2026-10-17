@@ -1,4 +1,4 @@
-#include "native_lifecycle_hooks_25661166.h"
+#include "vehicle_lifecycle_hooks.h"
 #include "MinHook.h"
 #include <cstring>
 

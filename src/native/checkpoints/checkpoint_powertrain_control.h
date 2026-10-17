@@ -1,6 +1,6 @@
 #ifndef LMU_CHECKPOINT_POWERTRAIN_CONTROL_H
 #define LMU_CHECKPOINT_POWERTRAIN_CONTROL_H
-#include "../restore/restore_bindings_25661166.h"
+#include "../restore/vehicle_memory_bindings.h"
 /* Offset-named state from REA C6FA00/C6FBB0 at HDV+4740. This is partial
  * powertrain control, not proof of complete gearbox/clutch coverage. */
 typedef struct PowertrainControl {

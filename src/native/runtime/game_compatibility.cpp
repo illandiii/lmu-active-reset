@@ -2,8 +2,8 @@
 #include <windows.h>
 #include <wincrypt.h>
 #include <cstring>
-#include "verified_game_25661166.h"
-int verified_game_25661166(void) {
+#include "game_compatibility.h"
+int game_compatibility(void) {
 #ifdef LMU_PHASE_FIXTURE
     return 1;
 #else

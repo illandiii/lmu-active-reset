@@ -9,9 +9,9 @@ extern "C" {
 #define POSE_MAGIC 0x4c4d55534e503051ULL
 extern "C" {
 #include "../checkpoints/checkpoint_engine_integration.h"
-#include "../restore/restore_plan_25661166.h"
+#include "../restore/vehicle_restore_plan.h"
 #include "../checkpoints/checkpoint_native_cache.h"
-#include "../restore/restore_bindings_25661166.h"
+#include "../restore/vehicle_memory_bindings.h"
 #include "../checkpoints/checkpoint_tire_thermal.h"
 #include "../checkpoints/checkpoint_tread_history.h"
 #include "../checkpoints/checkpoint_wheel_phase.h"

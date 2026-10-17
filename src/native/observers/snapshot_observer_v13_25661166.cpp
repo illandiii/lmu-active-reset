@@ -267,7 +267,7 @@ static void prepare_native_bank(SnapshotFrame &f) {
         for (size_t i = 0; i < f.constraint_count; i++)
             frozen_bindings.constraint_kind[i] = f.recipes[i].kind;
         f.plan_status =
-            restore_plan_25661166(&checkpoint_bank, &checkpoint_prepared, planning_epoch,
+            vehicle_restore_plan(&checkpoint_bank, &checkpoint_prepared, planning_epoch,
                                   &planning_backend, &plan_workspace, &native_plan);
         if (!f.plan_status) {
             plan_workspace = native_plan;

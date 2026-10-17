@@ -1,5 +1,5 @@
-#include "restore_bindings_25661166.h"
-#include "aero_restore_25661166.h"
+#include "vehicle_memory_bindings.h"
+#include "aerodynamic_state.h"
 #include <stdint.h>
 #include <stdlib.h>
 static int field(uint32_t offset, uint32_t size, uint32_t wanted, uint32_t bytes) {

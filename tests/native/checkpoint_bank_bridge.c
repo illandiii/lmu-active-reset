@@ -5,8 +5,8 @@
 #include "../../src/native/checkpoints/checkpoint_cached_mass.h"
 #include "../../src/native/checkpoints/checkpoint_solver_history.h"
 #include "../../src/native/checkpoints/checkpoint_engine_integration.h"
-#include "../../src/native/restore/restore_plan_25661166.h"
-#include "../../src/native/restore/restore_native_memory_25661166.h"
+#include "../../src/native/restore/vehicle_restore_plan.h"
+#include "../../src/native/restore/native_memory_backend.h"
 __declspec(dllexport) int fixture_native_memory_execute(const RestorePlan *p,
                                                         const RestoreBindings *b, uint32_t thread,
                                                         int (*validate)(void *, uint64_t),
@@ -38,7 +38,7 @@ __declspec(dllexport) size_t fixture_plan_size(unsigned kind) {
 __declspec(dllexport) int fixture_plan_build(const EngineBank *b, const EnginePreparation *p,
                                              uint64_t epoch, const RestoreBackend *backend,
                                              RestorePlan *work, RestorePlan *out) {
-    return restore_plan_25661166(b, p, epoch, backend, work, out);
+    return vehicle_restore_plan(b, p, epoch, backend, work, out);
 }
 __declspec(dllexport) int fixture_plan_execute(const RestorePlan *p, const RestoreBackend *b,
                                                RestoreReport *report) {
@@ -158,7 +158,7 @@ __declspec(dllexport) size_t fixture_checkpoint_size(unsigned int kind) {
 }
 
 #include "../../src/native/checkpoints/checkpoint_native_cache.h"
-#include "../../src/native/restore/restore_bindings_25661166.h"
+#include "../../src/native/restore/vehicle_memory_bindings.h"
 __declspec(dllexport) int fixture_bindings_validate(const RestoreBindings *b,
                                                     const RestorePlan *p) {
     return restore_bindings_validate(b, p);
@@ -266,7 +266,7 @@ __declspec(dllexport) int fixture_outputs_plan(const DrivelineOutputsBank *b, ui
     return driveline_outputs_plan(b, sequence, backend, work, out);
 }
 
-#include "../../src/native/restore/restore_joint_25661166.h"
+#include "../../src/native/restore/physical_scoring_transaction.h"
 __declspec(dllexport) int fixture_joint_prepare(const RestorePlan *physical,
                                                 const LapGuardFlags *flags, RestorePlan *out) {
     return restore_joint_prepare(physical, flags, out);

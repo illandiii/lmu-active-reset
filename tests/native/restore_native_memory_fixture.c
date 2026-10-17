@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
-#include "../../src/native/restore/restore_native_memory_25661166.h"
+#include "../../src/native/restore/native_memory_backend.h"
 static RestorePlan plan;
 static RestoreBindings bindings;
 typedef struct Context {

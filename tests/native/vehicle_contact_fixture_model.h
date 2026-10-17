@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cmath>
-#include "../../src/native/restore/contact_batch_25661166.h"
+#include "../../src/native/restore/contact_rebuild.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif

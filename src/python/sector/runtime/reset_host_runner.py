@@ -64,7 +64,7 @@ class Report(C.Structure):
     )
 
 
-class IPC(C.Structure):
+class LegacyIPC(C.Structure):
     _fields_ = [
         ("magic", C.c_uint64),
         ("version", C.c_uint64),
@@ -95,7 +95,32 @@ class IPC(C.Structure):
         return self.physical_field_write_attempts
 
 
-assert C.sizeof(Report) == 216 and C.sizeof(IPC) == 328
+class IPC(LegacyIPC):
+    _fields_ = [
+        (f"bodywork_{name}", C.c_uint64)
+        for name in (
+            "result",
+            "components",
+            "meshes",
+            "vertex_bytes",
+            "attempted_writes",
+            "verified_writes",
+            "recovery_writes",
+        )
+    ]
+
+
+assert C.sizeof(Report) == 216 and C.sizeof(LegacyIPC) == 328 and C.sizeof(IPC) == 384
+
+
+def ipc_type_for_magic(magic):
+    return LegacyIPC if magic <= 0x4C4D555253543030 + 20 else IPC
+
+
+def bodywork_diagnostics(ipc):
+    if ipc.magic < 0x4C4D555253543030 + 21:
+        return {}
+    return {name: getattr(ipc, name) for name, _ in IPC._fields_}
 
 
 def as_dict(report):
@@ -136,6 +161,7 @@ def final_acknowledgement(view, ipc, last_id):
     ):
         return None
     row = as_dict(copy.report)
+    row.update(bodywork_diagnostics(copy))
     row.update(
         id=copy.completed_id, physical_field_write_attempts=copy.physical_field_write_attempts
     )
@@ -408,6 +434,7 @@ def run(args):
                         and copy.completed_id == completed
                     ):
                         row = as_dict(copy.report)
+                        row.update(bodywork_diagnostics(copy))
                         row.update(
                             id=completed,
                             physical_field_write_attempts=copy.physical_field_write_attempts,

@@ -1,7 +1,7 @@
 #ifndef LMU_ACTIVE_RESET_NATIVE_H
 #define LMU_ACTIVE_RESET_NATIVE_H
 #include "active_reset_control.h"
-#include "../restore/restore_native_memory_25661166.h"
+#include "../restore/native_memory_backend.h"
 typedef struct ResetNativeAdapter {
     void *user;
     int (*capture)(void *, const ResetIdentity *);

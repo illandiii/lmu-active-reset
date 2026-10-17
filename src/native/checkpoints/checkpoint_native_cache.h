@@ -1,6 +1,6 @@
 #ifndef LMU_CHECKPOINT_NATIVE_CACHE_H
 #define LMU_CHECKPOINT_NATIVE_CACHE_H
-#include "../restore/restore_plan_25661166.h"
+#include "../restore/vehicle_restore_plan.h"
 /* Numeric fields only. These caches are captured at the same Dynamics boundary
  * as the base checkpoint; they must not be synthesized from reciprocal values. */
 typedef struct NativeBodyCache {

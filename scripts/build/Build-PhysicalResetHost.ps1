@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$ZigPath,
     [string]$FrameDirectory,
-    [ValidateRange(1, 99)][int]$Revision = 20
+    [ValidateRange(1, 99)][int]$Revision = 21
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,25 +17,27 @@ $core = @(
     'checkpoint_bank', 'tire_persistent_core', 'checkpoint_persistent_bank',
     'checkpoint_vehicle_partial', 'checkpoint_transmission_partial',
     'checkpoint_cached_mass', 'checkpoint_solver_history', 'checkpoint_engine_integration',
-    'restore_transaction', 'restore_plan_25661166', 'checkpoint_native_cache',
-    'restore_bindings_25661166', 'checkpoint_tire_thermal', 'checkpoint_tread_history',
+    'restore_transaction', 'vehicle_restore_plan', 'checkpoint_native_cache',
+    'vehicle_memory_bindings', 'checkpoint_tire_thermal', 'checkpoint_tread_history',
     'wheel_restore_core', 'checkpoint_wheel_phase', 'restore_thermal_plan',
     'checkpoint_brake_state', 'checkpoint_driveline_cache', 'checkpoint_driveline_outputs',
-    'checkpoint_powertrain_control', 'checkpoint_shift_transient', 'restore_joint_25661166',
-    'restore_flow', 'scoring_plan_25661166', 'restore_native_memory_25661166',
+    'checkpoint_powertrain_control', 'checkpoint_shift_transient', 'physical_scoring_transaction',
+    'restore_flow', 'lap_scoring_plan', 'native_memory_backend',
     'active_reset_control', 'active_reset_native'
 ) | ForEach-Object { Get-SectorNativeSource "${_}.c" }
 $native = @(
-    'vehicle_checkpoint_25661166', 'vehicle_reader_25661166',
-    'vehicle_restore_adapter_25661166', 'contact_batch_25661166',
+    'vehicle_checkpoint', 'vehicle_state_reader',
+    'vehicle_restore_adapter', 'contact_rebuild',
+    'bodywork_checkpoint', 'graphics_lifetime',
     'native_lock_witness', 'native_lifetime_pin', 'native_lifetime_handoff',
     'fenced_restore', 'simulation_fence', 'active_reset_boundary'
 ) | ForEach-Object { Get-SectorNativeSource "${_}.cpp" }
 $options = @('-O2', '-Wall', '-Wextra', '-Werror', '-Wno-deprecated', '-target', 'x86_64-windows-gnu', "-DLMU_RESET_HOST_REVISION=$Revision")
 
 $hostSources = @(
-    'native_lifecycle_epoch.cpp', 'native_lifecycle_hooks_25661166.cpp',
-    'verified_game_25661166.cpp', 'physical_reset_host_25661166.cpp'
+    'native_lifecycle_epoch.cpp', 'vehicle_lifecycle_hooks.cpp',
+    'game_compatibility.cpp', 'physical_reset_host.cpp',
+    'graphics_lifetime_hooks.cpp'
 ) | ForEach-Object { Get-SectorNativeSource $_ }
 $minhook = Join-Path $projectRoot 'third_party\minhook'
 $hostSources += @('src\buffer.c', 'src\hook.c', 'src\trampoline.c', 'src\hde\hde64.c') |
@@ -59,7 +61,7 @@ if ($FrameDirectory) {
 }
 & $ZigPath c++ @options -shared -I (Join-Path $minhook 'include') @core @native @hostSources -ladvapi32 -o $dll
 if ($LASTEXITCODE -ne 0) { throw 'Physical reset host build failed' }
-$targets = Get-Content (Get-SectorNativeSource 'physical_reset_targets_25661166.json') -Raw | ConvertFrom-Json
+$targets = Get-Content (Get-SectorNativeSource 'reset_hook_targets.json') -Raw | ConvertFrom-Json
 $targets = @($targets | Where-Object { !$_.minimum_revision -or $_.minimum_revision -le $Revision })
 $manifest = [ordered]@{
     build = 14200

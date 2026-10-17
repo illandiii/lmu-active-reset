@@ -11,6 +11,7 @@ $builds = @(
     'build/Build-NativeLifetimeHandoff.ps1',
     'build/Build-NativeLifecycleEpoch.ps1',
     'build/Build-ContactBatch.ps1',
+    'build/Build-BodyworkRestore.ps1',
     'build/Build-CheckpointBank.ps1',
     'build/Build-ActiveResetRuntime.ps1',
     'build/Build-ActiveResetBoundary.ps1',

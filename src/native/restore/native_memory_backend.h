@@ -1,6 +1,6 @@
 #ifndef LMU_RESTORE_NATIVE_MEMORY_25661166_H
 #define LMU_RESTORE_NATIVE_MEMORY_25661166_H
-#include "restore_bindings_25661166.h"
+#include "vehicle_memory_bindings.h"
 #include "restore_flow.h"
 #ifdef __cplusplus
 extern "C" {

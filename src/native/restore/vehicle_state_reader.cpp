@@ -1,5 +1,5 @@
 // Read-only typed layout extracted from the validated v31 observer.
-#include "vehicle_reader_25661166.h"
+#include "vehicle_state_reader.h"
 #include <cmath>
 #include <cstring>
 

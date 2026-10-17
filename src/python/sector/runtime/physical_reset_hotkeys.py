@@ -18,6 +18,16 @@ def expected_restore_fields(revision):
 
 def rejection_reason(report):
     cause = report.get("cause")
+    bodywork_reasons = {
+        92003: "Bodywork is being updated. Wait for the impact or loading to finish and retry.",
+        92004: "Bodywork buffers are not ready or have an unsupported layout.",
+        92005: "This vehicle uses a graphics buffer that this reset version cannot restore.",
+        92006: "Bodywork is damaged. Save a new checkpoint with a repaired car.",
+        92007: "The bodywork was rebuilt. Save a new checkpoint before restoring.",
+        92010: "Bodywork recovery failed. Restart LMU before using Active Reset again.",
+    }
+    if cause in bodywork_reasons:
+        return bodywork_reasons[cause]
     if cause in (91001, 91002, 91003, 91004):
         wheel = ("Front-left", "Front-right", "Rear-left", "Rear-right")[cause - 91001]
         return f"{wheel} wheel detached. This reset version cannot rebuild detached suspension."

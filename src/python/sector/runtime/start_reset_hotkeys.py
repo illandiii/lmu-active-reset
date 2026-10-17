@@ -102,7 +102,7 @@ def main():
         if virtual_key(args.save_key) == virtual_key(args.restore_key):
             raise ValueError("Choose different keys for save and restore.")
         from sector.observers.audit_snapshot_25661166 import audit
-        from sector.runtime.run_physical_reset_host_25661166 import run, process_exit_code, k
+        from sector.runtime.reset_host_runner import run, process_exit_code, k
 
         handle = k.OpenProcess(0x1000, False, args.pid)
         if not handle:

@@ -77,5 +77,65 @@
     "prolog": "48895c24084889742410574883ec204c",
     "name": "CollisionRemovePairs",
     "minimum_revision": 15
+  },
+  {
+    "rva": 15860160,
+    "prolog": "48895c240848896c2410488974241857",
+    "name": "GraphicsClear",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 15860800,
+    "prolog": "40555356574154415541564157488dac",
+    "name": "GraphicsLoad",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 15908960,
+    "prolog": "48895c2418488974242048894c240857",
+    "name": "GraphicsConstruct",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 15945648,
+    "prolog": "48895c241048896c2418488974242057",
+    "name": "GraphicsDestroy",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 11367440,
+    "prolog": "48895c2420488954241048894c240855",
+    "name": "GraphicsPublish",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 11366848,
+    "prolog": "48895c240848896c2410488974241857",
+    "name": "GraphicsComponentClear",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 11368752,
+    "prolog": "488954241048894c2408555356574154",
+    "name": "GraphicsComponentLoad",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 15934912,
+    "prolog": "488bc44889580848897010574883ec60",
+    "name": "GraphicsImpact",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 15984944,
+    "prolog": "48895c241048896c2418488974242057",
+    "name": "GraphicsRepair",
+    "minimum_revision": 21
+  },
+  {
+    "rva": 15948784,
+    "prolog": "488bc448895808488970184889782055",
+    "name": "GraphicsReset",
+    "minimum_revision": 21
   }
 ]

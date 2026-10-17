@@ -28,7 +28,9 @@ BoundaryResetResult active_reset_boundary_dispatch(
         if (runtime->control.quarantined || runtime->flow.quarantined)
             simulation_fence_quarantine(fence);
     }
-    if (!native_lock_witness(held_native_lock).held_by_caller) {
+    const bool lock_lost = !native_lock_witness(held_native_lock).held_by_caller;
+    if (lock_lost ||
+        (result.control_result != CONTROL_QUARANTINED && !simulation_fence_may_advance(&ticket))) {
         simulation_fence_quarantine(fence);
         runtime->flow.quarantined = 1;
         runtime->control.quarantined = 1;
@@ -41,7 +43,7 @@ BoundaryResetResult active_reset_boundary_dispatch(
         runtime->flow.completed = completed;
         runtime->flow.compensated = compensated;
         runtime->report.result = FLOW_QUARANTINED;
-        runtime->report.cause = FLOW_NATIVE_LOCK_LOST;
+        runtime->report.cause = lock_lost ? FLOW_NATIVE_LOCK_LOST : FLOW_OWNER_LOST;
     }
     if (simulation_fence_may_advance(&ticket)) {
         original(input);

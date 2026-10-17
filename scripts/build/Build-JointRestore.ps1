@@ -6,7 +6,7 @@ $ErrorActionPreference='Stop'
 $jointWork=[IO.Path]::GetFullPath((Join-Path $projectRoot 'work'))
 $env:ZIG_GLOBAL_CACHE_DIR=Join-Path $jointWork 'zig-cache'
 $env:ZIG_LOCAL_CACHE_DIR=Join-Path $jointWork 'zig-local-cache'
-$jointSources=@('restore_joint_25661166.c','restore_joint_fixture.c','scoring_plan_25661166.c','restore_transaction.c') | ForEach-Object {Get-SectorNativeSource $_}
+$jointSources=@('physical_scoring_transaction.c','restore_joint_fixture.c','lap_scoring_plan.c','restore_transaction.c') | ForEach-Object {Get-SectorNativeSource $_}
 & $ZigPath cc -O2 -Wall -Wextra -Werror @jointSources -o (Join-Path $jointWork 'joint-restore-fixture.exe')
 if($LASTEXITCODE -ne 0){throw 'Joint restore build failed'}
 & (Join-Path $jointWork 'joint-restore-fixture.exe')

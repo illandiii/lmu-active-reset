@@ -34,7 +34,7 @@ entries, not proof that all possible game lifetime paths have been discovered.
 
 ## Commands and bounds
 
-Build with `scripts/build/Build-PhysicalResetHost25661166.ps1`, specifying `-ZigPath`,
+Build with `scripts/build/Build-PhysicalResetHost.ps1`, specifying `-ZigPath`,
 `-FrameDirectory` for the recorded-frame fixture and an unused `-Revision`.
 Never overwrite a DLL resident in LMU, even after its hooks have stopped.
 

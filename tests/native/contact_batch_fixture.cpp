@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cmath>
-#include "../../src/native/restore/contact_batch_25661166.h"
+#include "../../src/native/restore/contact_rebuild.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
@@ -162,8 +162,8 @@ int batch_tests() {
 
 extern "C" {
 #include "../../src/native/restore/restore_flow.h"
-#include "../../src/native/restore/scoring_plan_25661166.h"
-#include "../../src/native/restore/restore_joint_25661166.h"
+#include "../../src/native/restore/lap_scoring_plan.h"
+#include "../../src/native/restore/physical_scoring_transaction.h"
 }
 static RestoreFlow flow_state;
 static RestoreFlowWork flow_work;

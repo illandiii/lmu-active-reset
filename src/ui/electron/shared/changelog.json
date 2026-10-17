@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.9",
+    "changes": [
+      "Adds experimental bodywork restoration to Active Reset for supported CPU graphics buffers. Live validation is still pending.",
+      "Coordinates bodywork updates with physical reset and restores previous graphics state if contact rebuilding fails.",
+      "Explains when bodywork is busy or a rebuilt vehicle requires a new checkpoint.",
+      "Renames active reset source files and updates build scripts for easier maintenance."
+    ]
+  },
+  {
     "version": "0.2.8",
     "changes": [
       "Wait for LMU to leave pause before connecting Active Reset, even when the player still controls the car.",
@@ -117,7 +126,9 @@
   },
   {
     "version": "0.1.5",
-    "changes": ["Animated first-run setup and guided-tour popups."]
+    "changes": [
+      "Animated first-run setup and guided-tour popups."
+    ]
   },
   {
     "version": "0.1.4",
@@ -135,7 +146,9 @@
   },
   {
     "version": "0.1.2",
-    "changes": ["Added the Help menu with access to Guide."]
+    "changes": [
+      "Added the Help menu with access to Guide."
+    ]
   },
   {
     "version": "0.1.1",

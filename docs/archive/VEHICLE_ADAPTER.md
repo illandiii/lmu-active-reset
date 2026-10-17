@@ -15,10 +15,10 @@ traceable. Referenced local capture files are not included in Git.
 ## Full checkpoint adapter
 
 The full checkpoint pipeline is now connected to the native boundary dispatcher
-through `vehicle_restore_adapter_25661166`. It is not installed in LMU yet.
+through `vehicle_restore_adapter`. It is not installed in LMU yet.
 
-`vehicle_reader_25661166` reads the typed vehicle layout previously validated by
-the v31 observer. `vehicle_checkpoint_25661166` saves and prepares all currently
+`vehicle_state_reader` reads the typed vehicle layout previously validated by
+the v31 observer. `vehicle_checkpoint` saves and prepares all currently
 mapped subsystems, then appends the three scoring fields. The payload is separate
 from observer IPC. The adapter resolves fresh bindings, validates all four contact
 samples and supplies the real contact-batch implementation to `RestoreFlowOps`.

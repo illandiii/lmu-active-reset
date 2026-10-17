@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import re
 
-HOST_REVISION = 20
+HOST_REVISION = 21
 
 
 def physical_host_identity(name):
@@ -18,7 +18,7 @@ def physical_host_identity(name):
         return None
     prefix = f"LMU_PhysicalReset_{name}_" if match[2] else f"LMU_PhysicalReset25661166_v{revision}_"
     return (
-        "sector.runtime.run_physical_reset_host_25661166",
+        "sector.runtime.reset_host_runner",
         f"steam-25661166-physical-reset-v{revision}.json",
         prefix,
         0x4C4D555253543030 + revision,

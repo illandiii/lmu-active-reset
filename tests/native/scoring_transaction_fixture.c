@@ -1,4 +1,4 @@
-#include "../../src/native/restore/scoring_plan_25661166.h"
+#include "../../src/native/restore/lap_scoring_plan.h"
 #include <stdio.h>
 #include <string.h>
 static unsigned char memory[0x28000], original[0x28000];
@@ -45,7 +45,7 @@ int main(void) {
     State state = {0, 0, 19};
     RestoreReport report;
     RestoreBackend backend = {&state, context, allowed, read_field, write_field};
-    REQUIRE(scoring_plan_25661166(&flags, 19, &plan));
+    REQUIRE(lap_scoring_plan(&flags, 19, &plan));
     memset(original, 0x5a, sizeof(original));
     for (size_t i = 0; i < plan.count; i++)
         memcpy(original + plan.fields[i].field_offset, plan.fields[i].expected, 4);
@@ -84,7 +84,7 @@ int main(void) {
     REQUIRE(!scoring_field_allowed_25661166(0, 0x160, 8));
     size_t prior_count = plan.count;
     flags.current = 3;
-    REQUIRE(!scoring_plan_25661166(&flags, 19, &plan) && plan.count == prior_count &&
+    REQUIRE(!lap_scoring_plan(&flags, 19, &plan) && plan.count == prior_count &&
             plan.fields[2].field_offset == 0x2735c);
     printf(
         "PASS scoring 12-byte transaction; all other bytes preserved; three partial-write rollback "

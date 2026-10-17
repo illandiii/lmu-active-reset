@@ -1,11 +1,15 @@
 # Physical reset: current status
 
-**Development desktop: 0.2.8. Native host: v20 for the verified Steam 25661166 /
+**Development desktop: 0.2.9. Native host: v21 for the verified Steam 25661166 /
 app build 14200 compatibility profile.** Matching the display version alone is
 insufficient: runtime admission also checks the pinned identities and hashes.
 The 0.2.5 impact trial crashed LMU. V19 passed the subsequent ordinary and
-settled-impact trial on the Oreca 07. V20 adds aerodynamic damage recovery;
-it has passed local tests but has not yet been validated in LMU.
+settled-impact trial on the Oreca 07. The 0.2.8 capture confirms restoration of all 17 aerodynamic fields after the
+tested impacts, but the user still observed damaged front and rear bodywork.
+V21 integrates graphics-buffer restoration with the physical transaction and
+adds synchronization with native model updates. Local tests pass; visible repair
+with the packaged 0.2.9 build is not yet verified in LMU. See the
+[bodywork implementation and test procedure](BODYWORK_RESTORE.md).
 
 ## Implemented behavior
 
@@ -91,13 +95,15 @@ V20 includes seven aerodynamic coefficients and ten dependent caches, with
 finite/coherence checks and unchanged setup dependencies. All 17 fields take
 part in preflight, readback and rollback. The fixture now restores 10,114 fields.
 The change follows measured damaged/repaired values and native repair analysis.
-It does not yet repair the visible bodywork mesh.
+V20 does not repair the visible bodywork mesh; v21 adds the separately locked
+graphics transaction described above.
 
 Detachment remains unsupported: native `EEB800` also changes the active
 constraint set. Merely clearing its flag would leave a broken suspension.
 V18 reports the detached corner explicitly and preserves the existing
-checkpoint. Visible bodywork repair, puncture repair and missing-assembly
-reconstruction are not implemented. Aerodynamic recovery still needs a live v20 test.
+checkpoint. Puncture repair and missing-assembly reconstruction remain unsupported.
+The recorded v20 aerodynamic restore succeeded. V21 visual repair still needs
+the packaged live test.
 
 ### Earlier failure-latch correction
 

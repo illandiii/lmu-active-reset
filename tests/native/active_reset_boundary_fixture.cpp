@@ -81,6 +81,8 @@ static void leave(void *, int resume) {
         assert(!resume);
     if (mode == 5)
         LeaveCriticalSection(&game_lock);
+    if (mode == 6)
+        simulation_fence_quarantine(&fence);
 }
 static void quarantine(void *, int) {
     ++quarantines;
@@ -117,7 +119,7 @@ static void init(int fault) {
 }
 int main() {
     InitializeCriticalSection(&game_lock);
-    for (int fault = 0; fault <= 5; fault++) {
+    for (int fault = 0; fault <= 6; fault++) {
         init(fault);
         auto r = dispatch(1, RESET_SAVE);
         assert(r.control_result == CONTROL_OK && r.forwarded && runtime.control.saves == 1);
@@ -134,13 +136,15 @@ int main() {
             // Fault 5 ends the host lifetime before losing the lock: quarantine
             // belongs to the outer dispatcher, which must not reenter the host.
             assert(!r.forwarded && r.control_result == CONTROL_QUARANTINED &&
-                   quarantines == (fault == 5 ? 0 : 1) && original_calls == 1);
+                   quarantines == (fault >= 5 ? 0 : 1) && original_calls == 1);
             assert(runtime.flow.quarantined && runtime.control.quarantined &&
                    !runtime.control.checkpoint_valid);
             assert(!runtime.control.loads && !runtime.flow.completed && !runtime.flow.compensated);
-            if (fault >= 4)
+            if (fault == 4 || fault == 5)
                 assert(runtime.report.result == FLOW_QUARANTINED &&
                        runtime.report.cause == FLOW_NATIVE_LOCK_LOST);
+            if (fault == 6)
+                assert(runtime.report.cause == FLOW_OWNER_LOST);
             int prior = prepared;
             r = dispatch(3, RESET_LOAD);
             assert(!r.forwarded && prepared == prior && !simulation_fence_stop(&fence));

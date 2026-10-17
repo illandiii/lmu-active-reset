@@ -236,7 +236,7 @@ class DesktopTests(unittest.TestCase):
             supervise(args, run, audit, alive, wait=wait, sleep=lambda _: None)
         self.assertEqual(run.call_count, 3)
         self.assertEqual(audit.call_count, 3)
-        self.assertEqual(args.revision, 20)
+        self.assertEqual(args.revision, 21)
         self.assertFalse(self.session.state["checkpoint"])
         self.assertFalse(hasattr(args, "seconds"))
 

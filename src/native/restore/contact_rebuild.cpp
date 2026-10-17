@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <cstring>
 #include <cmath>
-#include "contact_batch_25661166.h"
+#include "contact_rebuild.h"
 static constexpr size_t CONTACT_MAX = 512;
 // Node layout/validation extracted from the build-pinned contact v2 observer.
 static bool self_read(uintptr_t p, void *out, size_t size) {

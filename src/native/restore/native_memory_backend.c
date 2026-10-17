@@ -1,6 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include "restore_native_memory_25661166.h"
+#include "native_memory_backend.h"
 #include <stdlib.h>
 #include <string.h>
 typedef struct NativeMemory {

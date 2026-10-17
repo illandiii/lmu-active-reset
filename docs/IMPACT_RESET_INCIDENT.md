@@ -1,7 +1,7 @@
 # Impact reset investigation
 
 The 17 October 2026 packaged 0.2.5 test failed. This page records the evidence
-and the v19/v20 changes without treating successful memory writes as proof of
+and the v19/v20/v21 changes without treating successful memory writes as proof of
 physical stability. Raw dumps, captured game code and telemetry remain local
 and excluded from Git.
 
@@ -97,7 +97,8 @@ the snapshot ABI is unchanged.
 
 These are build-specific observations, not universal vehicle constants.
 The test fixture uses this measured difference and verifies rollback as well
-as forward restoration. V20 has not yet been tested in LMU.
+as forward restoration. The subsequent v20 capture below confirms the tested
+aerodynamic restore in LMU.
 
 ## Live v19 result
 
@@ -115,25 +116,24 @@ address directly mislabels these fields. The initial capture's component data
 had this offset error and is excluded from the conclusion. The corrected
 capture identifies visual deformation separately from a detached-component flag.
 
-## Remaining work and next live check
+## Live v20 result and v21 bodywork integration
 
-Visible front bodywork deformation is still outside the checkpoint. V20 adds
-aerodynamic state but does not restore mesh deformation or detached components.
-Puncture repair also remains unsupported. Identifying the graphics-owned damage
-state and its synchronization is the next implementation task; the broad memory
-diff across a reconstructed vehicle is not sufficient to authorize blind copies.
+The 0.2.8 recording `20261017T160130779569Z_physical_reset_host_v20` contains
+ordinary and impact restores with 10,114 verified fields and four contacts.
+Both damaged restores returned all 17 aerodynamic fields to their saved bytes.
+The user still observed damaged front and rear bodywork.
 
-Use a new offline Practice without EAC and the new packaged build, after
-quitting the previous Sector process. Start with an ordinary save and restore
-on a healthy vehicle. Then save again, reproduce one impact with wheels still
-attached, and request one restore after the car has settled. Record the native
-and physical traces before and after that restore. Verify teleport, saved
-velocity, suspension alignment, continued driving and absence of a crash.
-Stop after a refusal or instability and preserve the same vehicle for capture.
+The graphics comparison found four CPU meshes and 6,408 changed attribute bytes.
+Native repair restores these buffers and requests a render upload under each
+component's critical section. V21 implements that path as a journaled sidecar
+to the physical transaction, with a separate lifetime gate for model loading,
+asynchronous publication, impact and repair updates. The original vertex data,
+topology and generation must still match the healthy checkpoint.
 
-The ordinary and settled-impact checks passed with v19. Repeat them with v20
-and capture the seven primary coefficients and ten caches before and after F7.
-Only after that check should a separate trial restore during an active impact.
-The stopped-car step isolates suspension recovery from concurrent collision
-handling; it is a test sequence, not a product speed restriction. Bodywork
-restoration needs its own implementation and evidence before it can be claimed.
+Local replay, write-fault recovery, thread synchronization and loaded-host tests
+pass. Visible bodywork repair in the game remains unverified. Punctures and
+detached assemblies remain unsupported. The next test is an ordinary F6/F7,
+then one settled front or rear impact with wheels still attached, using 0.2.9.
+See [Bodywork restore](BODYWORK_RESTORE.md) for synchronization details, limits
+and the exact procedure. Restoring during an active impact needs separate
+qualification after the settled-impact test.

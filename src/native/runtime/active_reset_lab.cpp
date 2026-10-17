@@ -12,7 +12,7 @@
 #include "active_reset_hotkeys_win32.h"
 extern "C" {
 #include "active_reset_native.h"
-#include "../restore/restore_joint_25661166.h"
+#include "../restore/physical_scoring_transaction.h"
 }
 /* Standalone owned-memory laboratory. Does not open or attach to LMU. */
 static ResetNativeRuntime runtime_state;

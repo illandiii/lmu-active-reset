@@ -14,7 +14,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Lifecycle epoch build failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Lifecycle epoch fixture failed' }
 
 $minhook = Join-Path $projectRoot 'third_party\minhook'
-$hookSources = @('native_lock_witness.cpp', 'native_lifecycle_epoch.cpp', 'native_lifecycle_hooks_25661166.cpp', 'native_lifecycle_hooks_fixture.cpp') |
+$hookSources = @('native_lock_witness.cpp', 'native_lifecycle_epoch.cpp', 'vehicle_lifecycle_hooks.cpp', 'native_lifecycle_hooks_fixture.cpp') |
     ForEach-Object { Get-SectorNativeSource $_ }
 $hookSources += @('src\buffer.c', 'src\hook.c', 'src\trampoline.c', 'src\hde\hde64.c') |
     ForEach-Object { Join-Path $minhook $_ }

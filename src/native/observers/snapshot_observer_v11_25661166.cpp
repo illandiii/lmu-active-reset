@@ -250,7 +250,7 @@ static void prepare_native_bank(SnapshotFrame &f) {
             f.bank_saved_sequence) {
         planning_epoch = bank_epoch;
         f.plan_status =
-            restore_plan_25661166(&checkpoint_bank, &checkpoint_prepared, planning_epoch,
+            vehicle_restore_plan(&checkpoint_bank, &checkpoint_prepared, planning_epoch,
                                   &planning_backend, &plan_workspace, &native_plan);
         if (!f.plan_status) {
             f.plan_fields = native_plan.count;

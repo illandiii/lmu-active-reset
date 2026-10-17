@@ -1,6 +1,6 @@
 // Checkpoint preparation extracted from the validated v31 observer.
 // Kept separate from injection, IPC leases and automatic observation saves.
-#include "vehicle_checkpoint_25661166.h"
+#include "vehicle_checkpoint.h"
 #include <cstring>
 #include <new>
 
@@ -187,7 +187,7 @@ struct VehicleCheckpointWorkspace {
             for (size_t i = 0; i < f.constraint_count; i++)
                 frozen_bindings.constraint_kind[i] = f.recipes[i].kind;
             f.plan_status =
-                restore_plan_25661166(&checkpoint_bank, &checkpoint_prepared, planning_epoch,
+                vehicle_restore_plan(&checkpoint_bank, &checkpoint_prepared, planning_epoch,
                                       &planning_backend, &plan_workspace, &native_plan);
             if (!f.plan_status) {
                 plan_workspace = native_plan;

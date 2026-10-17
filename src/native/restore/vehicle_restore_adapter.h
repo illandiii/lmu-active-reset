@@ -1,7 +1,9 @@
 #ifndef LMU_VEHICLE_RESTORE_ADAPTER_25661166_H
 #define LMU_VEHICLE_RESTORE_ADAPTER_25661166_H
-#include "vehicle_reader_25661166.h"
-#include "contact_batch_25661166.h"
+#include "vehicle_state_reader.h"
+#include "contact_rebuild.h"
+#include "bodywork_checkpoint.h"
+#include "../runtime/graphics_lifetime.h"
 extern "C" {
 #include "../runtime/active_reset_native.h"
 }
@@ -33,6 +35,10 @@ struct VehicleRestoreHost {
     // Optional for older hosts; v15 rebuilds collision caches after typed restore.
     uintptr_t collision_vehicle = 0;
     int (*rebuild_collision)(void *, uintptr_t) = nullptr;
+    uintptr_t graphics = 0;
+    GraphicsLifetime *graphics_lifetime = nullptr;
+    // Must quarantine the host fence if graphics finalization cannot complete.
+    void (*finalization_failed)(void *) = nullptr;
 };
 
 struct VehicleRestoreAdapter;
@@ -41,6 +47,7 @@ void vehicle_restore_adapter_destroy(VehicleRestoreAdapter *);
 bool vehicle_restore_adapter_bind(VehicleRestoreAdapter *, const VehicleRestoreContext *);
 ResetNativeAdapter vehicle_restore_adapter_ops(VehicleRestoreAdapter *);
 ContactBatchReport vehicle_restore_adapter_contact_report(const VehicleRestoreAdapter *);
+sector_bodywork::Report vehicle_restore_adapter_bodywork_report(const VehicleRestoreAdapter *);
 
 #ifdef LMU_VEHICLE_ADAPTER_FIXTURE
 // Test-only dependency substitution; absent from the production object.

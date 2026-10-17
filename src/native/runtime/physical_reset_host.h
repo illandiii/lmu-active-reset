@@ -25,6 +25,15 @@ struct ResetHostIPC {
     volatile LONG error, reserved;
     ResetHostReport report;
     volatile LONG64 physical_field_write_attempts;
+#if LMU_RESET_HOST_REVISION >= 21
+    uint64_t bodywork_result, bodywork_components, bodywork_meshes, bodywork_vertex_bytes,
+        bodywork_attempted_writes, bodywork_verified_writes, bodywork_recovery_writes;
+#endif
 };
-static_assert(sizeof(ResetHostReport) == 216 && sizeof(ResetHostIPC) == 328, "Reset host ABI");
+static_assert(sizeof(ResetHostReport) == 216, "Reset report ABI");
+#if LMU_RESET_HOST_REVISION >= 21
+static_assert(sizeof(ResetHostIPC) == 384, "Reset host ABI with bodywork diagnostics");
+#else
+static_assert(sizeof(ResetHostIPC) == 328, "Legacy reset host ABI");
+#endif
 #endif

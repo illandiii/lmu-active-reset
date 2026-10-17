@@ -1,5 +1,5 @@
 #include "restore_flow.h"
-#include "restore_joint_25661166.h"
+#include "physical_scoring_transaction.h"
 #include <string.h>
 /* A host pin is still required. These checks prevent a known lost pin from
  * reaching either forward transfers or transaction-internal rollback. */

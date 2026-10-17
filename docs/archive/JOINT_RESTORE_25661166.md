@@ -35,7 +35,7 @@ Audit: `logs/20261012_contact_v2_shutdown_audit.json`.
 
 ## Transazione congiunta
 
-`restore_joint_25661166` aggiunge tre campi scoring al piano fisico e instrada
+`physical_scoring_transaction` aggiunge tre campi scoring al piano fisico e instrada
 un'unica transazione sui due adattatori. Slot scoring 2700, offset esatti
 160/27290/27360, quattro byte ciascuno, destinazione zero. Scoring incompleto,
 vecchio offset, valori estranei e campi duplicati sono rifiutati. I flag del

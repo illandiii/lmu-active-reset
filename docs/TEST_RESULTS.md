@@ -3,6 +3,35 @@
 This page separates automated checks from live-game observations. Historical
 counts and build-specific experiments are preserved in the [research archive](archive/README.md).
 
+## Bodywork integration: 0.2.9 / v21
+
+- Graphics fixture: 35 journal spans and 70 partial/corrupt write fault cases,
+  including compensation, failed recovery, topology changes and lock contention.
+- Captured CPU-buffer replay: 2,889,128 bytes and 6,408 differing bytes restored.
+- Real-thread graphics lifetime tests: asynchronous publication, busy admission,
+  pin ownership, nested operations and generation changes.
+- Combined adapter: successful physical and graphics restore, contact failure,
+  collision rebuild failure and fatal recovery handling.
+- Loaded host: save/restore, graphics reconstruction refusal before writes,
+  fresh checkpoint after reconstruction, missing player and clean restart.
+- Boundary finalization failure suppresses both current and future simulation.
+- 113 Python tests and 46 desktop model tests pass.
+- The complete native core suite passes, including real hook/fence fixtures.
+- Packaged 0.2.9 passes isolated EXE startup, embedded Python imports, UI and
+  overlay checks without connecting to LMU.
+
+These checks use owned memory and isolated processes. The packaged live test
+must still verify rendered bodywork and stability in LMU. Follow the
+[bodywork test procedure](BODYWORK_RESTORE.md#packaged-live-test).
+
+## Aerodynamic recovery: 0.2.8 live result
+
+Recording `20261017T160130779569Z_physical_reset_host_v20` includes successful
+ordinary and impact restores. The impact reports verified 10,114 physical fields,
+four contacts and all 17 saved aerodynamic fields, without compensation. The
+user still observed front and rear bodywork damage. This confirms the recorded
+aerodynamic values, not visual repair or every possible impact condition.
+
 ## Paused startup: 0.2.8
 
 The first 0.2.7 connection attempt returned native status/error `4/112` before
@@ -14,8 +43,8 @@ shutdown summary confirmed every original hook target was restored.
 The launcher now requires `MultiStintState=DRIVING` before loading the host.
 Its two-sample admission restarts when pause or missing state interrupts the
 sequence. The regression reproduces that sequence, and all 110 Python tests
-pass. Native v20 is unchanged. Aerodynamic recovery is still awaiting a live
-test; this failed startup is not a failed restore or an aero test result.
+pass. Native v20 was unchanged. At that point aerodynamic recovery still awaited
+a live test; the subsequent successful recording is described above.
 
 ## Impact recovery: 0.2.6 live result and 0.2.7 candidate
 
@@ -33,8 +62,8 @@ caches, nonfinite configuration and changed setup while preserving the previous
 checkpoint. Loaded-host save/restore, missing-player refusal and restart pass.
 All 109 Python tests, 46 desktop model tests and the isolated packaged 0.2.7
 executable smoke test pass.
-The 0.2.7 aerodynamic change has not yet run in LMU; visual mesh repair remains
-unimplemented. The native-repair recording crossed a vehicle lifetime change
+At the 0.2.7 checkpoint the aerodynamic change had not run in LMU and visual
+mesh repair was unimplemented. The subsequent v20/v21 results are recorded above. The native-repair recording crossed a vehicle lifetime change
 and cannot establish the graphical repair sequence on an unchanged generation.
 
 The 0.2.4 impact capture reproduced a refusal at the wheel damage flags. SDK
@@ -140,7 +169,7 @@ Live V17 recovery and threshold accuracy still require in-game validation.
 | Area | Entry point | What it verifies |
 | --- | --- | --- |
 | Native core | `scripts/test/Test-Core.ps1` | State mathematics, restore plans, transaction/rollback and coordination fixtures |
-| Native host | `scripts/build/Build-PhysicalResetHost25661166.ps1` | Native plan verification, contacts, collision reconstruction, callback refusal and restart cases |
+| Native host | `scripts/build/Build-PhysicalResetHost.ps1` | Native plan verification, contacts, collision reconstruction, callback refusal and restart cases |
 | Python | `python scripts/sector.py test` | Supervision, acknowledgements, key behavior, lifecycle, analysis and source layout |
 | Desktop/controller | `npm test` in `src/ui/electron` | Settings, discovery, runtime ownership and overlay models |
 | Desktop/widgets | `npm run test:ui` | Real Electron interactions in isolated preview, including all ten widgets |

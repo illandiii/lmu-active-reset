@@ -31,7 +31,7 @@ execFileSync(
   python,
   [
     "-c",
-    `import sys; sys.path.insert(0,${JSON.stringify(path.join(payload, "src/python"))}); import sector.runtime.run_physical_reset_host_25661166; import sector.observers.audit_snapshot_25661166; import sector.desktop.reset_feedback`,
+    `import sys; sys.path.insert(0,${JSON.stringify(path.join(payload, "src/python"))}); import sector.runtime.reset_host_runner; import sector.observers.audit_snapshot_25661166; import sector.desktop.reset_feedback`,
   ],
   { cwd: process.env.TEMP, env },
 );

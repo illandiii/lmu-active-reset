@@ -1,6 +1,6 @@
 #ifndef LMU_RESTORE_BINDINGS_25661166_H
 #define LMU_RESTORE_BINDINGS_25661166_H
-#include "restore_plan_25661166.h"
+#include "vehicle_restore_plan.h"
 /* Ephemeral addresses, never serialized in a saved checkpoint. Capture and
  * validate on the physical thread, freeze until transaction/rollback ends. */
 #define RESTORE_THERMAL_BASE 108

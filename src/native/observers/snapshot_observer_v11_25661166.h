@@ -9,7 +9,7 @@ extern "C" {
 #define POSE_MAGIC 0x4c4d55534e503041ULL
 extern "C" {
 #include "../checkpoints/checkpoint_engine_integration.h"
-#include "../restore/restore_plan_25661166.h"
+#include "../restore/vehicle_restore_plan.h"
 }
 struct SnapshotFrame {
     uint64_t tick_ms, root_count, total_count, constraint_count, geometry_status, memory_valid;

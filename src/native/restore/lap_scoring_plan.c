@@ -1,10 +1,10 @@
-#include "scoring_plan_25661166.h"
+#include "lap_scoring_plan.h"
 #include <string.h>
 int scoring_field_allowed_25661166(uint32_t slot, uint32_t offset, uint32_t size) {
     return slot == 0 && size == 4 &&
            (offset == 0xd4 || offset == 0x160 || offset == 0x27290 || offset == 0x27360);
 }
-int scoring_plan_25661166(const LapGuardFlags *before, uint64_t epoch, RestorePlan *out) {
+int lap_scoring_plan(const LapGuardFlags *before, uint64_t epoch, RestorePlan *out) {
     LapGuardFlags after;
     if (!out || !epoch || !lap_guard_prepare(before, &after))
         return 0;

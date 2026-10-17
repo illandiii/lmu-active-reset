@@ -1,4 +1,4 @@
-#include "../../src/native/runtime/native_lifecycle_hooks_25661166.h"
+#include "../../src/native/runtime/vehicle_lifecycle_hooks.h"
 #include "MinHook.h"
 #ifdef NDEBUG
 #undef NDEBUG

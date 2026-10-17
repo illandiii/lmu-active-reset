@@ -77,7 +77,7 @@ Nel checkout i file vengono salvati in `logs/`. Nella build portabile sono
 nella sottocartella `logs/` del runtime in `%APPDATA%/sector/runtime/<versione>-<id>/`
 (con il percorso predefinito di Electron). Per la struttura vedi la
 [guida alla release](RELEASE.md). I file condividono il prefisso
-`<data>_physical_reset_host_v16`:
+`<data>_physical_reset_host_v17`:
 
 - `.physical.jsonl`: corpi fisici, contatti pneumatici, corpo collisioni e stato
   prima/dopo le routine native di preparazione e correzione.
@@ -101,7 +101,9 @@ python scripts/sector.py analysis.analyze_physical_reset_trace <file.physical.js
 Verificare nell'ordine:
 
 1. `saved_vs_applied`: velocità, posa e momento dei cinque corpi coincidono con
-   F6 subito dopo F7; il rapporto deve riportare tutti i 10.085 campi verificati.
+   F6 subito dopo F7; `verified_fields` deve coincidere con `fields`, senza
+   `mismatched_fields`. Il numero di campi dipende dalla vettura. Dopo PREPARE
+   (azione 2) deve comparire RESTORE (azione 3), con scritture e quattro contatti.
 2. `collision_rebuilds` (fasi 15/16, prima della fase 3): geometria riallineata,
    flag pendente azzerato dalla routine nativa e corpi fisici invariati.
 3. `collision_corrections` (fasi 11/12): cercare il primo cambiamento dei corpi

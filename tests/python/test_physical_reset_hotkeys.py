@@ -9,7 +9,7 @@ from sector.runtime.physical_reset_hotkeys import (
 
 class HotkeyTests(unittest.TestCase):
     def setUp(self):
-        self.keys = HotkeyCommands()
+        self.keys = HotkeyCommands(10085)
 
     def poll(
         self,
@@ -44,6 +44,57 @@ class HotkeyTests(unittest.TestCase):
         self.poll()
         self.assertEqual(self.poll(restore=True), {})
 
+    def test_vehicle_specific_native_preflight_controls_restore(self):
+        # The incident prepared 10122 fields successfully; the old launcher
+        # compared it to 10084 and never issued HOST_RESTORE.
+        self.assertIsNone(expected_restore_fields(17))
+        for count in (10084, 10122, 10085, 10123, 11000):
+            self.keys = HotkeyCommands()
+            self.saved()
+            self.poll(restore=True)
+            report = dict(
+                id=2,
+                action=2,
+                result=0,
+                fields=count,
+                verified_fields=count,
+                mismatched_fields=0,
+                readable=1,
+                epoch=1,
+            )
+            self.assertTrue(preparation_ready(report))
+            self.assertEqual(self.poll(report=report), {"id": 3, "action": 3})
+            self.assertEqual(self.poll(report=report), {})
+
+    def test_v17_rejects_missing_partial_or_failed_native_preflight(self):
+        for patch in (
+            {"verified_fields": 0},
+            {"verified_fields": 10122},
+            {"mismatched_fields": 1},
+            {"readable": 0},
+            {"epoch": 0},
+            {"result": 1},
+            {"action": 1},
+            {"fields": 16385},
+            {"fields": True},
+            {"id": 99},
+        ):
+            self.keys = HotkeyCommands()
+            self.saved()
+            self.poll(restore=True)
+            report = dict(
+                id=2,
+                action=2,
+                result=0,
+                fields=10123,
+                verified_fields=10123,
+                mismatched_fields=0,
+                readable=1,
+                epoch=1,
+            )
+            report.update(patch)
+            self.assertEqual(self.poll(report=report), {})
+
     def test_native_revision_controls_both_preparation_gates(self):
         # The live v15 incident acknowledged PREPARE with 10084 fields, but the
         # two launcher gates still expected 10077 and never sent RESTORE.
@@ -65,15 +116,15 @@ class HotkeyTests(unittest.TestCase):
         report = {"id": 2, "action": 2, "result": 0, "fields": 10077}
         self.assertFalse(preparation_ready(report, expected_restore_fields(15)))
         self.assertEqual(self.poll(report=report), {})
-        self.assertIn("expected 10085", self.keys.notice)
+        self.assertIn("complete native preflight required", self.keys.notice)
         self.assertTrue(self.keys.saved)
-        for revision in (0, 17):
+        for revision in (0, 18):
             with self.assertRaises(ValueError):
                 expected_restore_fields(revision)
 
     def test_focus_context_and_timeout_cancel_prepare(self):
         for kwargs in ({"focused": False}, {"allowed": False}, {"modifiers": True}, {"now": 3}):
-            self.keys = HotkeyCommands()
+            self.keys = HotkeyCommands(10085)
             self.saved()
             self.poll(restore=True)
             self.assertEqual(
@@ -89,7 +140,7 @@ class HotkeyTests(unittest.TestCase):
             {"id": 2, "action": 2, "result": 0, "fields": 0},
             {"id": 99, "action": 2, "result": 0, "fields": 10085},
         ):
-            self.keys = HotkeyCommands()
+            self.keys = HotkeyCommands(10085)
             self.saved()
             self.poll(restore=True)
             self.assertEqual(self.poll(report=report), {})

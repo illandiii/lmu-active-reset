@@ -47,7 +47,7 @@ def supervise(args, run_host, audit_host, alive, wait=wait_for_driving, sleep=ti
         return args.desktop.stopped() or not alive()
 
     args.owner_thread = 0
-    args.revision = 16
+    args.revision = 17
     args.hotkeys = True
     args.request_file = Path("work/unused-hotkey-command.json")
     while not stopped():

@@ -108,7 +108,7 @@ test("lock events and observed tyre age reset after rewind and tyre replacement"
   assert.deepEqual(data.tyreLaps, [null, null, null, null]);
   assert.equal(
     model.valuesFor("brake-lock", data, settings["brake-lock"]).threshold,
-    "~84",
+    "-", // A single locked sample is not a learned pedal threshold.
   );
   raw.player.et++;
   raw.player.wheels[0].wear = 1;

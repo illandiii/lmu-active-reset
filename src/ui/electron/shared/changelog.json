@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.2",
+    "changes": [
+      "Fixed resets rejected by a field count belonging to a different car. Native preflight now validates each complete vehicle plan.",
+      "Brake lock now shows a learned pedal limit below the warning threshold, adjusted for wheel slip and comparable steering, speed and load conditions.",
+      "The brake limit stays independent of the current pedal and identifies the limiting wheel."
+    ]
+  },
+  {
     "version": "0.2.1",
     "changes": [
       "Prevent telemetry updates from repositioning widgets during layout dragging.",

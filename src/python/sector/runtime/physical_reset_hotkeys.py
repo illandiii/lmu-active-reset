@@ -2,7 +2,9 @@
 
 
 def expected_restore_fields(revision):
-    """Match the admitted native host's typed plan, including the failure latch."""
+    """Legacy counts; v17 validates each vehicle's complete plan in native code."""
+    if revision == 17:
+        return None
     if revision == 16:
         return 10085
     if revision == 15:
@@ -12,16 +14,27 @@ def expected_restore_fields(revision):
     raise ValueError(f"Unsupported reset host revision: {revision}")
 
 
-def preparation_ready(report, expected_fields):
+def preparation_ready(report, expected_fields=None):
+    if report.get("action") != 2 or report.get("result") != 0:
+        return False
+    count = report.get("fields")
+    if expected_fields is not None:
+        return count == expected_fields
+    # Count varies with body/constraint topology and engine channels. The pinned
+    # native host validates the entire typed plan and read-only preflight first.
     return (
-        report.get("action") == 2
-        and report.get("result") == 0
-        and report.get("fields") == expected_fields
+        type(count) is int
+        and 4 <= count <= 16384
+        and report.get("verified_fields") == count
+        and report.get("mismatched_fields") == 0
+        and report.get("readable") == 1
+        and type(report.get("epoch")) is int
+        and report["epoch"] > 0
     )
 
 
 class HotkeyCommands:
-    def __init__(self, expected_fields=10085):
+    def __init__(self, expected_fields=None):
         self.expected_fields = expected_fields
         self.armed = False
         self.saved = False
@@ -81,7 +94,7 @@ class HotkeyCommands:
                     self.notice = (
                         "Restore preparation rejected: "
                         f"result {report.get('result')}, fields {report.get('fields')} "
-                        f"(expected {self.expected_fields})."
+                        "(complete native preflight required)."
                     )
             return {}
         # A validated desktop click has its own intent; game focus is only needed

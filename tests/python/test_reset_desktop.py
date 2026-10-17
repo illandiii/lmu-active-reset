@@ -54,7 +54,16 @@ class DesktopTests(unittest.TestCase):
         )
         self.assertEqual(command["action"], 2)
         self.session.command(2, command["id"])
-        prepared = dict(id=command["id"], action=2, result=0, fields=10085)
+        prepared = dict(
+            id=command["id"],
+            action=2,
+            result=0,
+            fields=10123,
+            verified_fields=10123,
+            mismatched_fields=0,
+            readable=1,
+            epoch=1,
+        )
         self.session.report(prepared)
         self.assertIsNotNone(self.session.request)
         command = keys.poll(False, True, False, False, False, 0.3, prepared)
@@ -99,7 +108,16 @@ class DesktopTests(unittest.TestCase):
             keys.saved = True
             command = keys.poll(False, True, False, False, False, 0, desktop_action="restore")
             self.assertEqual(command["action"], 2)
-            ack = dict(id=command["id"], action=2, result=result, fields=fields)
+            ack = dict(
+                id=command["id"],
+                action=2,
+                result=result,
+                fields=fields,
+                verified_fields=10085,
+                mismatched_fields=0,
+                readable=1,
+                epoch=1,
+            )
             self.assertEqual(keys.poll(False, allowed, False, False, False, now, ack), {})
             self.assertIsNone(keys.pending)
             self.assertEqual(keys.poll(False, True, False, False, False, now + 0.1, ack), {})
@@ -218,7 +236,7 @@ class DesktopTests(unittest.TestCase):
             supervise(args, run, audit, alive, wait=wait, sleep=lambda _: None)
         self.assertEqual(run.call_count, 3)
         self.assertEqual(audit.call_count, 3)
-        self.assertEqual(args.revision, 16)
+        self.assertEqual(args.revision, 17)
         self.assertFalse(self.session.state["checkpoint"])
         self.assertFalse(hasattr(args, "seconds"))
 

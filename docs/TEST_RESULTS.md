@@ -5,10 +5,20 @@ counts and build-specific experiments are preserved in the [research archive](ar
 
 ## Automated coverage
 
+The 0.2.2 update passed 48 Node tests, 100 Python tests and the native host's
+save/prepare/restore, callback-refusal and restart fixtures. Native PREPARE now
+performs complete read-only preflight and reports its verified field count.
+Python regressions cover different vehicle plan sizes, partial or absent
+verification, failure replies, stale identity and duplicate acknowledgements.
+Desktop, overlay and Home smoke suites passed with the new pedal-limit model.
+The packaged 0.2.2 EXE passed isolated startup, bundled Python imports, UI and
+overlay smoke checks.
+Live V17 recovery and threshold accuracy still require in-game validation.
+
 | Area | Entry point | What it verifies |
 | --- | --- | --- |
 | Native core | `scripts/test/Test-Core.ps1` | State mathematics, restore plans, transaction/rollback and coordination fixtures |
-| Native host | `scripts/build/Build-PhysicalResetHost25661166.ps1` | Revision-specific host fixture, including v16 field count, contacts, collision reconstruction and restart cases |
+| Native host | `scripts/build/Build-PhysicalResetHost25661166.ps1` | Native plan verification, contacts, collision reconstruction, callback refusal and restart cases |
 | Python | `python scripts/sector.py test` | Supervision, acknowledgements, key behavior, lifecycle, analysis and source layout |
 | Desktop/controller | `npm test` in `src/ui/electron` | Settings, discovery, runtime ownership and overlay models |
 | Desktop/widgets | `npm run test:ui` | Real Electron interactions in isolated preview, including all eleven widgets |

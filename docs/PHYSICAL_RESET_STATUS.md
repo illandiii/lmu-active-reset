@@ -1,6 +1,6 @@
 # Physical reset: current status
 
-**Current desktop: 0.2.1. Native host: v16 for the verified Steam 25661166 /
+**Current desktop: 0.2.2. Native host: v17 for the verified Steam 25661166 /
 app build 14200 compatibility profile.** Matching the display version alone is
 insufficient: runtime admission also checks the pinned identities and hashes.
 
@@ -9,14 +9,34 @@ insufficient: runtime admission also checks the pinned identities and hashes.
 F6 captures a checkpoint; F7 prepares and restores the saved physical state at
 the admitted native callback boundary. Physics/scoring coordination, object
 lifetime checks, contact reconstruction and collision-state rebuilding are part
-of the restore sequence. The v16 plan verifies **10,085 fields** and rebuilds
-**four tire contacts** before simulation continues.
+of the restore sequence. V17 validates every field of the vehicle-specific plan
+and rebuilds **four tire contacts** before simulation continues. The field count
+depends on the car's body/constraint topology and engine integration channels.
 
 The saved pose and velocity are restored, rather than combining the saved
 position with the velocity at the moment of F7. There are no speed, distance,
 session-duration or checkpoint-age caps. Compatibility, lifecycle, finite-state
 checks remain active. Checkpoints are tied to the vehicle
 generation and can be invalidated by reconstruction, even at the same address.
+
+## Preparation without teleporting
+
+The 17 October `20261017T140149268846Z` recording from desktop 0.2.0 contains
+a successful save followed by nine successful native PREPARE replies with
+10,122 fields, but no RESTORE commands or physical writes. The launcher expected
+10,084 fields from a different vehicle. V16 had retained the same fixed-count
+assumption with one extra failure-latch field.
+
+V17 performs a read-only native preflight after preparing the complete typed
+plan. It reports the number of verified fields only after all bindings, writable
+regions, expected values and owner context pass. Python requires that verification
+to match the actual plan count, rather than comparing against another car's count.
+RESTORE still builds and validates a fresh plan on the physics thread before
+writing. Request identity, focus/context and timeout checks remain in place.
+
+Regression coverage includes the incident's differing plan counts, missing or
+partial verification, stale requests, host restart and the complete native
+save/prepare/restore path. A live test of V17 in LMU is still pending.
 
 ## Recovery after an impact
 

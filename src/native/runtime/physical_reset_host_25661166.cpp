@@ -461,6 +461,13 @@ static void WINAPI boundary(uint64_t input) {
                     report.result = ops.prepare(ops.user, &context.identity, &runtime->plan,
                                                 &runtime->bindings, &runtime->scoring);
                     report.fields = runtime->plan.count;
+                    if (!report.result) {
+                        report.result = restore_joint_native_preflight(
+                            &runtime->plan, &runtime->bindings, runtime->scoring, physics_thread,
+                            ops.context, ops.user);
+                        if (!report.result)
+                            report.verified_fields = report.fields;
+                    }
                 } else if (action == HOST_SAVE ||
                            (action == HOST_RESTORE && ipc->permit_writes == 1)) {
                     // Distance and speed do not define checkpoint validity.

@@ -92,7 +92,7 @@ test("lock forecast rejects missing telemetry and released brakes", () => {
       ...settings["brake-lock"],
       predictionMs: 100,
     }).forecast,
-    "-",
+    "FL limit",
   );
   assert.equal(
     state.update(raw).brakeTrace[0].length,
@@ -103,6 +103,48 @@ test("lock forecast rejects missing telemetry and released brakes", () => {
   assert.equal(
     wheelModel.brakeValues(raw, settings["brake-lock"]).forecast,
     "-",
+  );
+});
+test("pedal limit remains visible below the warning window and with a steady or released pedal", () => {
+  const { raw, state } = braking();
+  const config = { ...settings["brake-lock"], predictionMs: 100 };
+  let values = wheelModel.brakeValues(raw, config);
+  assert.equal(values.threshold, "~80");
+  assert.equal(values.tyres[0].predicted, false);
+  for (let i = 0; i < 10; i++) {
+    raw.player.et += 0.05;
+    Object.assign(raw, state.update(raw));
+  }
+  values = wheelModel.brakeValues(raw, config);
+  assert.equal(values.threshold, "~80");
+  assert.equal(values.tyres[0].predicted, false);
+  raw.player.brake = 0;
+  raw.player.et += 0.05;
+  Object.assign(raw, state.update(raw));
+  assert.equal(wheelModel.brakeValues(raw, config).threshold, "~80");
+  raw.player.wheels[0].lateralSpeed = 4;
+  assert.ok(
+    Number(wheelModel.brakeValues(raw, config).threshold.slice(1)) < 80,
+  );
+  raw.player.steering = 0.8;
+  assert.equal(wheelModel.brakeValues(raw, config).threshold, "-");
+  raw.player.steering = 0;
+  raw.player.et += 13;
+  Object.assign(raw, state.update(raw));
+  assert.equal(wheelModel.brakeValues(raw, config).threshold, "-");
+});
+test("the lowest estimated pedal limit selects its wheel and does not track the current pedal", () => {
+  const { raw } = braking();
+  raw.brakeModels[1] = { ...raw.brakeModels[0], slope: 0.5, intercept: -0.1 };
+  raw.player.wheels[1].rotation = 78;
+  const values = wheelModel.brakeValues(raw, settings["brake-lock"]);
+  assert.equal(values.threshold, "~60");
+  assert.ok(values.tyres[1].locked);
+  assert.match(values.forecast, /FR LOCK/);
+  raw.player.brake = 0.9;
+  assert.equal(
+    wheelModel.brakeValues(raw, settings["brake-lock"]).threshold,
+    "~60",
   );
 });
 test("slip angle advances the warning without labelling lateral sliding as a wheel lock", () => {

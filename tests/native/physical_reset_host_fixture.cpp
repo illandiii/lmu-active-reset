@@ -340,6 +340,7 @@ static int run_fixture(int argc, char **argv) {
 #endif
     auto plan = request(ipc, 2, HOST_PREPARE);
     assert(plan.result == 0 && plan.fields == expected_fields && !plan.forward_writes);
+    assert(plan.verified_fields == plan.fields && !plan.mismatched_fields);
     assert(plan.pins == 2);
     auto denied = request(ipc, 3, HOST_RESTORE);
     assert(denied.result == CONTROL_REJECTED && denied.loads == 0 && !denied.forward_writes);

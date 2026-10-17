@@ -60,20 +60,28 @@ longitudinal wheel-ground velocity. Detached, airborne and off-road wheels are
 excluded, and braking must exceed the selected minimum speed. The slip threshold
 defaults to 20%, minimum speed to 20 km/h and prediction window to 500 ms.
 
-The forecast uses a combined-slip warning metric, `hypot(longitudinalSlip,
-tan(slipAngle))`, so lateral sliding advances the warning. This is a heuristic,
-not a fitted LMU tyre model. The distinction between longitudinal and lateral
-slip follows the [combined-slip wheel model](https://www.mathworks.com/help/vdynblks/ref/combinedslipwheelcpi.html);
-the warning threshold is Sector's configurable sensitivity, not a measured
-friction limit. Lateral slip alone never marks a wheel as locked.
+The widget learns the local relationship between pedal percentage and each
+wheel's longitudinal slip. Learning needs at least four samples spanning 100 ms,
+an eight-percentage-point pedal change and a consistent response. It compares
+steering input, speed and wheel load, and uses slip angle to reduce the remaining
+longitudinal slip allowance in a turn. The response is inverted to estimate the
+pedal percentage that reaches the configured slip limit. The smallest wheel
+limit is displayed as `LIMIT EST.` with the wheel identified below the bar.
 
-The forecast fits combined demand and brake-pedal trends over at most 400 ms
-at comparable speed and wheel load. It requires at least four samples over
-100 ms and a consistent rising trend. Releasing the brake, missing data or
-an inconsistent trend suppresses extrapolation. Yellow `RISK` means combined
-demand has already crossed the warning threshold while braking. A yellow ETA
-projects that crossing within the prediction window. Red means the measured
-longitudinal slip threshold has been reached.
+The estimate remains visible below the warning region, at a steady pedal and
+briefly after releasing the brake. It expires after twelve seconds or when
+conditions no longer match, and resets after telemetry interruption, a rewind
+or tyre replacement. Until enough useful braking data exists it shows `-`;
+it never substitutes the current pedal percentage for a learned limit.
+Values beyond the pedal range show `>100%`.
+
+Yellow `RISK` means the pedal has reached the estimated limit. A yellow ETA
+projects that crossing using the recent pedal trend. Red means the measured
+longitudinal slip threshold has been reached. Slip angle alone never confirms
+a lock. This combines a locally learned pedal response with a combined-slip
+heuristic, not the game's hidden tyre model or a guaranteed physical limit.
+The distinction between longitudinal and lateral slip follows the
+[combined-slip wheel model](https://www.mathworks.com/help/vdynblks/ref/combinedslipwheelcpi.html).
 `FL ~200 ms`, for example, identifies the front-left wheel and estimated delay.
 These are estimates, not a guaranteed limit or an ABS intervention measurement.
 

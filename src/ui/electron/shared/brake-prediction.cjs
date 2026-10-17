@@ -1,8 +1,5 @@
 const finite = Number.isFinite;
-// A combined-slip warning metric, not a calibrated friction coefficient.
-// Lateral demand advances the warning; only longitudinal slip confirms a lock.
-const combinedSlip = (slip, angle) =>
-  Math.hypot(slip, Math.tan((Math.min(80, Math.abs(angle)) * Math.PI) / 180));
+const radians = (degrees) => (degrees * Math.PI) / 180;
 function slipAngle(w) {
   return finite(w?.lateralSpeed) &&
     finite(w?.groundSpeed) &&
@@ -11,110 +8,170 @@ function slipAngle(w) {
     : null;
 }
 
+function regression(samples, xKey, yKey) {
+  const x = samples.reduce((sum, s) => sum + s[xKey], 0) / samples.length;
+  const y = samples.reduce((sum, s) => sum + s[yKey], 0) / samples.length;
+  let xx = 0,
+    xy = 0,
+    yy = 0;
+  for (const s of samples) {
+    xx += (s[xKey] - x) ** 2;
+    xy += (s[xKey] - x) * (s[yKey] - y);
+    yy += (s[yKey] - y) ** 2;
+  }
+  const slope = xx ? xy / xx : 0;
+  return {
+    slope,
+    intercept: y - slope * x,
+    fit: xx && yy ? (xy * xy) / (xx * yy) : 0,
+  };
+}
+
+function comparable(sample, current) {
+  return (
+    Math.abs(sample.speed - current.speed) <=
+      Math.max(8, current.speed * 0.2) &&
+    sample.load / current.load >= 0.7 &&
+    sample.load / current.load <= 1.3 &&
+    Math.abs((sample.steering ?? 0) - (current.steering ?? 0)) <= 0.25 &&
+    Math.abs(sample.angle - current.angle) <= 15
+  );
+}
+
+function fitResponse(samples, current) {
+  const selected = samples.filter(
+    (s) =>
+      current.time - s.time >= 0 &&
+      current.time - s.time <= 3 &&
+      comparable(s, current) &&
+      s.slip < 0.3,
+  );
+  if (
+    selected.length < 4 ||
+    selected.at(-1).time - selected[0].time < 0.1 ||
+    Math.max(...selected.map((s) => s.brake)) -
+      Math.min(...selected.map((s) => s.brake)) <
+      0.08
+  )
+    return null;
+  const fit = regression(selected, "brake", "slip");
+  if (fit.slope < 0.05 || fit.fit < 0.7) return null;
+  return { ...current, ...fit };
+}
+
 class BrakeTrace {
   constructor() {
     this.wheels = [[], [], [], []];
+    this.models = [null, null, null, null];
+    this.lastTime = null;
   }
-  update(raw, slips) {
+  update(raw, slips, replacements = []) {
     const p = raw.player;
+    const dt = p?.et - this.lastTime;
+    const reset =
+      !raw.driving ||
+      !finite(p?.et) ||
+      (this.lastTime !== null && (dt < 0 || dt > 0.25));
+    this.lastTime = finite(p?.et) ? p.et : null;
     this.wheels = this.wheels.map((samples, i) => {
       const w = p?.wheels?.[i],
         slip = slips[i],
         angle = slipAngle(w);
-      if (
-        !raw.driving ||
-        !finite(p?.et) ||
-        !finite(p.brake) ||
-        p.brake <= 0.02 ||
-        !slip ||
-        slip.speed < 5 ||
-        angle === null
-      )
+      if (reset || replacements[i] || !slip || angle === null) {
+        this.models[i] = null;
         return [];
-      const last = samples.at(-1);
-      const dt = p.et - last?.time;
-      if (dt === 0) return samples;
-      if (last && (dt < 0 || dt > 0.15)) samples = [];
-      return [
-        ...samples.filter((s) => p.et - s.time <= 0.4),
-        {
-          time: p.et,
-          brake: p.brake,
-          speed: slip.speed,
-          slip: slip.slip,
-          angle,
-          load: w.load,
-        },
-      ].slice(-16);
+      }
+      samples = samples.filter((s) => p.et - s.time <= 3);
+      if (!finite(p.brake) || p.brake <= 0.05 || samples.at(-1)?.time === p.et)
+        return samples;
+      const current = {
+        time: p.et,
+        brake: p.brake,
+        speed: slip.speed,
+        slip: slip.slip,
+        angle,
+        load: w.load,
+        steering: finite(p.steering) ? p.steering : 0,
+      };
+      samples = [...samples, current].slice(-120);
+      const learned = fitResponse(samples, current);
+      if (learned) this.models[i] = learned;
+      return samples;
     });
     return this.wheels;
   }
 }
 
-function regression(samples, key) {
-  const origin = samples[0].time;
-  const meanX =
-    samples.reduce((s, p) => s + p.time - origin, 0) / samples.length;
-  const meanY = samples.reduce((s, p) => s + p[key], 0) / samples.length;
-  let xx = 0,
-    xy = 0,
-    yy = 0;
-  for (const p of samples) {
-    const x = p.time - origin - meanX,
-      y = p[key] - meanY;
-    xx += x * x;
-    xy += x * y;
-    yy += y * y;
-  }
-  return { slope: xx ? xy / xx : 0, fit: xx && yy ? (xy * xy) / (xx * yy) : 0 };
-}
-
 function predictLock(data, settings, index, slip) {
   const p = data?.player,
     wheel = p?.wheels?.[index];
-  const angle = slipAngle(wheel),
-    goal = (settings.slipThreshold ?? 20) / 100;
   if (
     !data?.driving ||
-    !(p?.brake > 0.02) ||
+    !p ||
     !slip ||
     slip.speed < (settings.minimumSpeed ?? 20)
   )
     return null;
-  if (slip.slip >= goal)
-    return { locked: true, eta: 0, threshold: p.brake, angle };
-  if (angle === null || slip.slip < 0.03) return null;
-  const demand = combinedSlip(slip.slip, angle);
-  if (demand >= goal)
-    return { locked: false, eta: 0, threshold: p.brake, angle };
-  // Extrapolate combined longitudinal and lateral demand at comparable speed/load.
-  // Changing slip angle now advances or delays the warning instead of discarding it.
-  const samples = (data.brakeTrace?.[index] || []).filter(
-    (s) =>
-      p.et - s.time >= 0 &&
-      p.et - s.time <= 0.4 &&
-      Math.abs(s.speed - slip.speed) <= Math.max(8, slip.speed * 0.15) &&
-      s.load / wheel.load >= 0.65 &&
-      s.load / wheel.load <= 1.35,
+  const angle = slipAngle(wheel),
+    goal = (settings.slipThreshold ?? 20) / 100;
+  const locked = p.brake > 0.02 && slip.slip >= goal;
+  if (angle === null)
+    return locked
+      ? { locked, predicted: false, threshold: null, eta: 0 }
+      : null;
+  const current = {
+    time: p.et,
+    speed: slip.speed,
+    load: wheel.load,
+    angle,
+    steering: finite(p.steering) ? p.steering : 0,
+  };
+  const samples = data.brakeTrace?.[index] || [];
+  const learned = fitResponse(samples, current) || data.brakeModels?.[index];
+  const valid =
+    learned &&
+    p.et >= learned.time &&
+    p.et - learned.time <= 12 &&
+    comparable(learned, current) &&
+    (locked ||
+      !(p.brake > 0.05) ||
+      Math.abs(learned.slope * p.brake + learned.intercept - slip.slip) <=
+        0.08);
+  if (!valid)
+    return locked
+      ? { locked, predicted: false, threshold: null, eta: 0, angle }
+      : null;
+
+  // Invert the observed pedal/slip response at the current lateral demand.
+  // This is an estimated warning threshold, not the game's hidden tyre model.
+  const lateral = Math.tan(radians(Math.min(80, Math.abs(angle))));
+  const remainingSlip = Math.sqrt(Math.max(0, goal * goal - lateral * lateral));
+  const threshold = Math.max(
+    0,
+    (remainingSlip - learned.intercept) / learned.slope,
   );
-  if (
-    samples.length < 4 ||
-    p.et - samples[0].time < 0.1 ||
-    p.et - samples.at(-1).time > 0.1 ||
-    slip.slip < 0.03
-  )
-    return null;
-  const sliding = regression(
-      samples.map((s) => ({ ...s, demand: combinedSlip(s.slip, s.angle) })),
-      "demand",
-    ),
-    pedal = regression(samples, "brake");
-  if (sliding.slope < 0.05 || sliding.fit < 0.75 || pedal.slope < -0.03)
-    return null;
-  const eta = (goal - demand) / sliding.slope;
-  const threshold = p.brake + Math.max(0, pedal.slope) * eta;
-  if (eta <= 0 || eta > (settings.predictionMs ?? 500) / 1000 || threshold > 1)
-    return null;
-  return { locked: false, eta, threshold, angle };
+  const recent = samples.filter(
+    (s) => p.et - s.time >= 0 && p.et - s.time <= 0.4,
+  );
+  const pedalRate =
+    recent.length >= 4 && p.et - recent.at(-1).time <= 0.1
+      ? regression(recent, "time", "brake").slope
+      : 0;
+  const braking = p.brake > 0.02;
+  const eta =
+    locked || (braking && p.brake >= threshold)
+      ? 0
+      : braking && pedalRate > 0.03
+        ? (threshold - p.brake) / pedalRate
+        : null;
+  const predicted =
+    !locked &&
+    braking &&
+    threshold <= 1 &&
+    (p.brake >= threshold ||
+      (eta !== null &&
+        eta > 0 &&
+        eta <= (settings.predictionMs ?? 500) / 1000));
+  return { locked, predicted, threshold, eta, angle };
 }
 module.exports = { BrakeTrace, predictLock, slipAngle };

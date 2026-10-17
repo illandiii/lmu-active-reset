@@ -1,6 +1,6 @@
 # Sector desktop
 
-Sector 0.1.9 uses Electron, React and a locally built Vite renderer. The Python
+Sector 0.1.10 uses Electron, React and a locally built Vite renderer. The Python
 supervisor and v15 native host own reset commands; the desktop displays their
 acknowledged state. See [overlays](OVERLAYS.md) for the separate telemetry path.
 
@@ -95,6 +95,13 @@ A single-instance lock prevents duplicate desktop listeners. Background mode
 keeps the heartbeat active and locks the overlay layout. The tray or another
 launch restores the same window. The window hides after the close-dialog exit
 animation has completed.
+
+The supplied Sector splash plays once per process launch, before Home or first-run
+setup. Its SVG letter outlines draw in sequence before the filled word and blue
+dot appear. Click or press a key to skip; the input is consumed so it cannot
+activate the screen underneath. System and app reduced-motion settings use a
+short fade instead. The main process owns the one-time launch flag, so tray
+restores, second-instance launches and renderer reloads do not replay the splash.
 
 Quit requests a cooperative stop and waits for cleanup. It does not terminate
 LMU or interrupt an active restore by force. Heartbeat expiry handles unexpected

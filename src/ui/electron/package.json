@@ -1,6 +1,6 @@
 {
   "name": "sector-desktop",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "license": "MIT",
   "description": "Sector desktop companion for Le Mans Ultimate",
@@ -17,7 +17,8 @@
     "format": "prettier --write build main renderer shared tests *.json *.js *.html",
     "format:check": "prettier --check build main renderer shared tests *.json *.js *.html",
     "release": "npm run build && node build/release.mjs",
-    "test:release": "node tests/release-smoke.mjs"
+    "test:release": "node tests/release-smoke.mjs",
+    "test:startup": "node tests/startup-smoke.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

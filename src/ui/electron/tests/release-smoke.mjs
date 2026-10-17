@@ -43,6 +43,9 @@ const app = await electron.launch({
 });
 try {
   const page = await app.firstWindow();
+  await page.locator("#sector-splash").waitFor();
+  assert.equal(await page.locator(".word-stroke").count(), 8);
+  await page.keyboard.press("Escape");
   await page
     .getByRole("button", { name: "Change save shortcut, F6", exact: true })
     .waitFor();

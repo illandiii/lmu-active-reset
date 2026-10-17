@@ -104,6 +104,8 @@ let quitting = false;
 let canQuit = false;
 let audioReady;
 let overlays;
+// Keep this in the main process so hiding, restoring or reloading cannot replay it.
+let launchAnimationPending = true;
 gameLauncher.on("state", (state) => {
   if (window && !window.isDestroyed())
     window.webContents.send("sector:game", state);
@@ -148,15 +150,20 @@ function handle(channel, callback) {
 }
 
 function installBridge() {
-  handle("sector:initialize", () => ({
-    settings: preferences,
-    keys,
-    status: runtime.state,
-    preview,
-    game: gameLauncher.state,
-    settingsError,
-    onboarding: { required: !setupReady(), folder: setup.lmuPath },
-  }));
+  handle("sector:initialize", () => {
+    const launchAnimation = launchAnimationPending;
+    launchAnimationPending = false;
+    return {
+      launchAnimation,
+      settings: preferences,
+      keys,
+      status: runtime.state,
+      preview,
+      game: gameLauncher.state,
+      settingsError,
+      onboarding: { required: !setupReady(), folder: setup.lmuPath },
+    };
+  });
   handle("sector:launch-game", () => gameLauncher.launch());
   handle("sector:setup-detect", async () => {
     if (preview)

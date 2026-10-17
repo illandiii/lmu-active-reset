@@ -25,6 +25,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
   await page.getByRole("tab", { name: "Active Reset", exact: true }).click();
   await page
+    .getByRole("tabpanel", { name: "Active Reset", exact: true })
     .getByRole("button", { name: "Change save shortcut, F6", exact: true })
     .waitFor();
   await page.waitForFunction(
@@ -129,6 +130,7 @@ try {
   await page.getByRole("button", { name: "Edit", exact: true }).click();
   await page.getByRole("menuitem", { name: "Settings", exact: true }).click();
   await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
+  await settle();
   const display = page.getByRole("combobox", { name: "Display", exact: true });
   const displayBounds = await display.boundingBox();
   await page.mouse.move(

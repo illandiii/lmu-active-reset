@@ -117,6 +117,9 @@ and start **Practice** for Active Reset. Session data updates even with overlays
 
 - Open **Edit → Settings** for app settings and overlay display selection.
 - Enable **Reduce motion** there if you prefer fewer interface animations.
+
+The Sector launch animation appears only when starting the app. Click or press
+any key to skip it. Reopening Sector from the tray does not replay it.
 - Open **Help → Guide** to replay the guided tour.
 - Choose **Run in background** when closing the window to keep Sector active.
 - Reopen it from the Windows notification area or by launching `Sector.exe` again.

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Dialog } from "@base-ui/react/dialog";
 import { Tabs } from "@base-ui/react/tabs";
@@ -18,6 +18,7 @@ import { OverlayEditor } from "./overlays/editor.jsx";
 import { GuidedTour } from "./guided-tour.jsx";
 import { Onboarding } from "./onboarding.jsx";
 import { Home } from "./home.jsx";
+import { StartupSplash } from "./startup-splash.jsx";
 import home from "@iconify-icons/solar/home-2-linear";
 import help from "@iconify-icons/solar/question-circle-linear";
 import "@fontsource/manrope/latin-400.css";
@@ -37,6 +38,8 @@ const Glyph = ({ icon, ...props }) => (
 );
 
 function App() {
+  const [startup, setStartup] = useState("pending");
+  const finishStartup = useCallback(() => setStartup("done"), []);
   const [settings, setSettings] = useState(null);
   const [keys, setKeys] = useState([]);
   const [status, setStatus] = useState({ phase: "idle" });
@@ -97,6 +100,7 @@ function App() {
       .then((data) => {
         if (!live) return;
         setSettings(data.settings);
+        setStartup(data.launchAnimation ? "playing" : "done");
         setPreview(data.preview);
         if (!receivedGame) setGame(data.game);
         setOnboarding(data.onboarding);
@@ -104,9 +108,10 @@ function App() {
         setError(data.settingsError);
         if (!receivedStatus) setStatus(data.status);
       })
-      .catch(() =>
-        setError("Sector could not initialize. Close and reopen the app."),
-      );
+      .catch(() => {
+        setStartup("done");
+        setError("Sector could not initialize. Close and reopen the app.");
+      });
     return () => {
       live = false;
       statusOff();
@@ -222,6 +227,14 @@ function App() {
     // Let the menu release focus before the tour takes it.
     requestAnimationFrame(() => setTour(true));
   }
+  if (startup === "pending") return <div className="splash" />;
+  if (startup === "playing")
+    return (
+      <StartupSplash
+        reduceMotion={settings?.reduce_motion === true}
+        onDone={finishStartup}
+      />
+    );
   return (
     <>
       <div className="titlebar">

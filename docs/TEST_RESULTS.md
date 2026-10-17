@@ -14,13 +14,14 @@ counts and build-specific experiments are preserved in the [research archive](ar
 | Desktop/widgets | `npm run test:ui` | Real Electron interactions in isolated preview, including all eleven widgets |
 | SDK/widget integration | `npm run test:telemetry` | Compiled native reader's synthetic SDK frame through production wheel and stint models |
 | Onboarding | `npm run test:onboarding` | Automatic/manual selection, invalid/canceled paths, tutorial choices and persistence |
+| Startup | `npm run test:startup` | SVG drawing, automatic exit, click/key skip, reduced motion and no replay on background restore or reload |
 | Portable package | `npm run test:release` | Actual EXE in preview, version, bundled Python imports, UI and no active reset listener |
 
-The 0.1.9 deployment-map update passed 41 Node unit tests, the overlay smoke
-suite, native SDK self-test and serialization fixture, formatting, renderer build
-and packaged EXE smoke checks. The desktop and Home smoke suites last passed
-with 0.1.8. These are recorded development results, not an automatically updated
-CI status.
+The 0.1.10 startup update passed 41 Node unit tests, desktop, Home, overlay,
+onboarding and startup smoke suites, formatting, renderer build and packaged EXE
+smoke checks. The unchanged native SDK reader last passed its self-test and
+serialization fixture with 0.1.9. These are recorded development results, not an
+automatically updated CI status.
 
 Deployment-map fixtures cover LMH and LMDh model recognition, both SDK encodings,
 range boundaries, valid recommendation steps, unknown vehicles and clearing

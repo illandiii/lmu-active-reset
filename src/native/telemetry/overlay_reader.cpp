@@ -163,9 +163,40 @@ static std::string serialize(const Frame &f, bool foreground) {
         n("gear", t.mGear);
         n("fuel", t.mFuel);
         n("energy", t.mVirtualEnergy);
+        n("fuelCapacity", t.mFuelCapacity);
         n("delta", t.mDeltaBest);
         n("limits", t.mTrackLimitsSteps);
-        o << ",\"invalid\":" << (t.mLapInvalidated ? "true" : "false") << '}';
+        o << ",\"invalid\":" << (t.mLapInvalidated ? "true" : "false");
+        o << ",\"frontCompound\":";
+        text(o, t.mFrontTireCompoundName);
+        o << ",\"rearCompound\":";
+        text(o, t.mRearTireCompoundName);
+        o << ",\"wheels\":[";
+        for (int i = 0; i < 4; ++i) {
+            if (i)
+                o << ',';
+            const auto &w = t.mWheel[i];
+            o << "{\"attached\":" << (w.mDetached ? "false" : "true")
+              << ",\"flat\":" << (w.mFlat ? "true" : "false");
+            n("rotation", w.mRotation);
+            n("groundSpeed", w.mLongitudinalGroundVel);
+            n("radius", double(w.mStaticUndeflectedRadius) / 100.0);
+            n("deflection", w.mVerticalTireDeflection);
+            n("load", w.mTireLoad);
+            n("surface", w.mSurfaceType);
+            n("wear", w.mWear);
+            n("pressure", w.mPressure);
+            n("compoundIndex", w.mCompoundIndex);
+            o << ",\"temperatures\":[";
+            for (int j = 0; j < 3; ++j) {
+                if (j)
+                    o << ',';
+                // The SDK reports left/centre/right tread samples in Kelvin.
+                number(o, w.mTemperature[j] > 0 ? w.mTemperature[j] - 273.15 : NAN);
+            }
+            o << "]}";
+        }
+        o << "]}";
     }
     o << ",\"cars\":[";
     for (long i = 0; i < s.mNumVehicles; ++i) {
@@ -198,7 +229,7 @@ static std::string serialize(const Frame &f, bool foreground) {
     return o.str();
 }
 int main(int argc, char **argv) {
-    if (argc == 2 && !strcmp(argv[1], "--self-test")) {
+    if (argc == 2 && (!strcmp(argv[1], "--self-test") || !strcmp(argv[1], "--test-frame"))) {
         auto *data = new SharedMemoryObjectOut{};
         Frame f{};
         data->generic.gameVersion = 14200;
@@ -216,10 +247,29 @@ int main(int argc, char **argv) {
         data->telemetry.telemInfo[0].mID = 7;
         Frame match{};
         ok = ok && copyFrame(match, *data) && match.player;
+        match.telemetry.mWheel[0].mTemperature[0] = 371.15;
+        match.telemetry.mWheel[0].mTemperature[1] = 366.15;
+        match.telemetry.mWheel[0].mTemperature[2] = 361.15;
+        match.telemetry.mWheel[0].mWear = 0.71;
+        match.telemetry.mWheel[0].mStaticUndeflectedRadius = 31;
+        match.telemetry.mWheel[0].mVerticalTireDeflection = 0.01;
+        match.telemetry.mWheel[0].mLongitudinalGroundVel = 30;
+        match.telemetry.mWheel[0].mRotation = 45;
+        match.telemetry.mWheel[0].mTireLoad = 3000;
+        match.telemetry.mUnfilteredBrake = 0.84;
+        match.scoring.mInRealtime = true;
+        strcpy(match.telemetry.mFrontTireCompoundName, "Soft");
+        const auto json = serialize(match, false);
+        ok = ok && json.find("\"temperatures\":[98,93,88]") != std::string::npos &&
+             json.find("\"radius\":0.31") != std::string::npos;
         std::ostringstream encoded;
         text(encoded, "Ren\xc3\xa9\n");
         ok = ok && encoded.str() == "\"Ren\xc3\xa9\\u000a\"";
         delete data;
+        if (!strcmp(argv[1], "--test-frame")) {
+            puts(json.c_str());
+            return ok ? 0 : 1;
+        }
         puts(ok ? "PASS overlay SDK bounds and player identity" : "FAIL");
         return ok ? 0 : 1;
     }

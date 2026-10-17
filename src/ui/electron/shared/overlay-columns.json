@@ -48,5 +48,31 @@
   "inputs": [
     ["throttle", "Throttle", 0],
     ["brake", "Brake", 0]
+  ],
+  "brake-lock": [
+    ["threshold", "Observed threshold", 0],
+    ["events", "Lock events", 0],
+    ["wheels", "Wheels", 62],
+    ["scale", "Pedal scale", 0]
+  ],
+  "tyres": [
+    ["frontLeft", "Front left", 0],
+    ["frontRight", "Front right", 0],
+    ["rearLeft", "Rear left", 0],
+    ["rearRight", "Rear right", 0],
+    ["heat", "Temperature bands", 0],
+    ["compound", "Compound", 0],
+    ["wear", "Tyre life", 0],
+    ["temperature", "Temperature", 0],
+    ["age", "Tyre laps", 0],
+    ["condition", "Tyre condition", 0]
+  ],
+  "stint-planner": [
+    ["pit", "Pit lap", 0],
+    ["energy", "Energy", 0],
+    ["fuel", "Fuel", 0],
+    ["energyRate", "Energy per lap", 0],
+    ["target", "Extra lap target", 0],
+    ["fuelRate", "Fuel per lap", 0]
   ]
 }

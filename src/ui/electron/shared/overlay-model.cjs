@@ -1,4 +1,6 @@
 const dash = "-";
+const { WheelHistory, brakeValues, tyreValues } = require("./wheel-model.cjs");
+const { stintValues } = require("./stint-model.cjs");
 const finite = (v) => typeof v === "number" && Number.isFinite(v);
 const clamp = (v, min = 0, max = 1) =>
   finite(v) ? Math.max(min, Math.min(max, v)) : min;
@@ -77,6 +79,7 @@ class TelemetryModel {
     this.reset();
   }
   reset() {
+    this.wheels = new WheelHistory();
     this.history = [];
     this.laps = [];
     this.previous = null;
@@ -183,6 +186,7 @@ class TelemetryModel {
     this.previous = raw;
     return {
       ...raw,
+      ...this.wheels.update(raw),
       history: this.history,
       laps: this.laps,
       lastPit: this.lastPit,
@@ -190,6 +194,9 @@ class TelemetryModel {
   }
 }
 function valuesFor(id, data, settings) {
+  if (id === "brake-lock") return brakeValues(data, settings);
+  if (id === "tyres") return tyreValues(data, settings);
+  if (id === "stint-planner") return stintValues(data, settings);
   const live = Boolean(data?.connected),
     p = live ? data.player : null,
     accent = settings.accent;

@@ -22,6 +22,17 @@ class OverlayTelemetry extends EventEmitter {
     this.status = status;
     this.emit("frame", frame);
   }
+  onResetStatus(state) {
+    const count = Number.isSafeInteger(state.restore_count)
+      ? state.restore_count
+      : 0;
+    if (count > (this.restoreCount || 0)) {
+      // A short rewind may not cross a lap or the position discontinuity threshold.
+      this.model.reset();
+      this.publish(null, "Waiting for telemetry");
+    }
+    this.restoreCount = count;
+  }
   start() {
     if (!this.stopped) return;
     this.stopped = false;

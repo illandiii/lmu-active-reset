@@ -59,6 +59,22 @@ The widget adjusts to the remaining content.
 For multiple monitors, choose the display in **Edit → Settings → Overlay**.
 Your layout and preferences are saved for the next launch.
 
+**Brake lock** highlights wheels with estimated locking under braking. Adjust
+**Slip threshold** and **Minimum speed** to control its sensitivity; the displayed
+pedal threshold is estimated from recent events.
+
+**Tyres** shows temperatures, tyre life and compounds. You can hide individual
+wheels or readings and change the cold/hot color thresholds. Tyre laps stay
+unknown until Sector observes a fresh tyre or replacement. `puncture` comes from
+the game; `~flat spot` is Sector's estimate from sustained wheel locks. Increase
+**Flat spot sensitivity** for earlier warnings, or hide **Tyre condition** to
+remove them. The estimate clears on an observed tyre change, reset or new session.
+It cannot detect damage that happened before Sector started observing the tyres.
+
+**Stint planner** estimates remaining laps from fuel and virtual-energy consumption.
+Drive complete clean laps to collect the data, then choose how many laps to average
+and an optional reserve. Treat these figures as estimates that change with your pace.
+
 ### Samples and missing information
 
 You can arrange widgets while LMU is closed using the editor's sample display.

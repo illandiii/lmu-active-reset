@@ -345,6 +345,7 @@ if (!app.requestSingleInstanceLock()) {
       });
       installBridge();
       runtime.on("status", (state) => {
+        overlays.telemetry.onResetStatus(state);
         if (!window.isDestroyed())
           window.webContents.send("sector:status", state);
       });

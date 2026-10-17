@@ -1,0 +1,149 @@
+<div
+  class="{{rootClass}}"
+  style="width: 400px; height: 124px; box-sizing: border-box; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 2000px rgba(10, 12, 15, {{panelAlpha}}); font-family: 'Barlow Semi Condensed', system-ui, sans-serif; color: #F2F4F6; text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 1px rgba(0,0,0,0.9); display: flex; flex-direction: column; gap: 10px; padding: 12px 14px"
+>
+  <div
+    style="display: flex; align-items: baseline; justify-content: space-between"
+  >
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em"
+      >BRAKE LOCK</span
+    >
+    <div
+      data-column="threshold"
+      style="display: flex; align-items: baseline; gap: 6px"
+    >
+      <span
+        style="
+          font-size: 11px;
+          font-weight: 600;
+          color: #c2c9d0;
+          letter-spacing: 0.06em;
+        "
+        >LOCKS ABOVE</span
+      >
+      <span
+        class="mono"
+        style="font-size: 16px; font-weight: 700; color: #ff8a80"
+        >{{threshold}}%</span
+      >
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 14px; align-items: stretch; flex: 1">
+    <div
+      style="
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      "
+    >
+      <div data-column="events" style="position: relative; height: 10px">
+        <sc-for list="{{events}}" as="e" hint-placeholder-count="6">
+          <span
+            style="position: absolute; top: 2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: #FF5A4E; box-shadow: 0 0 0 1px rgba(0,0,0,0.6); left: {{e.left}}"
+          ></span>
+        </sc-for>
+      </div>
+      <div
+        style="
+          position: relative;
+          height: 30px;
+          border-radius: 8px;
+          background: rgba(0, 0, 0, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          overflow: hidden;
+        "
+      >
+        <div
+          data-column="threshold"
+          class="lockzone"
+          style="position: absolute; top: 0; bottom: 0; right: 0; width: {{zoneW}}"
+        ></div>
+        <div
+          class="fill"
+          style="position: absolute; inset: 0; background: {{fillColor}}; opacity: 0.9; transform: scaleX({{brake}})"
+        ></div>
+        <div
+          data-column="threshold"
+          style="opacity: {{thresholdOpacity}}; position: absolute; top: -1px; bottom: -1px; width: 2px; margin-left: -1px; background: #FFFFFF; left: {{thrLeft}}"
+        ></div>
+        <span
+          class="mono"
+          style="
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            font-weight: 700;
+          "
+          >{{brakePct}}%</span
+        >
+      </div>
+      <div
+        data-column="scale"
+        style="display: flex; justify-content: space-between"
+      >
+        <span
+          class="mono"
+          style="font-size: 10px; font-weight: 500; color: #c2c9d0"
+          >0</span
+        >
+        <span
+          class="mono"
+          style="font-size: 10px; font-weight: 500; color: #c2c9d0"
+          >25</span
+        >
+        <span
+          class="mono"
+          style="font-size: 10px; font-weight: 500; color: #c2c9d0"
+          >50</span
+        >
+        <span
+          class="mono"
+          style="font-size: 10px; font-weight: 500; color: #c2c9d0"
+          >75</span
+        >
+        <span
+          class="mono"
+          style="font-size: 10px; font-weight: 500; color: #c2c9d0"
+          >100</span
+        >
+      </div>
+    </div>
+
+    <div
+      data-column="wheels"
+      style="
+        flex: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          column-gap: 10px;
+          row-gap: 8px;
+          padding: 6px 9px;
+          border-radius: 8px;
+          background: rgba(0, 0, 0, 0.35);
+        "
+      >
+        <sc-for list="{{tyres}}" as="w" hint-placeholder-count="4">
+          <div
+            title="{{w.name}}"
+            aria-label="{{w.name}}"
+            data-locked="{{w.locked}}"
+            class="tyre"
+            style="width: 13px; height: 22px; border-radius: 4px; border: 1px solid {{w.border}}; background: {{w.bg}}"
+          ></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>

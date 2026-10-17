@@ -108,7 +108,7 @@ function renderNode(node, context, key) {
   const tag = node.localName;
   if (
     node.dataset?.column &&
-    !layout.visible(context.settings, node.dataset.column)
+    !layout.visible(context.settings, bind(node.dataset.column, context))
   )
     return null;
   if (tag === "sc-if") {
@@ -196,6 +196,7 @@ function renderNode(node, context, key) {
       layout.visible(context.settings, n.dataset.column),
     ).length;
     props.style.gridTemplateColumns = `repeat(${Math.max(1, Math.min(3, count))}, minmax(0,1fr))`;
+    if (!count) props.style.display = "none";
   }
   if (tag === "svg")
     props.style = {

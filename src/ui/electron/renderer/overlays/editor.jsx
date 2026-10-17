@@ -312,6 +312,40 @@ export function OverlayEditor() {
                 suffix="°"
               />
             )}
+            {(selected === "brake-lock"
+              ? [
+                  ["slipThreshold", "Slip threshold", 5, 90, "%"],
+                  ["minimumSpeed", "Minimum speed", 5, 150, "km/h"],
+                ]
+              : selected === "tyres"
+                ? [
+                    ["coldTemp", "Cold below", 0, 150, "°C"],
+                    ["hotTemp", "Hot above", 20, 200, "°C"],
+                    [
+                      "flatSpotSensitivity",
+                      "Flat spot sensitivity",
+                      10,
+                      100,
+                      "%",
+                    ],
+                  ]
+                : selected === "stint-planner"
+                  ? [
+                      ["consumptionLaps", "Consumption average", 1, 20, "laps"],
+                      ["reserveLaps", "Reserve", 0, 5, "laps"],
+                    ]
+                  : []
+            ).map(([key, label, min, max, suffix]) => (
+              <NumberField
+                key={key}
+                label={label}
+                value={setting[key]}
+                min={min}
+                max={max}
+                suffix={suffix}
+                onCommit={(value) => update({ [key]: value })}
+              />
+            ))}
           </div>
         </div>
       </div>

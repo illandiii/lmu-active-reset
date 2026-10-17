@@ -33,5 +33,20 @@
     "name": "Session",
     "width": 440,
     "height": 332
+  },
+  "brake-lock": {
+    "name": "Brake lock",
+    "width": 400,
+    "height": 124
+  },
+  "tyres": {
+    "name": "Tyres",
+    "width": 360,
+    "height": 262
+  },
+  "stint-planner": {
+    "name": "Stint planner",
+    "width": 400,
+    "height": 176
   }
 }

@@ -78,6 +78,9 @@ try {
     "Delta",
     "Laps",
     "Session",
+    "Brake lock",
+    "Tyres",
+    "Stint planner",
   ]) {
     await page.getByRole("button", { name, exact: true }).click();
     assert.equal(
@@ -117,6 +120,100 @@ try {
     if (["Leaderboard", "Relative"].includes(name))
       assert.ok((await widget.locator(".manufacturer-logo").count()) > 0);
   }
+  await page.getByRole("button", { name: "Brake lock", exact: true }).click();
+  await page
+    .getByRole("checkbox", { name: "Column Wheels", exact: true })
+    .uncheck();
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".widget-brake-lock > div").style.width ===
+      "338px",
+  );
+  const slip = page.getByRole("spinbutton", {
+    name: "Slip threshold",
+    exact: true,
+  });
+  await slip.fill("70");
+  await slip.press("Tab");
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll('.widget-brake-lock [data-locked="true"]')
+        .length === 0,
+  );
+  await page
+    .getByRole("checkbox", { name: "Column Wheels", exact: true })
+    .check();
+  await page.getByRole("button", { name: "Tyres", exact: true }).click();
+  const flatSpot = page
+    .locator(".widget-tyres")
+    .getByText("~flat spot", { exact: true });
+  await flatSpot.waitFor();
+  const sensitivity = page.getByRole("spinbutton", {
+    name: "Flat spot sensitivity",
+    exact: true,
+  });
+  await sensitivity.fill("10");
+  await sensitivity.press("Tab");
+  await flatSpot.waitFor({ state: "detached" });
+  await sensitivity.fill("50");
+  await sensitivity.press("Tab");
+  await flatSpot.waitFor();
+  const condition = page.getByRole("checkbox", {
+    name: "Column Tyre condition",
+    exact: true,
+  });
+  await condition.uncheck();
+  assert.equal(await flatSpot.count(), 0);
+  await condition.check();
+  await flatSpot.waitFor();
+  for (const label of [
+    "Front right",
+    "Rear left",
+    "Rear right",
+    "Temperature bands",
+  ])
+    await page
+      .getByRole("checkbox", { name: `Column ${label}`, exact: true })
+      .uncheck();
+  await page.waitForFunction(
+    () => document.querySelector(".widget-tyres > div").style.width === "160px",
+  );
+  assert.equal(
+    await page.locator('.widget-tyres [aria-label$=" tyre"]').count(),
+    1,
+  );
+  for (const label of [
+    "Front right",
+    "Rear left",
+    "Rear right",
+    "Temperature bands",
+  ])
+    await page
+      .getByRole("checkbox", { name: `Column ${label}`, exact: true })
+      .check();
+  await page
+    .getByRole("button", { name: "Stint planner", exact: true })
+    .click();
+  const reserve = page.getByRole("spinbutton", {
+    name: "Reserve",
+    exact: true,
+  });
+  await reserve.fill("2");
+  await reserve.press("Tab");
+  await page
+    .locator('.widget-stint-planner [data-column="pit"]')
+    .getByText("9 laps", { exact: true })
+    .waitFor();
+  await page
+    .getByRole("checkbox", { name: "Column Fuel", exact: true })
+    .uncheck();
+  assert.equal(
+    await page.locator('.widget-stint-planner [data-column="fuel"]').count(),
+    0,
+  );
+  await page
+    .getByRole("checkbox", { name: "Column Fuel", exact: true })
+    .check();
   await page.getByRole("button", { name: "Leaderboard", exact: true }).click();
   await page
     .getByRole("checkbox", { name: "Column Logo", exact: true })
@@ -407,7 +504,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: all seven widgets, logos, settings, clutch removal, independent overlay windows, drag persistence, locking, foreground visibility and isolated preview.",
+    "PASS: all ten widgets, logos, settings, clutch removal, independent overlay windows, drag persistence, locking, foreground visibility and isolated preview.",
   );
 } catch (error) {
   const page = app.windows()[0];

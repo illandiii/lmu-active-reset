@@ -1,4 +1,6 @@
 import samples from "./samples.json";
+import wheels from "../../shared/wheel-model.cjs";
+import stint from "../../shared/stint-model.cjs";
 const common = {
   sessionName: "RACE",
   trackCars: "Spa-Francorchamps, 56 cars",
@@ -39,6 +41,51 @@ const common = {
   limitMax: 5,
 };
 export function sampleValues(id, settings) {
+  if (["brake-lock", "tyres", "stint-planner"].includes(id)) {
+    const data = {
+      connected: true,
+      driving: true,
+      player: {
+        id: 1,
+        brake: 0.84,
+        energy: 0.412,
+        fuel: 38.6,
+        frontCompound: "Soft",
+        rearCompound: "Medium",
+        wheels: [0.71, 0.78, 0.84, 0.86].map((wear, i) => ({
+          attached: true,
+          load: 3000,
+          groundSpeed: 30,
+          rotation: i === 0 ? 45 : 100,
+          radius: 0.31,
+          deflection: 0.01,
+          surface: 0,
+          wear,
+          flat: false,
+          temperatures: [
+            [98, 93, 88],
+            [91, 88, 85],
+            [86, 84, 82],
+            [84, 83, 81],
+          ][i],
+        })),
+      },
+      cars: [{ id: 1, laps: 48 }],
+      tyreLaps: [6, 6, 18, 18],
+      flatSpots: [{ exposure: 60, duration: 2 }, null, null, null],
+      brakeEvents: [0.81, 0.86, 0.79, 0.92, 0.84, 0.8].map((brake) => ({
+        brake,
+        slip: 0.6,
+        speed: 108,
+      })),
+      laps: [{ clean: true, energy: 3.6, fuel: 2.42 }],
+    };
+    return id === "brake-lock"
+      ? wheels.brakeValues(data, settings)
+      : id === "tyres"
+        ? wheels.tyreValues(data, settings)
+        : stint.stintValues(data, settings);
+  }
   const result = JSON.parse(
     JSON.stringify({ ...common, ...samples[id] })
       .replaceAll("#FFD23F", settings.accent)

@@ -14,6 +14,9 @@ const names = {
   inputs: "Inputs",
   laps: "Laps",
   "session-summary": "Session",
+  "brake-lock": "Brake lock",
+  tyres: "Tyres",
+  "stint-planner": "Stint planner",
 };
 
 // A deterministic, explicitly labelled demonstration, using the production widgets.
@@ -87,9 +90,9 @@ window.renderSectorMedia = (seconds, settings, animated = false) => {
   const columns = animated
     ? [["inputs", "delta"]]
     : [
-        ["leaderboard", "weather"],
-        ["inputs", "laps", "delta"],
-        ["relative", "session-summary"],
+        ["leaderboard", "weather", "brake-lock"],
+        ["inputs", "laps", "delta", "stint-planner"],
+        ["relative", "session-summary", "tyres"],
       ];
   flushSync(() =>
     root.render(

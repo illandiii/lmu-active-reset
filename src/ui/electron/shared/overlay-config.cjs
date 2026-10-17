@@ -25,6 +25,15 @@ function defaults() {
           showGear: true,
           showLogos: true,
           lockDeg: 270,
+          ...(id === "brake-lock"
+            ? { slipThreshold: 20, minimumSpeed: 20 }
+            : {}),
+          ...(id === "tyres"
+            ? { coldTemp: 80, hotTemp: 105, flatSpotSensitivity: 50 }
+            : {}),
+          ...(id === "stint-planner"
+            ? { consumptionLaps: 5, reserveLaps: 0 }
+            : {}),
         },
       ]),
     ),
@@ -40,7 +49,11 @@ function validate(value) {
   result.displayId = value.displayId;
   for (const id of Object.keys(definitions)) {
     const w = value.widgets[id];
-    if (!w) throw new Error("Missing widget settings.");
+    if (!w) {
+      // Older installations do not have entries for newly added widgets.
+      if (["brake-lock", "tyres", "stint-planner"].includes(id)) continue;
+      throw new Error("Missing widget settings.");
+    }
     for (const key of [
       "enabled",
       "showClutch",
@@ -72,6 +85,35 @@ function validate(value) {
     if (!/^#[0-9a-f]{6}$/i.test(w.accent))
       throw new Error("Invalid accent color.");
     result.widgets[id].accent = w.accent;
+    const ranges =
+      id === "brake-lock"
+        ? [
+            ["slipThreshold", 5, 90],
+            ["minimumSpeed", 5, 150],
+          ]
+        : id === "tyres"
+          ? [
+              ["coldTemp", 0, 150],
+              ["hotTemp", 20, 200],
+              ["flatSpotSensitivity", 10, 100],
+            ]
+          : id === "stint-planner"
+            ? [
+                ["consumptionLaps", 1, 20],
+                ["reserveLaps", 0, 5],
+              ]
+            : [];
+    for (const [key, min, max] of ranges) {
+      const candidate = w[key] ?? result.widgets[id][key];
+      if (!Number.isInteger(candidate) || candidate < min || candidate > max)
+        throw new Error(`Invalid ${key}.`);
+      result.widgets[id][key] = candidate;
+    }
+    if (
+      id === "tyres" &&
+      result.widgets[id].coldTemp >= result.widgets[id].hotTemp
+    )
+      throw new Error("Cold temperature must be lower than hot temperature.");
     for (const [key] of layout.columns[id]) {
       const value = w.columns?.[key];
       if (value !== undefined && typeof value !== "boolean")

@@ -22,6 +22,23 @@
 .lmu-widget .dbar-l {
   transform-origin: right center;
 }
+.widget-brake-lock .lockzone {
+  background-color: #e2483d2e;
+  background-image: repeating-linear-gradient(
+    135deg,
+    #ff5a4e52 0 2px,
+    transparent 2px 7px
+  );
+}
+.widget-brake-lock .fill {
+  transform-origin: left center;
+}
+.widget-tyres .tyre-grid:has(> :only-child) {
+  grid-template-columns: 1fr !important;
+}
+.widget-stint-planner [data-fluid-grid]:empty {
+  display: none !important;
+}
 .lmu-widget[data-trace="false"] .input-trace,
 .lmu-widget[data-wheel="false"] .input-wheel,
 .lmu-widget[data-gear="false"] .input-gear {

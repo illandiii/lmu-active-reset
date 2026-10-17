@@ -24,8 +24,8 @@ the repository's [asset guide](https://github.com/sector-lmu/Sector/blob/dev/ass
 
 ## Overlay designs and manufacturer marks
 
-Widget layouts and logo artwork derive from the user-supplied `LMU Overlay.html`
-and `loghi_LMU.png`. Widgets bundle a background-removal variant displayed through
+Widget layouts and logo artwork derive from the user-supplied `LMU Overlay.html`,
+`LMU Overlay - 2.html` and `loghi_LMU.png`. Widgets bundle a background-removal variant displayed through
 SVG viewports; the unused original reference sheet is kept locally outside Git.
 Manufacturer names and marks belong to their respective owners; inclusion does not imply affiliation
 or endorsement, and Sector's MIT license grants no rights to those marks.

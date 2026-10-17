@@ -11,6 +11,13 @@ const env = { ...process.env, PYTHONDONTWRITEBYTECODE: "1" };
 delete env.ELECTRON_RUN_AS_NODE;
 delete env.SECTOR_PYTHON;
 const python = path.join(payload, "python/python.exe");
+const nativeFrame = JSON.parse(
+  execFileSync(path.join(payload, "bin/overlay-reader.exe"), ["--test-frame"], {
+    encoding: "utf8",
+    windowsHide: true,
+  }),
+);
+assert.deepEqual(nativeFrame.player.wheels[0].temperatures, [98, 93, 88]);
 execFileSync(
   python,
   [
@@ -52,6 +59,29 @@ try {
   await page
     .getByRole("switch", { name: "Enable overlays", exact: true })
     .waitFor();
+  for (const name of ["Brake lock", "Tyres", "Stint planner"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    await page.locator(".widget-stage .lmu-widget").waitFor();
+    assert.doesNotMatch(
+      await page.locator(".widget-stage").innerText(),
+      /undefined|NaN|{{/,
+    );
+    if (name === "Tyres") {
+      await page
+        .locator(".widget-tyres")
+        .getByText("~flat spot", { exact: true })
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("spinbutton", {
+            name: "Flat spot sensitivity",
+            exact: true,
+          })
+          .inputValue(),
+        "50",
+      );
+    }
+  }
   fs.mkdirSync(path.join(root, "work/release-tests"), { recursive: true });
   await page.screenshot({
     path: path.join(root, "work/release-tests/sector-release.png"),

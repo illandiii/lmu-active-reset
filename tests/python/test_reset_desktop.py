@@ -54,7 +54,7 @@ class DesktopTests(unittest.TestCase):
         )
         self.assertEqual(command["action"], 2)
         self.session.command(2, command["id"])
-        prepared = dict(id=command["id"], action=2, result=0, fields=10084)
+        prepared = dict(id=command["id"], action=2, result=0, fields=10085)
         self.session.report(prepared)
         self.assertIsNotNone(self.session.request)
         command = keys.poll(False, True, False, False, False, 0.3, prepared)
@@ -90,10 +90,10 @@ class DesktopTests(unittest.TestCase):
 
     def test_desktop_preparation_still_requires_context_timely_ack_and_full_plan(self):
         for allowed, now, fields, result in [
-            (False, 0.1, 10084, 0),
-            (True, 3, 10084, 0),
+            (False, 0.1, 10085, 0),
+            (True, 3, 10085, 0),
             (True, 0.1, 10077, 0),
-            (True, 0.1, 10084, 9),
+            (True, 0.1, 10085, 9),
         ]:
             keys = HotkeyCommands()
             keys.saved = True
@@ -218,7 +218,7 @@ class DesktopTests(unittest.TestCase):
             supervise(args, run, audit, alive, wait=wait, sleep=lambda _: None)
         self.assertEqual(run.call_count, 3)
         self.assertEqual(audit.call_count, 3)
-        self.assertEqual(args.revision, 15)
+        self.assertEqual(args.revision, 16)
         self.assertFalse(self.session.state["checkpoint"])
         self.assertFalse(hasattr(args, "seconds"))
 

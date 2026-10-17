@@ -192,6 +192,40 @@ int main(void) {
         int prior = writes;
         assert(run(&r) == FLOW_QUARANTINED && writes == prior);
     }
+    for (int failure_mode = 0; failure_mode <= 2; ++failure_mode) {
+        init();
+        mode = failure_mode;
+        RestoreField *failure = &plan.fields[plan.count++];
+        *failure = (RestoreField){0};
+        failure->object_slot = RESTORE_SCORING_SLOT;
+        failure->field_offset = 0xd4;
+        failure->size = 4;
+        int32_t value = 4;
+        memcpy(failure->expected, &value, 4);
+        memcpy(score + 0xd4, &value, 4);
+        memcpy(old_score, score, sizeof(score));
+        assert(run(&r) == (failure_mode ? FLOW_COMPENSATED : FLOW_OK));
+        memcpy(&value, score + 0xd4, 4);
+        assert(value == (failure_mode ? 4 : 0));
+    }
+    // Stale failure state cannot be cleared; no writes precede complete preflight.
+    init();
+    plan.fields[4] = (RestoreField){0};
+    plan.fields[4].object_slot = RESTORE_SCORING_SLOT;
+    plan.fields[4].field_offset = 0xd4;
+    plan.fields[4].size = 4;
+    plan.fields[4].expected[0] = 4;
+    plan.count = 5;
+    assert(run(&r) == FLOW_REJECTED && !writes);
+    plan.fields[4].expected[0] = 10;
+    assert(run(&r) == FLOW_BAD_ARGUMENT && !writes);
+    plan.fields[4].expected[0] = 0;
+    plan.fields[4].desired[0] = 4;
+    assert(run(&r) == FLOW_BAD_ARGUMENT && !writes);
+    plan.fields[4].desired[0] = 0;
+    plan.fields[5] = plan.fields[4];
+    plan.count = 6;
+    assert(run(&r) == FLOW_BAD_ARGUMENT && !writes);
     puts("PASS integrated restore: physical/scoring commit, contact rebuild, compensation after "
          "contact/context failure, pinned plan, partial-write rollback, fatal recovery quarantine "
          "and command lockout.");

@@ -20,7 +20,7 @@ static int allowed(void *user, uint32_t slot, uint32_t offset, uint32_t size) {
     if (slot == RESTORE_OBJECT_COUNT)
         return GetCurrentThreadId() == n->owner_thread && n->scoring >= 0x10000 &&
                n->scoring < UINT64_C(0x800000000000) - 0x27400 && size == 4 &&
-               (offset == 0x160 || offset == 0x27290 || offset == 0x27360);
+               (offset == 0xd4 || offset == 0x160 || offset == 0x27290 || offset == 0x27360);
     return GetCurrentThreadId() == n->owner_thread &&
            restore_binding_field(&n->bindings, slot, offset, size);
 }
@@ -133,16 +133,20 @@ static int validate_joint(const RestorePlan *plan, NativeMemory *native) {
         uintptr_t start = address_of(native, f->object_slot, f->field_offset);
         ranges[i] = (JointRange){start, start + f->size};
         if (f->object_slot == RESTORE_OBJECT_COUNT) {
-            unsigned bit = f->field_offset == 0x160 ? 1 : f->field_offset == 0x27290 ? 2 : 4;
+            const int failure = f->field_offset == 0xd4;
+            unsigned bit = failure                      ? 8
+                           : f->field_offset == 0x160   ? 1
+                           : f->field_offset == 0x27290 ? 2
+                                                        : 4;
             int32_t expected, desired;
             memcpy(&expected, f->expected, 4);
             memcpy(&desired, f->desired, 4);
-            if (mask & bit || expected < 0 || expected > 2 || desired)
+            if (mask & bit || expected < 0 || expected > (failure ? 9 : 2) || desired)
                 return RESTORE_BAD_PLAN;
             mask |= bit;
         }
     }
-    if (mask != 7)
+    if (mask != 7 && mask != 15)
         return RESTORE_BAD_PLAN;
     qsort(ranges, plan->count, sizeof(*ranges), compare_joint_range);
     for (size_t i = 1; i < plan->count; i++)

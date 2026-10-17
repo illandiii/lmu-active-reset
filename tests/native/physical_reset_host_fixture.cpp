@@ -16,7 +16,7 @@ static unsigned correction_calls, collision_prepare_calls;
 static unsigned collision_rebuild_calls, spatial_calls, removed_pairs;
 static double largest_restored_sweep;
 static bool monitor_restored_sweep;
-static constexpr unsigned expected_fields = 10084;
+static constexpr unsigned expected_fields = 10085;
 #else
 static constexpr unsigned expected_fields = 10077;
 #endif

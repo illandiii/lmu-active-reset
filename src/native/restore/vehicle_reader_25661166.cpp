@@ -577,10 +577,8 @@ bool vehicle_read_25661166(uintptr_t module_base, uintptr_t physics, uint64_t ep
             frame->binding_status = 90000;
         return false;
     }
-    if (frame->terminal_failure || frame->geometry_status || frame->mechanical_status ||
-        !frame->memory_valid) {
-        frame->binding_status = frame->terminal_failure    ? 90001
-                                : frame->geometry_status   ? 90100 + frame->geometry_status
+    if (frame->geometry_status || frame->mechanical_status || !frame->memory_valid) {
+        frame->binding_status = frame->geometry_status     ? 90100 + frame->geometry_status
                                 : frame->mechanical_status ? 90200 + frame->mechanical_status
                                                            : 90003;
         return false;
@@ -599,9 +597,10 @@ uintptr_t vehicle_scoring_25661166(uintptr_t module_base, uintptr_t physics_poin
     uintptr_t native_bindings[RESTORE_OBJECT_COUNT]{};
     native_bindings[104] = physics_pointer;
 
-    uintptr_t owner = 0, vehicle = 0, back = 0, physics = 0;
+    uintptr_t owner = 0, vehicle = 0, back = 0, physics = 0, physical_vehicle = 0;
     if (!read_field(module_base + 0x1e194c8, owner) || !read_field(owner, vehicle) ||
-        !read_field(owner + 0x159a8, physics) || physics != native_bindings[104])
+        !read_field(owner + 0x159a8, physics) || physics != native_bindings[104] ||
+        !read_field(physics + 0x4bc0, physical_vehicle) || physical_vehicle != vehicle)
         return 0;
     uintptr_t score = vehicle + 0x1cec8;
     return read_field(score, back) && back == owner ? score : 0;

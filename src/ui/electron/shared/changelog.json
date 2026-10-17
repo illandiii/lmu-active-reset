@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.1",
+    "changes": [
+      "Prevent telemetry updates from repositioning widgets during layout dragging.",
+      "Brake-lock warnings now account for combined longitudinal slip and slip angle.",
+      "Restore the saved failure state after an impact when the vehicle assembly remains intact.",
+      "Updated widget opacity defaults and fixed class badges and vehicle logo matching."
+    ]
+  },
+  {
     "version": "0.2.0",
     "changes": [
       "Save and restore checkpoints directly from Home. Edit shortcuts in Active Reset.",

@@ -70,14 +70,18 @@ int restore_joint_execute(const RestorePlan *plan, const RestoreBackend *physica
             int32_t expected, desired;
             if (!scoring_field_allowed_25661166(0, f->field_offset, f->size))
                 return RESTORE_BAD_PLAN;
-            unsigned bit = f->field_offset == 0x160 ? 1 : f->field_offset == 0x27290 ? 2 : 4;
+            const int failure = f->field_offset == 0xd4;
+            unsigned bit = failure                      ? 8
+                           : f->field_offset == 0x160   ? 1
+                           : f->field_offset == 0x27290 ? 2
+                                                        : 4;
             memcpy(&expected, f->expected, 4);
             memcpy(&desired, f->desired, 4);
-            if (mask & bit || expected < 0 || expected > 2 || desired)
+            if (mask & bit || expected < 0 || expected > (failure ? 9 : 2) || desired)
                 return RESTORE_BAD_PLAN;
             mask |= bit;
         }
-    if (mask != 7)
+    if (mask != 7 && mask != 15)
         return RESTORE_BAD_PLAN;
     JointBackend frozen = {*physical, *scoring};
     RestoreBackend backend = {&frozen, context, allowed, read_field, write_field};

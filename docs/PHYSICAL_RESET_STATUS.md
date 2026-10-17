@@ -1,6 +1,6 @@
 # Physical reset: current status
 
-**Current desktop: 0.1.6. Native host: v15 for the verified Steam 25661166 /
+**Current desktop: 0.2.1. Native host: v16 for the verified Steam 25661166 /
 app build 14200 compatibility profile.** Matching the display version alone is
 insufficient: runtime admission also checks the pinned identities and hashes.
 
@@ -9,14 +9,35 @@ insufficient: runtime admission also checks the pinned identities and hashes.
 F6 captures a checkpoint; F7 prepares and restores the saved physical state at
 the admitted native callback boundary. Physics/scoring coordination, object
 lifetime checks, contact reconstruction and collision-state rebuilding are part
-of the restore sequence. The v15 plan verifies **10,084 fields** and rebuilds
+of the restore sequence. The v16 plan verifies **10,085 fields** and rebuilds
 **four tire contacts** before simulation continues.
 
 The saved pose and velocity are restored, rather than combining the saved
 position with the velocity at the moment of F7. There are no speed, distance,
 session-duration or checkpoint-age caps. Compatibility, lifecycle, finite-state
-and terminal-fault refusals remain active. Checkpoints are tied to the vehicle
+checks remain active. Checkpoints are tied to the vehicle
 generation and can be invalidated by reconstruction, even at the same address.
+
+## Recovery after an impact
+
+The 17 October runtime stopped at startup with `Vehicle terminal failure 4`.
+The reader also rejected any nonzero failure latch before restore preparation.
+V16 keeps the connection available and admits the damaged current frame for
+restore preparation. Saving still requires a healthy frame.
+
+The shared failure latch at `game_vehicle+0x1cf9c` (scoring `+0xd4`) is now
+restored with the engine, transmission, rigid bodies and collision state in the
+same transaction. It participates in expected-value preflight, readback and
+rollback. A failed restore puts back the pre-restore failure value too.
+This is recovery to an existing healthy checkpoint, not a new checkpoint
+created after the accident.
+
+The adapter fixture covers failure code 4, successful restore, contact failure,
+collision rebuild failure and compensation. The host fixture covers the complete
+10,085-field path and restart. **V16 has not yet been tested after an actual
+impact in LMU.** Detached wheels, changed topology and invalid mechanical
+geometry still cannot be restored by this path; recreating missing assemblies
+is not implemented.
 
 ## Collision correction
 

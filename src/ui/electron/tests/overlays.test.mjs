@@ -58,6 +58,49 @@ const raw = (patch = {}) => ({
   ],
   ...patch,
 });
+
+test("requested opacity defaults migrate once without overwriting custom values", () => {
+  assert.deepEqual(
+    Object.values(config.defaults().widgets).map((w) => w.opacity),
+    [0.35, 0.6, 0.35, 0.5, 0.65, 0.35, 0.35, 0.75, 0.5, 0.35, 0.35],
+  );
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sector-opacity-"));
+  const file = path.join(dir, "overlays.json");
+  try {
+    const old = config.defaults();
+    delete old.defaultsVersion;
+    for (const [id, w] of Object.entries(old.widgets))
+      w.opacity = id === "leaderboard" ? 0.1 : 0.35;
+    old.widgets.inputs.opacity = 0.42;
+    fs.writeFileSync(file, JSON.stringify(old));
+    const next = config.read(file);
+    assert.equal(next.widgets.relative.opacity, 0.6);
+    assert.equal(next.widgets.inputs.opacity, 0.42);
+    next.widgets.relative.opacity = 0.35;
+    config.write(file, next);
+    assert.equal(config.read(file).widgets.relative.opacity, 0.35);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("class badges and model-only vehicle names resolve to their logos", () => {
+  for (const [name, code] of [
+    ["LMP 2", "P2"],
+    ["LMP3", "P3"],
+    ["LM GT3", "GT3"],
+    ["P2", "P2"],
+  ])
+    assert.equal(model.classCode(name), code);
+  for (const [name, code] of [
+    ["Oreca 07", "ORE"],
+    ["JS P325", "LIG"],
+    ["720S GT3 Evo", "MCL"],
+    ["911 GT3 R", "POR"],
+    ["296 GT3", "FER"],
+  ])
+    assert.equal(model.make(name), code);
+});
 test("overlay preferences persist independently and reject invalid geometry", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sector-overlays-"));
   const file = path.join(dir, "overlays.json");

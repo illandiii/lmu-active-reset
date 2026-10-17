@@ -8,7 +8,7 @@ counts and build-specific experiments are preserved in the [research archive](ar
 | Area | Entry point | What it verifies |
 | --- | --- | --- |
 | Native core | `scripts/test/Test-Core.ps1` | State mathematics, restore plans, transaction/rollback and coordination fixtures |
-| Native host | `scripts/build/Build-PhysicalResetHost25661166.ps1` | Revision-specific host fixture, including v15 field count, contacts, collision reconstruction and restart cases |
+| Native host | `scripts/build/Build-PhysicalResetHost25661166.ps1` | Revision-specific host fixture, including v16 field count, contacts, collision reconstruction and restart cases |
 | Python | `python scripts/sector.py test` | Supervision, acknowledgements, key behavior, lifecycle, analysis and source layout |
 | Desktop/controller | `npm test` in `src/ui/electron` | Settings, discovery, runtime ownership and overlay models |
 | Desktop/widgets | `npm run test:ui` | Real Electron interactions in isolated preview, including all eleven widgets |
@@ -17,8 +17,16 @@ counts and build-specific experiments are preserved in the [research archive](ar
 | Startup | `npm run test:startup` | SVG drawing, automatic exit, click/key skip, reduced motion and no replay on background restore or reload |
 | Portable package | `npm run test:release` | Actual EXE in preview, version, bundled Python imports, UI and no active reset listener |
 
-The 0.2.0 Home update passed 43 Node unit tests, 98 Python tests, desktop, Home,
-overlay and onboarding smoke suites, formatting, renderer build and packaged EXE
+The 0.2.1 update passed 46 Node unit tests, 98 Python tests, desktop, overlay,
+Home and packaged EXE smoke checks, formatting and the renderer build. Native adapter
+fixtures verify restoration of failure code 4 and preservation of that code
+during compensation. Host fixtures verify the full plan, missing callbacks and
+restart. The restore-flow fixture also rejects stale/unknown failure values,
+duplicate latch fields and attempts to restore a nonzero failure. Live impact
+recovery remains unqualified. Overlay smoke checks cover geometry synchronization
+during a drag, class badges and manufacturer logos for all four classes.
+
+The 0.2.0 Home update passed desktop, Home, overlay, onboarding and packaged EXE
 smoke checks. Startup-specific coverage last passed with 0.1.10.
 The unchanged native SDK reader last passed its self-test and
 serialization fixture with 0.1.9. These are recorded development results, not an

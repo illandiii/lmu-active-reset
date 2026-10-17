@@ -57,13 +57,27 @@ sterzata fuori pista. Attendi cinque secondi e interrompi alla prima instabilit�
 Comunica soltanto: esito, velocità approssimative di F6/F7, eventuale urto e se
 si è chiuso LMU oppure soltanto il programma delle hotkey. Non serve filmare.
 
+## Ripristino dopo un urto, versione 0.2.1
+
+1. In Practice offline senza EAC, salva con F6 quando la vettura è sana.
+2. Dopo un urto che lascia le quattro ruote attaccate, premi F7 una sola volta.
+3. Controlla che torni al checkpoint con la velocità salvata e che possa ancora
+   accelerare, sterzare e frenare. Non basta il messaggio di successo.
+4. Conserva i log anche se il ripristino viene rifiutato. Annota eventuali ruote
+   staccate o il ritorno automatico al monitor: la ricostruzione di parti mancanti
+   non è implementata e un cambio di vettura invalida il checkpoint.
+
+La v16 supera la prova locale con guasto codice 4 e verifica il rollback del
+guasto se fallisce la ricostruzione dei contatti. Questa prova in gioco è ancora
+da eseguire.
+
 ## Dati da conservare
 
 Nel checkout i file vengono salvati in `logs/`. Nella build portabile sono
 nella sottocartella `logs/` del runtime in `%APPDATA%/sector/runtime/<versione>-<id>/`
 (con il percorso predefinito di Electron). Per la struttura vedi la
 [guida alla release](RELEASE.md). I file condividono il prefisso
-`<data>_physical_reset_host_v15`:
+`<data>_physical_reset_host_v16`:
 
 - `.physical.jsonl`: corpi fisici, contatti pneumatici, corpo collisioni e stato
   prima/dopo le routine native di preparazione e correzione.
@@ -87,7 +101,7 @@ python scripts/sector.py analysis.analyze_physical_reset_trace <file.physical.js
 Verificare nell'ordine:
 
 1. `saved_vs_applied`: velocità, posa e momento dei cinque corpi coincidono con
-   F6 subito dopo F7; il rapporto deve riportare tutti i 10.084 campi verificati.
+   F6 subito dopo F7; il rapporto deve riportare tutti i 10.085 campi verificati.
 2. `collision_rebuilds` (fasi 15/16, prima della fase 3): geometria riallineata,
    flag pendente azzerato dalla routine nativa e corpi fisici invariati.
 3. `collision_corrections` (fasi 11/12): cercare il primo cambiamento dei corpi

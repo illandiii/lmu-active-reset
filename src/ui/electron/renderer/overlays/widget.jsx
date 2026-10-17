@@ -81,7 +81,33 @@ const makes = [
   "DUQ",
 ];
 export function Logo({ code, badge = false }) {
-  const index = (badge ? ["HY", "P2", "GT3", "P3"] : makes).indexOf(code);
+  const color = { HY: "#EF3030", P2: "#29A3D8", GT3: "#20A34A", P3: "#F68A22" }[
+    code
+  ];
+  if (badge)
+    return color ? (
+      <svg
+        className="manufacturer-logo"
+        role="img"
+        aria-label={code}
+        viewBox="0 0 71 39"
+        style={{ width: 32, height: 18 }}
+      >
+        <path d="M5 0H66L71 5V34L66 39H5L0 34V5Z" fill={color} />
+        <text
+          x="35.5"
+          y="27"
+          textAnchor="middle"
+          fill="white"
+          fontFamily="Arial, sans-serif"
+          fontWeight="700"
+          fontSize="24"
+        >
+          {code}
+        </text>
+      </svg>
+    ) : null;
+  const index = makes.indexOf(code);
   if (index < 0) return null;
   const x = 45 + (index % 6) * 150,
     y = 30 + Math.floor(index / 6) * 140;
@@ -90,8 +116,8 @@ export function Logo({ code, badge = false }) {
       className="manufacturer-logo"
       role="img"
       aria-label={code}
-      viewBox={badge ? `${60 + index * 150} 473 71 39` : `${x} ${y} 100 92`}
-      style={{ width: badge ? 32 : 28, height: badge ? 18 : 22 }}
+      viewBox={`${x} ${y} 100 92`}
+      style={{ width: 28, height: 22 }}
     >
       <image href={logoSheet} width="940" height="600" />
     </svg>
@@ -141,6 +167,7 @@ function renderNode(node, context, key) {
   if (tag === "img")
     return context.showLogos ? <Logo key={key} code={context.r?.make} /> : null;
   if (
+    node.children.length === 0 &&
     ["{{cl.badge}}", "{{r.cls}}", "{{classBadge}}"].includes(
       node.textContent.trim(),
     )
@@ -148,7 +175,7 @@ function renderNode(node, context, key) {
     return (
       <Logo
         key={key}
-        code={lookup(context, node.textContent.replace(/[{}]/g, ""))}
+        code={lookup(context, node.textContent.trim().replace(/[{}]/g, ""))}
         badge
       />
     );

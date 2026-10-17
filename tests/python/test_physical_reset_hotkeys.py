@@ -33,7 +33,7 @@ class HotkeyTests(unittest.TestCase):
         self.assertEqual(self.poll(restore=True), {"id": 2, "action": 2})
         self.assertEqual(self.poll(restore=True), {})
         self.assertEqual(
-            self.poll(restore=True, report={"id": 2, "action": 2, "result": 0, "fields": 10084}),
+            self.poll(restore=True, report={"id": 2, "action": 2, "result": 0, "fields": 10085}),
             {"id": 3, "action": 3},
         )
         self.poll(restore=True, report={"id": 3, "result": 0})
@@ -47,7 +47,7 @@ class HotkeyTests(unittest.TestCase):
     def test_native_revision_controls_both_preparation_gates(self):
         # The live v15 incident acknowledged PREPARE with 10084 fields, but the
         # two launcher gates still expected 10077 and never sent RESTORE.
-        for revision, count in ((14, 10077), (15, 10084)):
+        for revision, count in ((14, 10077), (15, 10084), (16, 10085)):
             with self.subTest(revision=revision):
                 expected = expected_restore_fields(revision)
                 self.assertEqual(expected, count)
@@ -65,9 +65,9 @@ class HotkeyTests(unittest.TestCase):
         report = {"id": 2, "action": 2, "result": 0, "fields": 10077}
         self.assertFalse(preparation_ready(report, expected_restore_fields(15)))
         self.assertEqual(self.poll(report=report), {})
-        self.assertIn("expected 10084", self.keys.notice)
+        self.assertIn("expected 10085", self.keys.notice)
         self.assertTrue(self.keys.saved)
-        for revision in (0, 16):
+        for revision in (0, 17):
             with self.assertRaises(ValueError):
                 expected_restore_fields(revision)
 
@@ -77,17 +77,17 @@ class HotkeyTests(unittest.TestCase):
             self.saved()
             self.poll(restore=True)
             self.assertEqual(
-                self.poll(report={"id": 2, "action": 2, "result": 0, "fields": 10084}, **kwargs), {}
+                self.poll(report={"id": 2, "action": 2, "result": 0, "fields": 10085}, **kwargs), {}
             )
             self.assertEqual(
-                self.poll(report={"id": 2, "action": 2, "result": 0, "fields": 10084}), {}
+                self.poll(report={"id": 2, "action": 2, "result": 0, "fields": 10085}), {}
             )
 
     def test_failed_or_unrelated_preparation_never_restores(self):
         for report in (
-            {"id": 2, "action": 2, "result": 2, "fields": 10084},
+            {"id": 2, "action": 2, "result": 2, "fields": 10085},
             {"id": 2, "action": 2, "result": 0, "fields": 0},
-            {"id": 99, "action": 2, "result": 0, "fields": 10084},
+            {"id": 99, "action": 2, "result": 0, "fields": 10085},
         ):
             self.keys = HotkeyCommands()
             self.saved()

@@ -3,8 +3,12 @@ const path = require("node:path");
 const { randomUUID } = require("node:crypto");
 const layout = require("./overlay-layout.cjs");
 const definitions = require("./overlay-definitions.json");
+const opacities = [
+  0.35, 0.6, 0.35, 0.5, 0.65, 0.35, 0.35, 0.75, 0.5, 0.35, 0.35,
+];
 function defaults() {
   return {
+    defaultsVersion: 2,
     enabled: false,
     displayId: null,
     widgets: Object.fromEntries(
@@ -16,7 +20,7 @@ function defaults() {
           x: 30 + (i % 3) * 460,
           y: 30 + Math.floor(i / 3) * 330,
           scale: 1,
-          opacity: id === "leaderboard" ? 0.1 : 0.35,
+          opacity: opacities[i],
           accent: "#FFD23F",
           rows: id === "laps" ? 8 : 7,
           showClutch: true,
@@ -136,7 +140,18 @@ function validate(value) {
 }
 function read(file) {
   try {
-    return validate(JSON.parse(fs.readFileSync(file, "utf8")));
+    const saved = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (!saved.defaultsVersion) {
+      const base = defaults();
+      for (const [id, widget] of Object.entries(saved.widgets || {})) {
+        if (
+          base.widgets[id] &&
+          widget.opacity === (id === "leaderboard" ? 0.1 : 0.35)
+        )
+          widget.opacity = base.widgets[id].opacity;
+      }
+    }
+    return validate(saved);
   } catch (error) {
     if (error.code === "ENOENT") return defaults();
     throw new Error("Overlay settings could not be read.");

@@ -5,6 +5,9 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const directory = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
+const history = JSON.parse(
+  fs.readFileSync(path.join(directory, "shared/changelog.json"), "utf8"),
+);
 const output = path.resolve(directory, "../../../work/electron-screenshots");
 fs.mkdirSync(output, { recursive: true });
 const env = { ...process.env };
@@ -186,8 +189,17 @@ try {
     name: "Changelog",
     exact: true,
   });
-  await changelog.getByRole("heading", { name: /0\.2\.0\s*Latest/ }).waitFor();
-  assert.equal(await changelog.locator(".changelog-list section").count(), 13);
+  await changelog
+    .getByRole("heading", {
+      name: new RegExp(
+        `${history[0].version.replaceAll(".", "\\.")}\\s*Latest`,
+      ),
+    })
+    .waitFor();
+  assert.equal(
+    await changelog.locator(".changelog-list section").count(),
+    history.length,
+  );
   await changelog
     .getByRole("heading", { name: "0.1.0", exact: true })
     .scrollIntoViewIfNeeded();

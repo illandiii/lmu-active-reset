@@ -20,7 +20,7 @@ function brakeFrame(t) {
         attached: true,
         load: 3000,
         groundSpeed: 30,
-        lateralSpeed: 2,
+        lateralSpeed: 0,
         radius: 0.31,
         deflection: 0.01,
         rotation: i === 0 ? 100 * (1 - (0.05 + t * 0.3)) : 100,
@@ -57,11 +57,8 @@ test("lock forecast identifies a wheel, time and pedal threshold before locking"
     "FL LOCK",
   );
 });
-test("lock forecast rejects changing corner conditions, missing telemetry and released brakes", () => {
+test("lock forecast rejects missing telemetry and released brakes", () => {
   for (const alter of [
-    (raw) => {
-      raw.player.wheels[0].lateralSpeed = 15;
-    },
     (raw) => {
       raw.player.wheels[0].lateralSpeed = null;
     },
@@ -106,6 +103,25 @@ test("lock forecast rejects changing corner conditions, missing telemetry and re
   assert.equal(
     wheelModel.brakeValues(raw, settings["brake-lock"]).forecast,
     "-",
+  );
+});
+test("slip angle advances the warning without labelling lateral sliding as a wheel lock", () => {
+  const { raw } = braking();
+  const straight = wheelModel.brakeValues(raw, settings["brake-lock"]);
+  raw.player.wheels[0].lateralSpeed = 6;
+  const corner = wheelModel.brakeValues(raw, settings["brake-lock"]);
+  assert.ok(corner.tyres[0].predicted);
+  assert.equal(corner.tyres[0].locked, false);
+  assert.notEqual(corner.threshold, straight.threshold);
+  raw.player.wheels[0].rotation = 100;
+  assert.equal(
+    wheelModel.brakeValues(raw, settings["brake-lock"]).tyres[0].predicted,
+    false,
+  );
+  raw.player.wheels[0].rotation = 50;
+  assert.equal(
+    wheelModel.brakeValues(raw, settings["brake-lock"]).tyres[0].locked,
+    true,
   );
 });
 test("leaderboard keeps player neighbours under their class with matching resources", () => {

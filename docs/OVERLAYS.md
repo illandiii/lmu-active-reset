@@ -18,6 +18,11 @@ field changes also apply immediately; the editor preview may be fitted to its
 available space. Edit/Lock uses a fixed-width button. Background mode locks the
 layout automatically.
 
+Native dragging suspends geometry synchronization until release, so telemetry
+cannot snap a moving widget back to its previous location. Default opacities in
+the widget order above are 35, 60, 35, 50, 65, 35, 35, 75, 50, 35 and 35 percent.
+Existing default values migrate once; other saved opacity values are preserved.
+
 Column and section switches are arranged in two columns. Hidden table columns,
 including manufacturer logos, remove their grid tracks and shrink the widget.
 The live leaderboard omits classes with no entries. Accent controls are available
@@ -55,13 +60,20 @@ longitudinal wheel-ground velocity. Detached, airborne and off-road wheels are
 excluded, and braking must exceed the selected minimum speed. The slip threshold
 defaults to 20%, minimum speed to 20 km/h and prediction window to 500 ms.
 
-The forecast fits recent slip and brake-pedal trends over at most 400 ms using
-samples at comparable speed, slip angle and wheel load. It requires at least four
-samples over 100 ms and a consistent rising slip trend. It projects time to the
-selected slip threshold and the corresponding pedal percentage, assuming those
-trends continue. Releasing the brake, changing corner conditions, missing data or
-an inconsistent trend suppresses the prediction. Yellow means an estimated lock
-within the prediction window; red means the measured slip threshold is reached.
+The forecast uses a combined-slip warning metric, `hypot(longitudinalSlip,
+tan(slipAngle))`, so lateral sliding advances the warning. This is a heuristic,
+not a fitted LMU tyre model. The distinction between longitudinal and lateral
+slip follows the [combined-slip wheel model](https://www.mathworks.com/help/vdynblks/ref/combinedslipwheelcpi.html);
+the warning threshold is Sector's configurable sensitivity, not a measured
+friction limit. Lateral slip alone never marks a wheel as locked.
+
+The forecast fits combined demand and brake-pedal trends over at most 400 ms
+at comparable speed and wheel load. It requires at least four samples over
+100 ms and a consistent rising trend. Releasing the brake, missing data or
+an inconsistent trend suppresses extrapolation. Yellow `RISK` means combined
+demand has already crossed the warning threshold while braking. A yellow ETA
+projects that crossing within the prediction window. Red means the measured
+longitudinal slip threshold has been reached.
 `FL ~200 ms`, for example, identifies the front-left wheel and estimated delay.
 These are estimates, not a guaranteed limit or an ABS intervention measurement.
 

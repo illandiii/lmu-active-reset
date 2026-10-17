@@ -262,19 +262,8 @@ def run(args):
     close_api.argtypes = [C.c_void_p, C.c_int]
     close_api(console_close, 1)
     try:
-        # Asynchronous rejection only; the authoritative check runs again
-        # inside the pinned native reader before any checkpoint operation.
-        def pointer(address):
-            return struct.unpack("<Q", read_process(handle, address, 8))[0]
-
-        owner = pointer(image["base"] + 0x1E194C8)
-        physics = pointer(owner + 0x159A8)
-        vehicle = pointer(physics + 0x4BC0)
-        terminal_failure = struct.unpack("<I", read_process(handle, vehicle + 0x1CF9C, 4))[0]
-        if terminal_failure:
-            raise ValueError(
-                f"Vehicle terminal failure {terminal_failure}; a healthy vehicle is required"
-            )
+        # A current failure must not disconnect the listener or discard a healthy
+        # checkpoint. The pinned adapter validates capture and restores the latch.
         for target in profile["targets"]:
             address = image["base"] + target["rva"]
             raw = read_process(handle, address, 32)
@@ -589,7 +578,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--revision", type=int, choices=range(1, 100), default=15)
+    parser.add_argument("--revision", type=int, choices=range(1, 100), default=16)
     parser.add_argument("--pid", type=int, required=True)
     parser.add_argument("--owner-thread", type=int, default=0)
     parser.add_argument("--request-file", type=Path, required=True)

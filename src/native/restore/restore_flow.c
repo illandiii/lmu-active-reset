@@ -81,15 +81,19 @@ static int joint_valid(const RestorePlan *p) {
             int32_t before, after;
             if (!scoring_field_allowed_25661166(0, f->field_offset, f->size))
                 return 0;
-            unsigned bit = f->field_offset == 0x160 ? 1 : f->field_offset == 0x27290 ? 2 : 4;
+            const int failure = f->field_offset == 0xd4;
+            unsigned bit = failure                      ? 8
+                           : f->field_offset == 0x160   ? 1
+                           : f->field_offset == 0x27290 ? 2
+                                                        : 4;
             memcpy(&before, f->expected, 4);
             memcpy(&after, f->desired, 4);
-            if ((mask & bit) || before < 0 || before > 2 || after)
+            if ((mask & bit) || before < 0 || before > (failure ? 9 : 2) || after)
                 return 0;
             mask |= bit;
         }
     }
-    return mask == 7;
+    return mask == 7 || mask == 15;
 }
 int restore_flow_execute(RestoreFlow *state, RestoreFlowWork *work, const RestorePlan *plan,
                          const RestoreBackend *backend, const RestoreFlowOps *ops,

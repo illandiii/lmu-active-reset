@@ -172,6 +172,10 @@ int main(int argc, char **argv) {
     source_frame.terminal_failure = 1;
     assert(dispatch(2, RESET_SAVE).control_result == CONTROL_SAVE_FAILED);
     load_frame(argv[2]);
+    // An impact may set the shared failure latch without replacing the assembly.
+    // Loading must recover the healthy checkpoint; failed transactions restore 4.
+    source_frame.terminal_failure = 4;
+    put(score + 0xd4, uint32_t{4});
     put(collision_vehicle + 0x15a50, float{1240});
     put(collision_vehicle + 0x15a24, float{-100});
     current_angular = 3.5;
@@ -193,13 +197,14 @@ int main(int argc, char **argv) {
     std::fprintf(stderr, "full adapter result=%d fields=%zu flow=%d cause=%d contacts=%llu\n",
                  result.control_result, runtime->plan.count, runtime->report.result,
                  runtime->report.cause, static_cast<unsigned long long>(calls));
-    assert(runtime->plan.count == 10084);
+    assert(runtime->plan.count == 10085);
     assert(result.control_result == (fault == 2   ? CONTROL_QUARANTINED
                                      : fault != 0 ? CONTROL_RESTORE_RECOVERED
                                                   : CONTROL_OK));
     assert(result.forwarded == (fault != 2));
     assert(runtime->control.loads == (fault == 0 ? 1 : 0));
     if (fault != 2) {
+        assert(get<uint32_t>(score + 0xd4) == (fault ? 4u : 0u));
         assert(calls == (fault == 1 ? 6 : fault == 3 ? 8 : 4));
         assert(collision_refreshes == (fault == 3 ? 2 : 1));
         assert(vehicle_restore_adapter_contact_report(adapter).completed_mask == 15);
@@ -253,7 +258,8 @@ int main(int argc, char **argv) {
     DeleteCriticalSection(&gate_lock);
     assert(original_calls == (fault == 2 ? 5 : 9) && abi_errors == 0);
     puts("PASS full vehicle adapter: asynchronous control handoff -> saved/current capture -> "
-         "10084-field native boundary with collision cache compensation "
+         "10085-field native boundary with impact failure recovery with collision cache "
+         "compensation "
          "transaction -> four contact rebuilds; failed save preserves checkpoint; stale contacts, "
          "missing lock/pin and changed session rejected. Owned memory only; refresh modeled.");
     return 0;

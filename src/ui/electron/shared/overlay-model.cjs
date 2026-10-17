@@ -19,11 +19,11 @@ const clock = (v) =>
 const classCode = (name) =>
   /hyper|lmh|lmdh/i.test(name)
     ? "HY"
-    : /lmp2/i.test(name)
+    : /(?:lm\s*)?p\s*2/i.test(name)
       ? "P2"
-      : /lmp3/i.test(name)
+      : /(?:lm\s*)?p\s*3/i.test(name)
         ? "P3"
-        : /gt3/i.test(name)
+        : /gt\s*3/i.test(name)
           ? "GT3"
           : String(name || dash).slice(0, 8);
 const colors = { HY: "#E5322F", P2: "#2D9CDB", P3: "#F28C28", GT3: "#1FA34A" };
@@ -32,20 +32,20 @@ const manufacturers = [
   ["MER", "mercedes|amg"],
   ["FOR", "ford|mustang"],
   ["COR", "chevrolet|corvette"],
-  ["FER", "ferrari"],
+  ["FER", "ferrari|\\b296\\b|\\b488\\b"],
   ["LAM", "lamborghini"],
-  ["MCL", "mclaren"],
-  ["POR", "porsche"],
-  ["AST", "aston"],
+  ["MCL", "mclaren|720s"],
+  ["POR", "porsche|\\b911\\b|\\b992\\b"],
+  ["AST", "aston|vantage"],
   ["TOY", "toyota"],
   ["CAD", "cadillac"],
   ["LEX", "lexus"],
   ["ALP", "alpine"],
   ["PEU", "peugeot"],
-  ["ORE", "oreca"],
+  ["ORE", "oreca|\\b07\\b"],
   ["IF", "isotta"],
-  ["LIG", "ligier"],
-  ["DUQ", "duqueine"],
+  ["LIG", "ligier|js[ -]?p3(?:20|25)"],
+  ["DUQ", "duqueine|d0[89]"],
 ];
 const make = (vehicle) =>
   manufacturers.find(([, pattern]) =>

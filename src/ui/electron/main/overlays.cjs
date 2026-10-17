@@ -55,7 +55,10 @@ class Overlays {
   }
   setEditing(value) {
     if (typeof value !== "boolean") throw new Error("Invalid edit mode.");
-    if (!value) this.flushScale();
+    if (!value) {
+      this.flushScale();
+      this.flushMove();
+    }
     this.editing = value;
     this.sync();
     return this.state();
@@ -122,7 +125,12 @@ class Overlays {
       win.destroy();
       this.sync();
     });
-    win.on("moved", () => {
+    // Windows emits will-move during a native drag and moved only on release.
+    // Telemetry must never push stale configured bounds back into that drag.
+    win.on("will-move", () => {
+      if (this.editing) win.sectorDragging = true;
+    });
+    win.on("move", () => {
       if (!this.editing || this.moving) return;
       const bounds = win.getBounds(),
         old = this.windowBounds(id);
@@ -133,7 +141,11 @@ class Overlays {
       this.config.widgets[id].x = Math.max(0, bounds.x - display.bounds.x);
       this.config.widgets[id].y = Math.max(0, bounds.y - display.bounds.y);
       clearTimeout(this.moveTimer);
-      this.moveTimer = setTimeout(() => this.save(this.config), 200);
+      this.moveTimer = setTimeout(() => this.flushMove(), 200);
+    });
+    win.on("moved", () => {
+      win.sectorDragging = false;
+      this.flushMove();
     });
     win.on("closed", () => this.windows.delete(id));
     void win.loadURL("sector://app/overlay.html");
@@ -155,7 +167,10 @@ class Overlays {
       if (!win) win = this.create(id);
       const b = this.windowBounds(id),
         old = win.getBounds();
-      if (["x", "y", "width", "height"].some((k) => b[k] !== old[k])) {
+      if (
+        !win.sectorDragging &&
+        ["x", "y", "width", "height"].some((k) => b[k] !== old[k])
+      ) {
         this.moving = true;
         win.setBounds({ x: b.x, y: b.y, width: b.width, height: b.height });
         this.moving = false;
@@ -233,8 +248,15 @@ class Overlays {
     this.scaleTimer = null;
     this.save(this.config);
   }
+  flushMove() {
+    if (!this.moveTimer) return;
+    clearTimeout(this.moveTimer);
+    this.moveTimer = null;
+    this.save(this.config);
+  }
   stop() {
     this.flushScale();
+    this.flushMove();
     this.closed = true;
     clearTimeout(this.moveTimer);
     this.telemetry.stop();

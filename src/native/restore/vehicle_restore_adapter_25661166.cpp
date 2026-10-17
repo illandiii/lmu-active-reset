@@ -209,6 +209,18 @@ static int prepare(void *user, const ResetIdentity *identity, RestorePlan *plan,
     }
     *bindings = adapter->bindings;
     *scoring = adapter->scoring;
+    // game_vehicle+0x1cf9c is scoring+0xd4. Restore the healthy checkpoint's
+    // failure latch in the same transaction as engine/rigid state, including rollback.
+    // Geometry, lifetime and contact checks still reject a detached/replaced assembly.
+    if (plan->count >= RESTORE_MAX_FIELDS)
+        return 1;
+    auto &failure = plan->fields[plan->count++];
+    failure = {};
+    failure.object_slot = RESTORE_OBJECT_COUNT;
+    failure.field_offset = 0xd4;
+    failure.size = sizeof(uint32_t);
+    std::memcpy(failure.expected, &adapter->current.terminal_failure, failure.size);
+    std::memcpy(failure.desired, &adapter->saved.terminal_failure, failure.size);
     if (adapter->host.collision_vehicle) {
         // Include the producer-side pose and its collision-facing projection in
         // the same transaction, including preflight, readback and compensation.

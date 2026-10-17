@@ -2,7 +2,9 @@
 
 
 def expected_restore_fields(revision):
-    """Match the admitted native host's typed plan, including v15 collision caches."""
+    """Match the admitted native host's typed plan, including the failure latch."""
+    if revision == 16:
+        return 10085
     if revision == 15:
         return 10084
     if 1 <= revision <= 14:
@@ -19,7 +21,7 @@ def preparation_ready(report, expected_fields):
 
 
 class HotkeyCommands:
-    def __init__(self, expected_fields=10084):
+    def __init__(self, expected_fields=10085):
         self.expected_fields = expected_fields
         self.armed = False
         self.saved = False

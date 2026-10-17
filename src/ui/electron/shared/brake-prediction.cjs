@@ -1,4 +1,8 @@
 const finite = Number.isFinite;
+// A combined-slip warning metric, not a calibrated friction coefficient.
+// Lateral demand advances the warning; only longitudinal slip confirms a lock.
+const combinedSlip = (slip, angle) =>
+  Math.hypot(slip, Math.tan((Math.min(80, Math.abs(angle)) * Math.PI) / 180));
 function slipAngle(w) {
   return finite(w?.lateralSpeed) &&
     finite(w?.groundSpeed) &&
@@ -23,6 +27,7 @@ class BrakeTrace {
         !finite(p.brake) ||
         p.brake <= 0.02 ||
         !slip ||
+        slip.speed < 5 ||
         angle === null
       )
         return [];
@@ -78,15 +83,17 @@ function predictLock(data, settings, index, slip) {
     return null;
   if (slip.slip >= goal)
     return { locked: true, eta: 0, threshold: p.brake, angle };
-  if (angle === null) return null;
-  // Only extrapolate a consistent local trend at comparable speed, slip angle and load.
-  // This is a short-horizon warning, not a universal tyre-friction model.
+  if (angle === null || slip.slip < 0.03) return null;
+  const demand = combinedSlip(slip.slip, angle);
+  if (demand >= goal)
+    return { locked: false, eta: 0, threshold: p.brake, angle };
+  // Extrapolate combined longitudinal and lateral demand at comparable speed/load.
+  // Changing slip angle now advances or delays the warning instead of discarding it.
   const samples = (data.brakeTrace?.[index] || []).filter(
     (s) =>
       p.et - s.time >= 0 &&
       p.et - s.time <= 0.4 &&
       Math.abs(s.speed - slip.speed) <= Math.max(8, slip.speed * 0.15) &&
-      Math.abs(s.angle - angle) <= 3 &&
       s.load / wheel.load >= 0.65 &&
       s.load / wheel.load <= 1.35,
   );
@@ -97,11 +104,14 @@ function predictLock(data, settings, index, slip) {
     slip.slip < 0.03
   )
     return null;
-  const sliding = regression(samples, "slip"),
+  const sliding = regression(
+      samples.map((s) => ({ ...s, demand: combinedSlip(s.slip, s.angle) })),
+      "demand",
+    ),
     pedal = regression(samples, "brake");
   if (sliding.slope < 0.05 || sliding.fit < 0.75 || pedal.slope < -0.03)
     return null;
-  const eta = (goal - slip.slip) / sliding.slope;
+  const eta = (goal - demand) / sliding.slope;
   const threshold = p.brake + Math.max(0, pedal.slope) * eta;
   if (eta <= 0 || eta > (settings.predictionMs ?? 500) / 1000 || threshold > 1)
     return null;

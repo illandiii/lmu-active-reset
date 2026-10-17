@@ -49,18 +49,6 @@ struct VehicleCheckpointWorkspace {
         prior_topology = prior_configuration = 0;
     }
     void prepare_native_bank(SnapshotFrame &f) {
-        // REA ECDD90/ECD890: shared terminal failure latch is not yet restorable.
-        // Refuse preparation, invalidate the earlier bank, and retain diagnosis.
-        if (f.terminal_failure) {
-            invalidate_bank();
-            f.bank_status = CHECKPOINT_INVALID_STATE;
-            f.plan_status = RESTORE_BAD_PLAN;
-            f.bank_generation = bank_epoch;
-            f.bank_rejections = ++bank_rejections;
-            f.bank_saves = bank_saves;
-            f.bank_preparations = bank_preparations;
-            return;
-        }
         uint64_t config = 14695981039346656037ULL;
         config = hash_bytes(config, &f.dependencies.fuel.density, sizeof(double) * 3);
         config = hash_bytes(config, &f.powertrain.engine_type_rva, sizeof(uint64_t));
@@ -259,12 +247,12 @@ struct VehicleCheckpointWorkspace {
     }
 };
 
-static bool valid_shape(const SnapshotFrame *frame) {
+static bool valid_shape(const SnapshotFrame *frame, bool checkpoint = true) {
     return frame && frame->root_count > 0 && frame->root_count <= 28 && frame->total_count > 0 &&
            frame->total_count <= 32 && frame->root_count + 4 == frame->total_count &&
            frame->constraint_count > 0 && frame->constraint_count <= 64 && frame->topology_token &&
-           !frame->terminal_failure && !frame->geometry_status && !frame->mechanical_status &&
-           frame->memory_valid &&
+           (!checkpoint || !frame->terminal_failure) && !frame->geometry_status &&
+           !frame->mechanical_status && frame->memory_valid &&
            native_cache_valid(&frame->native_cache, frame->bodies, frame->total_count);
 }
 
@@ -298,7 +286,7 @@ int vehicle_checkpoint_prepare(VehicleCheckpointWorkspace *work, const SnapshotF
         output->count = 0;
     if (!work || !output || !bindings || !backend || !backend->context || !backend->allowed ||
         !backend->read || !flags || !bindings->epoch || !valid_shape(saved) ||
-        !valid_shape(current) || saved->topology_token != current->topology_token ||
+        !valid_shape(current, false) || saved->topology_token != current->topology_token ||
         saved->total_count != current->total_count ||
         saved->constraint_count != current->constraint_count ||
         bindings->body_count != current->total_count ||

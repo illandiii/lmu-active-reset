@@ -144,7 +144,7 @@ function brakeValues(data, settings) {
     fillColor: locked.some(Boolean) ? "#E2483D" : "#6B7A8C",
     events: events.map((e) => ({ left: `${e.brake * 100}%` })),
     forecast: earliest
-      ? `${upcoming} ${earliest.locked ? "LOCK" : `~${Math.round(earliest.eta * 1000)} ms`}`
+      ? `${upcoming} ${earliest.locked ? "LOCK" : earliest.eta === 0 ? "RISK" : `~${Math.round(earliest.eta * 1000)} ms`}`
       : "-",
     forecastColor: earliest?.locked ? "#FF8A80" : "#FFC062",
     tyres: locked.map((on, i) => ({
@@ -152,7 +152,7 @@ function brakeValues(data, settings) {
       locked: on,
       predicted: Boolean(predictions[i] && !on),
       title: predictions[i]
-        ? `${names[i]}: ${on ? "locking" : `estimated lock in ${Math.round(predictions[i].eta * 1000)} ms`} at ~${Math.round(predictions[i].threshold * 100)}% brake`
+        ? `${names[i]}: ${on ? "locking" : predictions[i].eta === 0 ? "combined-slip risk" : `estimated lock in ${Math.round(predictions[i].eta * 1000)} ms`} at ~${Math.round(predictions[i].threshold * 100)}% brake`
         : names[i],
       bg: on
         ? "#FF5A4E"

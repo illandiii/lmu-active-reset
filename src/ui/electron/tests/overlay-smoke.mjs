@@ -124,7 +124,7 @@ try {
   await page.getByRole("button", { name: "Brake lock", exact: true }).click();
   await page
     .locator(".widget-brake-lock")
-    .getByText("FL ~200 ms", { exact: true })
+    .getByText(/FL ~\d+ ms/)
     .waitFor();
   assert.equal(
     await page.locator('.widget-brake-lock [data-predicted="true"]').count(),
@@ -382,6 +382,28 @@ try {
   assert.equal(inputs.visible, true);
   assert.equal(inputs.bounds.width, 650);
   assert.equal(inputs.focusable, true);
+  // A telemetry tick with stale configured bounds must not move/resize a native drag.
+  assert.equal(
+    await app.evaluate(() => {
+      const overlays = global.sectorTest.overlays();
+      const win = overlays.windows.get("inputs");
+      const initial = overlays.config.widgets.inputs.x;
+      const setBounds = win.setBounds.bind(win);
+      let writes = 0;
+      win.setBounds = (...args) => {
+        writes++;
+        return setBounds(...args);
+      };
+      win.emit("will-move", {}, win.getBounds());
+      overlays.config.widgets.inputs.x = initial + 30;
+      for (let i = 0; i < 20; i++) overlays.sync();
+      overlays.config.widgets.inputs.x = initial;
+      win.emit("moved");
+      win.setBounds = setBounds;
+      return writes;
+    }),
+    0,
+  );
   const resize = inputPage.getByRole("button", {
     name: "Resize widget",
     exact: true,
@@ -519,13 +541,16 @@ try {
         session: 10,
         track: "Fixture",
         player: { id: 9 },
-        cars: ["Hypercar", "LMGT3"].flatMap((cls, c) =>
+        cars: ["Hypercar", "LMP 2", "LMP 3", "LM GT3"].flatMap((cls, c) =>
           Array.from({ length: 12 }, (_, i) => ({
             id: c * 20 + i,
             class: cls,
             place: c * 12 + i + 1,
             player: c === 0 && i === 9,
             name: c === 0 && i === 9 ? "Hyper Player" : `${cls} ${i}`,
+            vehicle: ["Ferrari 499P", "Oreca 07", "Ligier JS P325", "720S GT3"][
+              c
+            ],
             laps: 5,
             lapsBehind: 0,
             behind: i,
@@ -539,6 +564,18 @@ try {
     .locator(".widget-leaderboard")
     .getByText("Hyper Player", { exact: true });
   await hyperPlayer.waitFor();
+  for (const badge of ["HY", "P2", "P3", "GT3"]) {
+    const logo = page.locator(`.widget-leaderboard svg[aria-label="${badge}"]`);
+    assert.equal(await logo.count(), 1);
+    assert.equal(await logo.locator("path").count(), 1);
+    assert.equal(await logo.locator("text").textContent(), badge);
+  }
+  for (const brand of ["ORE", "LIG", "MCL"])
+    assert.ok(
+      (await page
+        .locator(`.widget-leaderboard svg[aria-label="${brand}"] image`)
+        .count()) > 0,
+    );
   assert.equal(
     await hyperPlayer.evaluate(
       (n) => n.closest(".ov-in").querySelector('[aria-label="HY"]') !== null,

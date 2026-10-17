@@ -1,12 +1,13 @@
 """Verify stopped resident snapshot modules and original Dynamics instructions."""
 
 import ctypes as C
-import hashlib
 import importlib
-import json
-import re
 from ctypes import wintypes as W
-from pathlib import Path
+from sector.runtime.resident_identity import (
+    physical_host_identity,
+    resident_profile,
+    verify_stopped_resident,
+)
 from sector.telemetry.capture_context import PROJECT
 from sector.telemetry.capture_preparation_steam25661166 import verify_telemetry
 from sector.observers.run_physics_observer import modules, k, api, read_process
@@ -16,6 +17,7 @@ def audit(pid):
     verify_telemetry(pid)
     listed = modules(pid)
     reports = {}
+    host_profiles = []
     registry = {
         "lmu-physical-reset-v8-25661166.dll": (
             "sector.runtime.run_physical_reset_host_25661166",
@@ -303,35 +305,17 @@ def audit(pid):
     api("OpenFileMappingW", [W.DWORD, W.BOOL, W.LPCWSTR], W.HANDLE)
     for entry in listed:
         name = entry["name"].lower()
-        if re.fullmatch(
-            r"lmu-physical-reset-v(?:9|10|11|12|13|14|15)-25661166-[0-9a-f]{32}\.dll", name
-        ):
-            registry[name] = (
-                "sector.runtime.run_physical_reset_host_25661166",
-                f"steam-25661166-physical-reset-v{name.split('-v')[1].split('-')[0]}.json",
-                f"LMU_PhysicalReset_{name}_",
-                0x4C4D555253543030 + int(name.split("-v")[1].split("-")[0]),
-            )
+        host = physical_host_identity(name)
+        if host:
+            registry[name] = host
         if not name.startswith("lmu-"):
             continue
         if name not in registry:
             raise ValueError("Unknown project module: " + name)
         module, manifest, prefix, magic = registry[name]
-        path = (PROJECT / "bin" / name).resolve()
-        profile = json.loads((PROJECT / "compatibility" / manifest).read_text())
-        # The initial repository migration moved the unchanged bin directory.
-        # Windows keeps the original mapped path until process exit. Accept only
-        # an explicit local migration record for this exact former project path.
-        former = PROJECT / "outputs" / "lmu-active-reset" / "bin" / name
-        migrated = (
-            profile.get("previous_dll_path") == str(former)
-            and Path(entry["path"]) == former
-            and not former.exists()
-        )
-        if (Path(entry["path"]) != path and not migrated) or hashlib.sha256(
-            path.read_bytes()
-        ).hexdigest() != profile["dll_sha256"]:
-            raise ValueError("Resident identity mismatch")
+        profile = resident_profile(entry, manifest, PROJECT)
+        if host:
+            host_profiles.append(profile)
         IPC = importlib.import_module(module).IPC
         mapping = k.OpenFileMappingW(4, False, f"Local\\{prefix}{pid}")
         view = None
@@ -342,16 +326,7 @@ def audit(pid):
             if not view:
                 raise ValueError("Unreadable snapshot IPC")
             state = IPC.from_buffer_copy(C.string_at(view, C.sizeof(IPC)))
-            if (
-                state.magic != magic
-                or state.pid != pid
-                or state.version != 1
-                or state.status != 3
-                or state.error
-                or state.stop != 1
-                or state.allow_observation
-            ):
-                raise ValueError("Snapshot module not cleanly stopped")
+            verify_stopped_resident(state, magic, pid)
             reports[name] = dict(
                 status=state.status,
                 error=state.error,
@@ -369,17 +344,7 @@ def audit(pid):
     if not handle:
         raise OSError("Cannot verify restored code")
     try:
-        for revision in range(1, 16):
-            if f"lmu-physical-reset-v{revision}-25661166.dll" not in reports and not (
-                revision >= 9
-                and any(n.startswith(f"lmu-physical-reset-v{revision}-") for n in reports)
-            ):
-                continue
-            profile = json.loads(
-                (
-                    PROJECT / f"compatibility/steam-25661166-physical-reset-v{revision}.json"
-                ).read_text()
-            )
+        for profile in host_profiles:
             for target in profile["targets"]:
                 expected = bytes.fromhex(target["prolog"])
                 if read_process(handle, image["base"] + target["rva"], len(expected)) != expected:

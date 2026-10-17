@@ -101,6 +101,53 @@ test("class badges and model-only vehicle names resolve to their logos", () => {
   ])
     assert.equal(model.make(name), code);
 });
+test("manufacturer logos use each car's telemetry model and vehicle file, not team names", () => {
+  const data = raw({
+    player: { id: 3, model: "Mercedes AMG GT3" },
+    cars: [
+      {
+        id: 1,
+        class: "LMP2",
+        place: 1,
+        vehicle: "United #22",
+        model: "Oreca 07",
+      },
+      {
+        id: 2,
+        class: "LMGT3",
+        place: 2,
+        vehicle: "Team #54",
+        vehicleFile: "Ferrari_296_GT3_54.veh",
+      },
+      { id: 3, class: "LMGT3", place: 3, vehicle: "Team #61", player: true },
+      {
+        id: 4,
+        class: "LMGT3",
+        place: 4,
+        vehicle: "Team #91",
+        model: "Porsche 911 GT3 R",
+      },
+    ],
+  });
+  const rows = model
+    .valuesFor("leaderboard", data, config.defaults().widgets.leaderboard)
+    .classes.flatMap((c) => c.rows);
+  assert.deepEqual(
+    rows.map((r) => r.make),
+    ["ORE", "FER", "MER", "POR"],
+  );
+  assert.ok(rows.every((r) => r.hasImg));
+  // Missing telemetry must never borrow the player's manufacturer for another car.
+  delete data.cars[0].model;
+  const unknown = model.valuesFor(
+    "leaderboard",
+    data,
+    config.defaults().widgets.leaderboard,
+  ).classes[0].rows[0];
+  assert.equal(unknown.make, "");
+  assert.equal(unknown.hasImg, false);
+});
+
 test("overlay preferences persist independently and reject invalid geometry", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sector-overlays-"));
   const file = path.join(dir, "overlays.json");

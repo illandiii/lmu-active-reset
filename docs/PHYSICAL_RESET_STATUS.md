@@ -1,6 +1,6 @@
 # Physical reset: current status
 
-**Current desktop: 0.2.2. Native host: v17 for the verified Steam 25661166 /
+**Current desktop: 0.2.3. Native host: v17 for the verified Steam 25661166 /
 app build 14200 compatibility profile.** Matching the display version alone is
 insufficient: runtime admission also checks the pinned identities and hashes.
 
@@ -18,6 +18,17 @@ position with the velocity at the moment of F7. There are no speed, distance,
 session-duration or checkpoint-age caps. Compatibility, lifecycle, finite-state
 checks remain active. Checkpoints are tied to the vehicle
 generation and can be invalidated by reconstruction, even at the same address.
+
+## Reconnecting after an app update
+
+The 0.2.2 launch logs recorded `Resident identity mismatch` before a host was
+started. The audit incorrectly required a resident DLL to live in the current
+release directory and did not register hosts v16/v17. Version 0.2.3 resolves each
+resident module against its original build. Earlier managed runtime directories
+must match their content-addressed release manifest, profile and DLL hashes.
+All resident modules must still acknowledge a clean stop, and their original
+hook targets must be restored before a new host can connect. Unknown, modified
+or still-active modules are refused. This does not reuse a previous checkpoint.
 
 ## Preparation without teleporting
 

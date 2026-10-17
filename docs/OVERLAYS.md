@@ -5,6 +5,12 @@ Sector provides eleven widgets based on the supplied `LMU Overlay.html`,
 Weather, Delta, Inputs, Laps, Session, Brake lock, Tyres, Stint planner and Hybrid**. Artwork and
 fonts are bundled locally; the exported page's remote runtime is not executed.
 
+Leaderboard and Relative identify manufacturer logos using each car's SDK model,
+then its vehicle filename and scoring name. Models are matched by vehicle ID;
+missing, stale or ambiguous opponent telemetry never borrows the player's model.
+This supports scoring names containing only a team and race number. Unknown
+models remain unidentified rather than receiving another manufacturer's logo.
+
 ## Configure the HUD
 
 1. Open **Overlay**, choose the widgets and enable **Overlays**.

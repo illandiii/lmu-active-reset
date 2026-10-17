@@ -92,6 +92,7 @@ template <size_t N> static void text(std::ostream &out, const char (&value)[N]) 
 
 struct CarResources {
     bool available = false;
+    char model[30]{};
     float energy = 0;
     char compounds[4][18]{};
 };
@@ -129,6 +130,7 @@ static bool copyFrame(Frame &f, const SharedMemoryObjectOut &data) {
             std::abs(match->mElapsedTime - f.scoring.mCurrentET) > 1.5)
             continue;
         r.available = true;
+        memcpy(r.model, match->mVehicleModel, sizeof r.model);
         r.energy = match->mVirtualEnergy;
         for (int wheel = 0; wheel < 4; ++wheel) {
             const auto index = match->mWheel[wheel].mCompoundIndex;
@@ -254,6 +256,10 @@ static std::string serialize(const Frame &f, bool foreground) {
         text(o, v.mDriverName);
         o << ",\"vehicle\":";
         text(o, v.mVehicleName);
+        o << ",\"vehicleFile\":";
+        text(o, v.mVehFilename);
+        o << ",\"model\":";
+        text(o, f.resources[i].model);
         o << ",\"class\":";
         text(o, v.mVehicleClass);
         o << ",\"player\":" << (v.mIsPlayer ? "true" : "false")
@@ -327,16 +333,20 @@ int main(int argc, char **argv) {
         match.telemetry.mMotorMap = 3;
         match.telemetry.mMotorMapMax = 5;
         strcpy(match.telemetry.mVehicleModel, "Porsche 963");
+        strcpy(match.cars[0].mVehicleName, "Team #6");
+        strcpy(match.cars[0].mVehFilename, "Porsche_963_6.veh");
         match.scoring.mInRealtime = true;
         strcpy(match.telemetry.mFrontTireCompoundName, "Soft");
         data->telemetry.telemInfo[0] = match.telemetry;
         data->telemetry.telemInfo[0].mVirtualEnergy = 0.42f;
         Frame resources{};
         ok = ok && copyFrame(resources, *data) && resources.resources[0].available &&
+             !strcmp(resources.resources[0].model, "Porsche 963") &&
              !strcmp(resources.resources[0].compounds[0], "Soft");
         match.resources[0] = resources.resources[0];
         data->telemetry.telemInfo[0].mElapsedTime = -5;
-        ok = ok && copyFrame(resources, *data) && !resources.resources[0].available;
+        ok = ok && copyFrame(resources, *data) && !resources.resources[0].available &&
+             !resources.resources[0].model[0];
         data->telemetry.telemInfo[0].mElapsedTime = 0;
         data->telemetry.activeVehicles = 2;
         data->scoring.scoringInfo.mNumVehicles = 2;
@@ -344,13 +354,17 @@ int main(int argc, char **argv) {
         data->telemetry.telemInfo[1].mID = 9;
         data->telemetry.telemInfo[1].mVirtualEnergy = 0.66f;
         strcpy(data->telemetry.telemInfo[1].mFrontTireCompoundName, "Medium");
+        strcpy(data->telemetry.telemInfo[1].mVehicleModel, "Oreca 07");
         ok = ok && copyFrame(resources, *data) && resources.resources[1].available &&
              std::abs(resources.resources[1].energy - 0.66f) < 0.0001 &&
              !strcmp(resources.resources[1].compounds[0], "Medium") &&
+             !strcmp(resources.resources[1].model, "Oreca 07") &&
+             !strcmp(resources.resources[0].model, "Porsche 963") &&
              !strcmp(resources.resources[0].compounds[0], "Soft");
         data->telemetry.telemInfo[1].mID = 7;
         ok = ok && copyFrame(resources, *data) && !resources.resources[0].available &&
-             !resources.resources[1].available;
+             !resources.resources[1].available && !resources.resources[0].model[0] &&
+             !resources.resources[1].model[0];
         const auto json = serialize(match, false);
         ok = ok && json.find("\"temperatures\":[98,93,88]") != std::string::npos &&
              json.find("\"radius\":0.31") != std::string::npos;

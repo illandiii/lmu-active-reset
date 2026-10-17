@@ -49,10 +49,10 @@ const manufacturers = [
 ];
 const make = (vehicle) =>
   manufacturers.find(([, pattern]) =>
-    new RegExp(pattern, "i").test(vehicle),
+    new RegExp(pattern, "i").test(String(vehicle || "").replaceAll("_", " ")),
   )?.[0] || "";
 function row(v, accent) {
-  const manufacturer = make(v.vehicle),
+  const manufacturer = make(v.model) || make(v.vehicleFile) || make(v.vehicle),
     player = v.player;
   return {
     car: true,
@@ -206,7 +206,11 @@ function valuesFor(id, data, settings) {
     p = live ? data.player : null,
     accent = settings.accent;
   const cars = (live ? data.cars || [] : [])
-    .map((v) => ({ ...v, cls: classCode(v.class) }))
+    .map((v) => ({
+      ...v,
+      model: v.model || (v.id === p?.id ? p.model : ""),
+      cls: classCode(v.class),
+    }))
     .sort((a, b) => a.place - b.place);
   const groups = {};
   for (const v of cars) {

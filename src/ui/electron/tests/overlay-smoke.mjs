@@ -548,7 +548,8 @@ try {
             place: c * 12 + i + 1,
             player: c === 0 && i === 9,
             name: c === 0 && i === 9 ? "Hyper Player" : `${cls} ${i}`,
-            vehicle: ["Ferrari 499P", "Oreca 07", "Ligier JS P325", "720S GT3"][
+            vehicle: `Team #${i + 1}`,
+            model: ["Ferrari 499P", "Oreca 07", "Ligier JS P325", "720S GT3"][
               c
             ],
             laps: 5,

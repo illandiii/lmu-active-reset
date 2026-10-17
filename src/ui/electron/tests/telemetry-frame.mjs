@@ -22,6 +22,9 @@ assert.equal(raw.player.wheels[0].lateralSpeed, 2);
 assert.equal(raw.player.hybrid.state, 2);
 assert.equal(raw.player.hybrid.battery, 0.45);
 assert.equal(raw.player.model, "Porsche 963");
+assert.equal(raw.cars[0].vehicle, "Team #6");
+assert.equal(raw.cars[0].model, "Porsche 963");
+assert.equal(raw.cars[0].vehicleFile, "Porsche_963_6.veh");
 assert.equal(raw.cars[0].resources.compounds[0], "Soft");
 assert.ok(Math.abs(raw.cars[0].resources.energy - 0.42) < 0.0001);
 assert.deepEqual(raw.player.wheels[1].temperatures, [null, null, null]);
@@ -35,6 +38,7 @@ const leader = model.valuesFor("leaderboard", data, settings.leaderboard)
   .classes[0].rows[0];
 assert.equal(leader.veTxt, "42%");
 assert.equal(leader.tl, "S");
+assert.equal(leader.make, "POR");
 assert.equal(
   model.valuesFor("tyres", data, settings.tyres).tyres[0].lifePct,
   71,

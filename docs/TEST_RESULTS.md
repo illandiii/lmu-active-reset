@@ -5,6 +5,16 @@ counts and build-specific experiments are preserved in the [research archive](ar
 
 ## Automated coverage
 
+The 0.2.3 update passed 108 Python tests and 49 Node tests. New regressions cover
+current and previous-release resident identity, changed DLLs/profiles/manifests,
+unrecognized paths, active or failed modules, v17 IPC and restored hook targets.
+Logo tests cover team-only names, per-car models, vehicle filenames and missing
+opponent identity. The native SDK fixture also checks stale and duplicate model
+associations. Native SDK serialization, Electron desktop/overlay/Home suites and
+the packaged 0.2.3 EXE smoke test passed. The mixed-class leaderboard screenshot
+also confirms visible Oreca, Ligier and McLaren logos with team-only names.
+Live reset reconnection and in-session logos still need validation.
+
 The 0.2.2 update passed 48 Node tests, 100 Python tests and the native host's
 save/prepare/restore, callback-refusal and restart fixtures. Native PREPARE now
 performs complete read-only preflight and reports its verified field count.

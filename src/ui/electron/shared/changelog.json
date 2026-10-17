@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.3",
+    "changes": [
+      "Fixed reset reconnection after updating Sector while LMU retains a stopped module from an earlier release.",
+      "Recognize reset hosts v16 and v17 during reconnection, with DLL integrity, stopped-state and restored-hook verification.",
+      "Leaderboard and Relative logos now identify each car from its telemetry model and vehicle file, including team-only scoring names."
+    ]
+  },
+  {
     "version": "0.2.2",
     "changes": [
       "Fixed resets rejected by a field count belonging to a different car. Native preflight now validates each complete vehicle plan.",

@@ -90,10 +90,16 @@ template <size_t N> static void text(std::ostream &out, const char (&value)[N]) 
     out << '"';
 }
 
+struct CarResources {
+    bool available = false;
+    float energy = 0;
+    char compounds[4][18]{};
+};
 struct Frame {
     long version;
     ScoringInfoV01 scoring;
     VehicleScoringInfoV01 cars[104];
+    CarResources resources[104];
     TelemInfoV01 telemetry;
     bool player = false;
 };
@@ -107,6 +113,36 @@ static bool copyFrame(Frame &f, const SharedMemoryObjectOut &data) {
         return false;
     memcpy(f.cars, data.scoring.vehScoringInfo, size_t(count) * sizeof f.cars[0]);
     const auto &t = data.telemetry;
+    for (long i = 0; i < count; ++i) {
+        const TelemInfoV01 *match = nullptr;
+        int matches = 0;
+        for (unsigned j = 0; j < t.activeVehicles; ++j) {
+            if (t.telemInfo[j].mID == f.cars[i].mID) {
+                match = &t.telemInfo[j];
+                ++matches;
+            }
+        }
+        auto &r = f.resources[i];
+        r = {};
+        // Never attach another car's resources or retain stale remote telemetry.
+        if (matches != 1 || !std::isfinite(match->mElapsedTime) ||
+            std::abs(match->mElapsedTime - f.scoring.mCurrentET) > 1.5)
+            continue;
+        r.available = true;
+        r.energy = match->mVirtualEnergy;
+        for (int wheel = 0; wheel < 4; ++wheel) {
+            const auto index = match->mWheel[wheel].mCompoundIndex;
+            const char *name = nullptr;
+            if (wheel >= 2 && index == match->mRearTireCompoundIndex)
+                name = match->mRearTireCompoundName;
+            else if (index == match->mFrontTireCompoundIndex)
+                name = match->mFrontTireCompoundName;
+            else if (index == match->mRearTireCompoundIndex)
+                name = match->mRearTireCompoundName;
+            if (name)
+                memcpy(r.compounds[wheel], name, sizeof r.compounds[wheel]);
+        }
+    }
     if (t.playerHasVehicle && t.playerVehicleIdx < t.activeVehicles) {
         const auto &candidate = t.telemInfo[t.playerVehicleIdx];
         int matches = 0;
@@ -164,6 +200,14 @@ static std::string serialize(const Frame &f, bool foreground) {
         n("fuel", t.mFuel);
         n("energy", t.mVirtualEnergy);
         n("fuelCapacity", t.mFuelCapacity);
+        o << ",\"hybrid\":{\"state\":" << unsigned(t.mElectricBoostMotorState);
+        n("battery", t.mBatteryChargeFraction);
+        n("torque", t.mElectricBoostMotorTorque);
+        n("rpm", t.mElectricBoostMotorRPM);
+        n("regenKW", t.mRegen);
+        n("map", t.mMotorMap);
+        n("mapMax", t.mMotorMapMax);
+        o << '}';
         n("delta", t.mDeltaBest);
         n("limits", t.mTrackLimitsSteps);
         o << ",\"invalid\":" << (t.mLapInvalidated ? "true" : "false");
@@ -180,6 +224,7 @@ static std::string serialize(const Frame &f, bool foreground) {
               << ",\"flat\":" << (w.mFlat ? "true" : "false");
             n("rotation", w.mRotation);
             n("groundSpeed", w.mLongitudinalGroundVel);
+            n("lateralSpeed", w.mLateralGroundVel);
             n("radius", double(w.mStaticUndeflectedRadius) / 100.0);
             n("deflection", w.mVerticalTireDeflection);
             n("load", w.mTireLoad);
@@ -223,6 +268,21 @@ static std::string serialize(const Frame &f, bool foreground) {
         n("pitStops", v.mNumPitstops);
         n("qualification", v.mQualification);
         n("countLap", v.mCountLapFlag);
+        o << ",\"resources\":";
+        const auto &r = f.resources[i];
+        if (!r.available)
+            o << "null";
+        else {
+            o << "{\"energy\":";
+            number(o, r.energy);
+            o << ",\"compounds\":[";
+            for (int j = 0; j < 4; ++j) {
+                if (j)
+                    o << ',';
+                text(o, r.compounds[j]);
+            }
+            o << "]}";
+        }
         o << '}';
     }
     o << "]}";
@@ -254,11 +314,40 @@ int main(int argc, char **argv) {
         match.telemetry.mWheel[0].mStaticUndeflectedRadius = 31;
         match.telemetry.mWheel[0].mVerticalTireDeflection = 0.01;
         match.telemetry.mWheel[0].mLongitudinalGroundVel = 30;
+        match.telemetry.mWheel[0].mLateralGroundVel = 2;
         match.telemetry.mWheel[0].mRotation = 45;
         match.telemetry.mWheel[0].mTireLoad = 3000;
         match.telemetry.mUnfilteredBrake = 0.84;
+        match.telemetry.mElectricBoostMotorState = 2;
+        match.telemetry.mBatteryChargeFraction = 0.45;
+        match.telemetry.mElectricBoostMotorTorque = 120;
+        match.telemetry.mElectricBoostMotorRPM = 10000;
+        match.telemetry.mMotorMap = 3;
+        match.telemetry.mMotorMapMax = 5;
         match.scoring.mInRealtime = true;
         strcpy(match.telemetry.mFrontTireCompoundName, "Soft");
+        data->telemetry.telemInfo[0] = match.telemetry;
+        data->telemetry.telemInfo[0].mVirtualEnergy = 0.42f;
+        Frame resources{};
+        ok = ok && copyFrame(resources, *data) && resources.resources[0].available &&
+             !strcmp(resources.resources[0].compounds[0], "Soft");
+        match.resources[0] = resources.resources[0];
+        data->telemetry.telemInfo[0].mElapsedTime = -5;
+        ok = ok && copyFrame(resources, *data) && !resources.resources[0].available;
+        data->telemetry.telemInfo[0].mElapsedTime = 0;
+        data->telemetry.activeVehicles = 2;
+        data->scoring.scoringInfo.mNumVehicles = 2;
+        data->scoring.vehScoringInfo[1].mID = 9;
+        data->telemetry.telemInfo[1].mID = 9;
+        data->telemetry.telemInfo[1].mVirtualEnergy = 0.66f;
+        strcpy(data->telemetry.telemInfo[1].mFrontTireCompoundName, "Medium");
+        ok = ok && copyFrame(resources, *data) && resources.resources[1].available &&
+             std::abs(resources.resources[1].energy - 0.66f) < 0.0001 &&
+             !strcmp(resources.resources[1].compounds[0], "Medium") &&
+             !strcmp(resources.resources[0].compounds[0], "Soft");
+        data->telemetry.telemInfo[1].mID = 7;
+        ok = ok && copyFrame(resources, *data) && !resources.resources[0].available &&
+             !resources.resources[1].available;
         const auto json = serialize(match, false);
         ok = ok && json.find("\"temperatures\":[98,93,88]") != std::string::npos &&
              json.find("\"radius\":0.31") != std::string::npos;

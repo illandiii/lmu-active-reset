@@ -316,6 +316,7 @@ export function OverlayEditor() {
               ? [
                   ["slipThreshold", "Slip threshold", 5, 90, "%"],
                   ["minimumSpeed", "Minimum speed", 5, 150, "km/h"],
+                  ["predictionMs", "Prediction window", 100, 1000, "ms"],
                 ]
               : selected === "tyres"
                 ? [
@@ -334,7 +335,13 @@ export function OverlayEditor() {
                       ["consumptionLaps", "Consumption average", 1, 20, "laps"],
                       ["reserveLaps", "Reserve", 0, 5, "laps"],
                     ]
-                  : []
+                  : selected === "hybrid"
+                    ? [
+                        ["targetSoc", "Battery target", 10, 90, "%"],
+                        ["targetLaps", "Target horizon", 1, 10, "laps"],
+                        ["powerScale", "Power bar scale", 50, 500, "kW"],
+                      ]
+                    : []
             ).map(([key, label, min, max, suffix]) => (
               <NumberField
                 key={key}

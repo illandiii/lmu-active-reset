@@ -59,7 +59,7 @@ try {
   await page
     .getByRole("switch", { name: "Enable overlays", exact: true })
     .waitFor();
-  for (const name of ["Brake lock", "Tyres", "Stint planner"]) {
+  for (const name of ["Brake lock", "Tyres", "Stint planner", "Hybrid"]) {
     await page.getByRole("button", { name, exact: true }).click();
     await page.locator(".widget-stage .lmu-widget").waitFor();
     assert.doesNotMatch(

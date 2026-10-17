@@ -1,6 +1,8 @@
 const dash = "-";
 const { WheelHistory, brakeValues, tyreValues } = require("./wheel-model.cjs");
 const { stintValues } = require("./stint-model.cjs");
+const { resourceValues } = require("./compound-model.cjs");
+const { HybridHistory, hybridValues } = require("./hybrid-model.cjs");
 const finite = (v) => typeof v === "number" && Number.isFinite(v);
 const clamp = (v, min = 0, max = 1) =>
   finite(v) ? Math.max(min, Math.min(max, v)) : min;
@@ -80,6 +82,7 @@ class TelemetryModel {
   }
   reset() {
     this.wheels = new WheelHistory();
+    this.hybrid = new HybridHistory();
     this.history = [];
     this.laps = [];
     this.previous = null;
@@ -187,6 +190,7 @@ class TelemetryModel {
     return {
       ...raw,
       ...this.wheels.update(raw),
+      hybridLaps: this.hybrid.update(raw),
       history: this.history,
       laps: this.laps,
       lastPit: this.lastPit,
@@ -197,6 +201,7 @@ function valuesFor(id, data, settings) {
   if (id === "brake-lock") return brakeValues(data, settings);
   if (id === "tyres") return tyreValues(data, settings);
   if (id === "stint-planner") return stintValues(data, settings);
+  if (id === "hybrid") return hybridValues(data, settings);
   const live = Boolean(data?.connected),
     p = live ? data.player : null,
     accent = settings.accent;
@@ -325,16 +330,22 @@ function valuesFor(id, data, settings) {
         1,
         Math.min(preferred, budget - (entries.length - i - 1)),
       );
-      const selected = list.slice(0, capacity);
-      budget -= selected.length;
-      if (list.some((v) => v.player) && !selected.some((v) => v.player)) {
-        const center = list.findIndex((v) => v.player);
-        selected.splice(
-          Math.max(1, selected.length - 3),
-          3,
-          ...list.slice(Math.max(1, center - 1), center + 2),
+      // Keep the player's neighbours inside their own class section.
+      const center = list.findIndex((v) => v.player);
+      let selected = list.slice(0, capacity);
+      if (center >= capacity) {
+        const leaders = Math.min(3, Math.max(0, capacity - 3));
+        const count = capacity - leaders;
+        const from = Math.max(
+          leaders,
+          Math.min(center - Math.floor(count / 2), list.length - count),
         );
+        selected = [
+          ...list.slice(0, leaders),
+          ...list.slice(from, from + count),
+        ];
       }
+      budget -= selected.length;
       return {
         badge,
         color: colors[badge] || "#677383",
@@ -343,15 +354,21 @@ function valuesFor(id, data, settings) {
           Math.min(...list.map((v) => (v.best > 0 ? v.best : Infinity))),
         ),
         delay: "0ms",
-        rows: selected.slice(0, capacity).map((v) => ({
-          ...row(v, accent),
-          gap:
-            v.classPlace === 1
-              ? `Lap ${v.laps}`
-              : v.lapsBehind !== list[0].lapsBehind
-                ? `${v.lapsBehind - list[0].lapsBehind}L`
-                : signed(v.behind - list[0].behind),
-        })),
+        rows: selected.flatMap((v, j) => [
+          ...(j > 0 && v.classPlace > selected[j - 1].classPlace + 1
+            ? [{ sep: true, car: false }]
+            : []),
+          {
+            ...row(v, accent),
+            ...resourceValues(v.resources),
+            gap:
+              v.classPlace === 1
+                ? `Lap ${v.laps}`
+                : v.lapsBehind !== list[0].lapsBehind
+                  ? `${v.lapsBehind - list[0].lapsBehind}L`
+                  : signed(v.behind - list[0].behind),
+          },
+        ]),
       };
     });
     return { ...common, classes };

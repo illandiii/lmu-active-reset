@@ -18,9 +18,20 @@ assert.equal(raw.player.wheels.length, 4);
 assert.deepEqual(raw.player.wheels[0].temperatures, [98, 93, 88]);
 assert.equal(raw.player.wheels[0].radius, 0.31);
 assert.equal(raw.player.wheels[0].wear, 0.71);
+assert.equal(raw.player.wheels[0].lateralSpeed, 2);
+assert.equal(raw.player.hybrid.state, 2);
+assert.equal(raw.player.hybrid.battery, 0.45);
+assert.equal(raw.cars[0].resources.compounds[0], "Soft");
+assert.ok(Math.abs(raw.cars[0].resources.energy - 0.42) < 0.0001);
 assert.deepEqual(raw.player.wheels[1].temperatures, [null, null, null]);
 const data = new model.TelemetryModel().update(raw);
 const settings = config.defaults().widgets;
+assert.equal(model.valuesFor("hybrid", data, settings.hybrid).socPct, 45);
+assert.equal(model.valuesFor("hybrid", data, settings.hybrid).kw, 126);
+const leader = model.valuesFor("leaderboard", data, settings.leaderboard)
+  .classes[0].rows[0];
+assert.equal(leader.veTxt, "42%");
+assert.equal(leader.tl, "S");
 assert.equal(
   model.valuesFor("tyres", data, settings.tyres).tyres[0].lifePct,
   71,
@@ -38,5 +49,5 @@ assert.equal(
   "-",
 );
 console.log(
-  "PASS native SDK serialization through the production wheel and stint models.",
+  "PASS native SDK serialization through wheel, stint, hybrid and leaderboard models.",
 );

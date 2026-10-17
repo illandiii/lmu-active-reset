@@ -33,8 +33,11 @@
 .widget-brake-lock .fill {
   transform-origin: left center;
 }
-.widget-tyres .tyre-grid:has(> :only-child) {
-  grid-template-columns: 1fr !important;
+.widget-hybrid .pl {
+  transform-origin: right center;
+}
+.widget-hybrid .pr {
+  transform-origin: left center;
 }
 .widget-stint-planner [data-fluid-grid]:empty {
   display: none !important;

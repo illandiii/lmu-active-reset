@@ -264,7 +264,7 @@ test("hidden columns persist and shrink the native window, absent classes stay a
     width: 1920,
     height: 1080,
   });
-  assert.equal(bounds.width, 440 - 42 - 36);
+  assert.equal(bounds.width, 520 - 42 - 36);
   const live = model.valuesFor("leaderboard", raw(), saved.widgets.leaderboard);
   assert.deepEqual(
     live.classes.map((c) => c.badge),

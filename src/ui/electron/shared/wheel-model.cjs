@@ -1,4 +1,5 @@
 const { FlatSpotHistory, flatSpotDetected } = require("./flatspot-model.cjs");
+const { BrakeTrace, predictLock } = require("./brake-prediction.cjs");
 const finite = Number.isFinite;
 const names = ["FL", "FR", "RL", "RR"];
 const keys = ["frontLeft", "frontRight", "rearLeft", "rearRight"];
@@ -34,6 +35,7 @@ class WheelHistory {
     this.previous = null;
     this.born = [null, null, null, null];
     this.flatSpots = new FlatSpotHistory();
+    this.brakeTrace = new BrakeTrace();
   }
   update(raw) {
     const p = raw.player;
@@ -103,6 +105,7 @@ class WheelHistory {
       };
     });
     return {
+      brakeTrace: this.brakeTrace.update(raw, wheels.map(wheelSlip)),
       flatSpots: this.flatSpots.update(p?.et, contacts, replacements),
       brakeEvents: this.events.map((e) => ({ ...e })),
       tyreLaps: this.born.map((lap) =>
@@ -119,20 +122,17 @@ function brakeValues(data, settings) {
   const events = (data?.connected ? data.brakeEvents || [] : []).filter(
     (e) => e.slip >= threshold && e.speed >= minimumSpeed,
   );
-  const observed = events.length
-    ? Math.min(...events.map((e) => e.brake))
-    : null;
   const brake = finite(p?.brake) ? clamp(p.brake) : 0;
-  const locked = names.map((_, i) => {
-    const w = wheelSlip(p?.wheels?.[i]);
-    return Boolean(
-      data?.driving &&
-      brake > 0.02 &&
-      w &&
-      w.slip >= threshold &&
-      w.speed >= minimumSpeed,
-    );
-  });
+  const predictions = names.map((_, i) =>
+    p ? predictLock(data, settings, i, wheelSlip(p.wheels?.[i])) : null,
+  );
+  const locked = predictions.map((p) => Boolean(p?.locked));
+  const earliest = predictions.filter(Boolean).sort((a, b) => a.eta - b.eta)[0];
+  const observed = earliest?.threshold ?? null;
+  const upcoming = predictions
+    .map((p, i) => (p && p.eta <= earliest.eta + 0.05 ? names[i] : null))
+    .filter(Boolean)
+    .join("/");
   return {
     brake,
     brakePct: finite(p?.brake) ? Math.round(brake * 100) : "-",
@@ -143,11 +143,27 @@ function brakeValues(data, settings) {
     zoneW: `${(1 - (observed ?? 1)) * 100}%`,
     fillColor: locked.some(Boolean) ? "#E2483D" : "#6B7A8C",
     events: events.map((e) => ({ left: `${e.brake * 100}%` })),
+    forecast: earliest
+      ? `${upcoming} ${earliest.locked ? "LOCK" : `~${Math.round(earliest.eta * 1000)} ms`}`
+      : "-",
+    forecastColor: earliest?.locked ? "#FF8A80" : "#FFC062",
     tyres: locked.map((on, i) => ({
       name: names[i],
       locked: on,
-      bg: on ? "#FF5A4E" : "rgba(255,255,255,0.08)",
-      border: on ? "#FFB3AC" : "rgba(255,255,255,0.25)",
+      predicted: Boolean(predictions[i] && !on),
+      title: predictions[i]
+        ? `${names[i]}: ${on ? "locking" : `estimated lock in ${Math.round(predictions[i].eta * 1000)} ms`} at ~${Math.round(predictions[i].threshold * 100)}% brake`
+        : names[i],
+      bg: on
+        ? "#FF5A4E"
+        : predictions[i]
+          ? "#F5A524"
+          : "rgba(255,255,255,0.08)",
+      border: on
+        ? "#FFB3AC"
+        : predictions[i]
+          ? "#FFC062"
+          : "rgba(255,255,255,0.25)",
     })),
   };
 }

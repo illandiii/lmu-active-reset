@@ -26,13 +26,16 @@ function defaults() {
           showLogos: true,
           lockDeg: 270,
           ...(id === "brake-lock"
-            ? { slipThreshold: 20, minimumSpeed: 20 }
+            ? { slipThreshold: 20, minimumSpeed: 20, predictionMs: 500 }
             : {}),
           ...(id === "tyres"
             ? { coldTemp: 80, hotTemp: 105, flatSpotSensitivity: 50 }
             : {}),
           ...(id === "stint-planner"
             ? { consumptionLaps: 5, reserveLaps: 0 }
+            : {}),
+          ...(id === "hybrid"
+            ? { targetSoc: 50, targetLaps: 5, powerScale: 220 }
             : {}),
         },
       ]),
@@ -51,7 +54,8 @@ function validate(value) {
     const w = value.widgets[id];
     if (!w) {
       // Older installations do not have entries for newly added widgets.
-      if (["brake-lock", "tyres", "stint-planner"].includes(id)) continue;
+      if (["brake-lock", "tyres", "stint-planner", "hybrid"].includes(id))
+        continue;
       throw new Error("Missing widget settings.");
     }
     for (const key of [
@@ -90,6 +94,7 @@ function validate(value) {
         ? [
             ["slipThreshold", 5, 90],
             ["minimumSpeed", 5, 150],
+            ["predictionMs", 100, 1000],
           ]
         : id === "tyres"
           ? [
@@ -102,7 +107,13 @@ function validate(value) {
                 ["consumptionLaps", 1, 20],
                 ["reserveLaps", 0, 5],
               ]
-            : [];
+            : id === "hybrid"
+              ? [
+                  ["targetSoc", 10, 90],
+                  ["targetLaps", 1, 10],
+                  ["powerScale", 50, 500],
+                ]
+              : [];
     for (const [key, min, max] of ranges) {
       const candidate = w[key] ?? result.widgets[id][key];
       if (!Number.isInteger(candidate) || candidate < min || candidate > max)

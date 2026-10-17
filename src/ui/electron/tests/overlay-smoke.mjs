@@ -81,6 +81,7 @@ try {
     "Brake lock",
     "Tyres",
     "Stint planner",
+    "Hybrid",
   ]) {
     await page.getByRole("button", { name, exact: true }).click();
     assert.equal(
@@ -121,6 +122,14 @@ try {
       assert.ok((await widget.locator(".manufacturer-logo").count()) > 0);
   }
   await page.getByRole("button", { name: "Brake lock", exact: true }).click();
+  await page
+    .locator(".widget-brake-lock")
+    .getByText("FL ~200 ms", { exact: true })
+    .waitFor();
+  assert.equal(
+    await page.locator('.widget-brake-lock [data-predicted="true"]').count(),
+    1,
+  );
   await page
     .getByRole("checkbox", { name: "Column Wheels", exact: true })
     .uncheck();
@@ -166,31 +175,51 @@ try {
   assert.equal(await flatSpot.count(), 0);
   await condition.check();
   await flatSpot.waitFor();
-  for (const label of [
-    "Front right",
-    "Rear left",
-    "Rear right",
-    "Temperature bands",
-  ])
-    await page
-      .getByRole("checkbox", { name: `Column ${label}`, exact: true })
-      .uncheck();
+  for (const label of ["Front left", "Front right", "Rear left", "Rear right"])
+    assert.equal(
+      await page
+        .getByRole("checkbox", { name: `Column ${label}`, exact: true })
+        .count(),
+      0,
+    );
+  const heat = page.getByRole("checkbox", {
+    name: "Column Temperature bands",
+    exact: true,
+  });
+  await heat.uncheck();
   await page.waitForFunction(
-    () => document.querySelector(".widget-tyres > div").style.width === "160px",
+    () => document.querySelector(".widget-tyres > div").style.width === "264px",
   );
   assert.equal(
     await page.locator('.widget-tyres [aria-label$=" tyre"]').count(),
-    1,
+    4,
   );
-  for (const label of [
-    "Front right",
-    "Rear left",
-    "Rear right",
-    "Temperature bands",
-  ])
-    await page
-      .getByRole("checkbox", { name: `Column ${label}`, exact: true })
-      .check();
+  await heat.check();
+  await page.getByRole("button", { name: "Hybrid", exact: true }).click();
+  await page
+    .locator(".widget-hybrid")
+    .getByText("DEPLOY", { exact: true })
+    .waitFor();
+  const batteryColumn = page.getByRole("checkbox", {
+    name: "Column Battery",
+    exact: true,
+  });
+  await batteryColumn.uncheck();
+  assert.equal(
+    await page.locator('.widget-hybrid [data-column="battery"]').count(),
+    0,
+  );
+  await batteryColumn.check();
+  const deployment = page.getByRole("checkbox", {
+    name: "Column Deploy map",
+    exact: true,
+  });
+  await deployment.uncheck();
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".widget-hybrid > div").style.height === "78px",
+  );
+  await deployment.check();
   await page
     .getByRole("button", { name: "Stint planner", exact: true })
     .click();
@@ -221,7 +250,7 @@ try {
   await page.waitForFunction(
     () =>
       document.querySelector(".widget-leaderboard > div").style.width ===
-      "404px",
+      "484px",
   );
   assert.equal(
     await page.locator('.widget-leaderboard [data-column="logo"]').count(),
@@ -460,6 +489,48 @@ try {
   await app.evaluate(() =>
     global.sectorTest.overlays().telemetry.publish(null, "Waiting for LMU"),
   );
+  await page.getByRole("button", { name: "Leaderboard", exact: true }).click();
+  await app.evaluate(() => {
+    const overlay = global.sectorTest.overlays();
+    overlay.telemetry.publish(
+      {
+        connected: true,
+        foreground: false,
+        session: 10,
+        track: "Fixture",
+        player: { id: 9 },
+        cars: ["Hypercar", "LMGT3"].flatMap((cls, c) =>
+          Array.from({ length: 12 }, (_, i) => ({
+            id: c * 20 + i,
+            class: cls,
+            place: c * 12 + i + 1,
+            player: c === 0 && i === 9,
+            name: c === 0 && i === 9 ? "Hyper Player" : `${cls} ${i}`,
+            laps: 5,
+            lapsBehind: 0,
+            behind: i,
+          })),
+        ),
+      },
+      "Live",
+    );
+  });
+  const hyperPlayer = page
+    .locator(".widget-leaderboard")
+    .getByText("Hyper Player", { exact: true });
+  await hyperPlayer.waitFor();
+  assert.equal(
+    await hyperPlayer.evaluate(
+      (n) => n.closest(".ov-in").querySelector('[aria-label="HY"]') !== null,
+    ),
+    true,
+  );
+  await page
+    .locator(".widget-leaderboard")
+    .screenshot({ path: path.join(output, "leaderboard-hyper-player.png") });
+  await app.evaluate(() =>
+    global.sectorTest.overlays().telemetry.publish(null, "Waiting for LMU"),
+  );
   assert.equal(
     await app.evaluate(() => global.sectorTest.hasListener()),
     false,
@@ -504,7 +575,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: all ten widgets, logos, settings, clutch removal, independent overlay windows, drag persistence, locking, foreground visibility and isolated preview.",
+    "PASS: all eleven widgets, logos, settings, clutch removal, independent overlay windows, drag persistence, locking, foreground visibility and isolated preview.",
   );
 } catch (error) {
   const page = app.windows()[0];

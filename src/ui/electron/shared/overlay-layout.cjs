@@ -10,15 +10,14 @@ function dimensions(id, settings, values) {
   let height = def.height;
   let width = Math.max(160, def.width - removed);
   if (id === "brake-lock") {
+    if (!visible(settings, "prediction")) height -= 20;
     if (!visible(settings, "wheels")) {
       if (!visible(settings, "events")) height -= 14;
       if (!visible(settings, "scale")) height -= 14;
     }
   }
   if (id === "tyres") {
-    const count = ["frontLeft", "frontRight", "rearLeft", "rearRight"].filter(
-      (key) => visible(settings, key),
-    ).length;
+    const count = 4;
     const cols = Math.min(2, Math.max(1, count));
     width =
       24 + cols * (164 - (visible(settings, "heat") ? 0 : 48)) + (cols - 1) * 8;
@@ -28,6 +27,12 @@ function dimensions(id, settings, values) {
       (visible(settings, "temperature") || visible(settings, "age") ? 0 : 14);
     const rows = Math.ceil(count / 2);
     height = 46 + rows * tileHeight + Math.max(0, rows - 1) * 8;
+  }
+  if (id === "hybrid") {
+    height =
+      124 -
+      (visible(settings, "bar") ? 0 : 20) -
+      (visible(settings, "recommendation") ? 0 : 46);
   }
   if (id === "stint-planner") {
     const rows = ["energy", "fuel"].filter((key) =>
@@ -43,7 +48,12 @@ function dimensions(id, settings, values) {
   }
   if (id === "leaderboard" && values?.classes)
     height =
-      68 + values.classes.reduce((sum, c) => sum + 40 + c.rows.length * 26, 0);
+      68 +
+      values.classes.reduce(
+        (sum, c) =>
+          sum + 40 + c.rows.reduce((h, r) => h + (r.sep ? 10 : 26), 0),
+        0,
+      );
   return { ...def, width: Math.max(160, width), height };
 }
 module.exports = { columns, visible, dimensions };

@@ -1,6 +1,8 @@
 import samples from "./samples.json";
 import wheels from "../../shared/wheel-model.cjs";
 import stint from "../../shared/stint-model.cjs";
+import hybrid from "../../shared/hybrid-model.cjs";
+import compounds from "../../shared/compound-model.cjs";
 const common = {
   sessionName: "RACE",
   trackCars: "Spa-Francorchamps, 56 cars",
@@ -41,13 +43,37 @@ const common = {
   limitMax: 5,
 };
 export function sampleValues(id, settings) {
+  if (id === "hybrid")
+    return hybrid.hybridValues(
+      {
+        connected: true,
+        player: {
+          hybrid: {
+            state: 2,
+            torque: 172,
+            rpm: 10000,
+            battery: 0.45,
+            map: 4,
+            mapMax: 5,
+          },
+        },
+        hybridLaps: [
+          { map: 4, delta: -1.4, seconds: 123 },
+          { map: 4, delta: -1.3, seconds: 124 },
+          { map: 3, delta: 1, seconds: 124 },
+          { map: 3, delta: 1.1, seconds: 125 },
+        ],
+      },
+      settings,
+    );
   if (["brake-lock", "tyres", "stint-planner"].includes(id)) {
     const data = {
       connected: true,
       driving: true,
       player: {
         id: 1,
-        brake: 0.84,
+        et: 0.3,
+        brake: 0.64,
         energy: 0.412,
         fuel: 38.6,
         frontCompound: "Soft",
@@ -56,7 +82,8 @@ export function sampleValues(id, settings) {
           attached: true,
           load: 3000,
           groundSpeed: 30,
-          rotation: i === 0 ? 45 : 100,
+          rotation: i === 0 ? 86 : 100,
+          lateralSpeed: 2,
           radius: 0.31,
           deflection: 0.01,
           surface: 0,
@@ -73,6 +100,19 @@ export function sampleValues(id, settings) {
       cars: [{ id: 1, laps: 48 }],
       tyreLaps: [6, 6, 18, 18],
       flatSpots: [{ exposure: 60, duration: 2 }, null, null, null],
+      brakeTrace: [
+        Array.from({ length: 7 }, (_, i) => ({
+          time: i * 0.05,
+          slip: 0.05 + i * 0.015,
+          brake: 0.4 + i * 0.04,
+          speed: 108,
+          angle: (Math.atan2(2, 30) * 180) / Math.PI,
+          load: 3000,
+        })),
+        [],
+        [],
+        [],
+      ],
       brakeEvents: [0.81, 0.86, 0.79, 0.92, 0.84, 0.8].map((brake) => ({
         brake,
         slip: 0.6,
@@ -105,7 +145,16 @@ export function sampleValues(id, settings) {
   if (id === "leaderboard")
     result.classes = result.classes.map((cl) => ({
       ...cl,
-      rows: cl.rows.slice(0, settings.rows),
+      rows: cl.rows.slice(0, settings.rows).map((r, i) => ({
+        ...r,
+        ...compounds.resourceValues({
+          compounds:
+            i % 3 === 1
+              ? ["Soft", "Soft", "Medium", "Medium"]
+              : ["Medium", "Medium", "Medium", "Medium"],
+          energy: ["GT3", "HY"].includes(cl.badge) ? (58 - i * 7) / 100 : null,
+        }),
+      })),
     }));
   if (id === "relative") result.rows = result.rows.slice(0, settings.rows);
   if (id === "laps") result.laps = result.laps.slice(0, settings.rows);

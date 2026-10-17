@@ -19,7 +19,7 @@
           color: #c2c9d0;
           letter-spacing: 0.06em;
         "
-        >LOCKS ABOVE</span
+        >LOCK EST.</span
       >
       <span
         class="mono"
@@ -136,14 +136,22 @@
       >
         <sc-for list="{{tyres}}" as="w" hint-placeholder-count="4">
           <div
-            title="{{w.name}}"
+            title="{{w.title}}"
             aria-label="{{w.name}}"
             data-locked="{{w.locked}}"
+            data-predicted="{{w.predicted}}"
             class="tyre"
             style="width: 13px; height: 22px; border-radius: 4px; border: 1px solid {{w.border}}; background: {{w.bg}}"
           ></div>
         </sc-for>
       </div>
     </div>
+  </div>
+  <div
+    data-column="prediction"
+    class="mono"
+    style="font-size: 11px; line-height: 12px; color: {{forecastColor}}"
+  >
+    {{forecast}}
   </div>
 </div>

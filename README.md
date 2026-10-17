@@ -92,22 +92,23 @@ is rejected. You can preview or mute them on the same page.
 Overlays are small widgets displayed over the game. Choose the information you
 want to keep in view:
 
-![The ten Sector widgets, including Brake lock, Tyres and Stint planner](docs/media/widgets.png)
+![The eleven Sector widgets, including Brake lock, Tyres, Stint planner and Hybrid](docs/media/widgets.png)
 
 *Widget previews use demo data.*
 
 | Widget | What it shows |
 | --- | --- |
-| **Leaderboard** | Standings and car classes |
+| **Leaderboard** | Standings, classes, tyre compounds and available virtual energy; your nearby rivals stay in your class section |
 | **Relative** | Nearby cars and estimated gaps |
 | **Weather** | Available weather information |
 | **Delta** | How your current lap compares with the reference lap |
 | **Inputs** | Pedals, steering, gear and speed |
 | **Laps** | Lap history and available usage information |
 | **Session** | Session and player information |
-| **Brake lock** | Wheel lock estimates and braking history |
+| **Brake lock** | Per-wheel locking warnings, predicted timing and brake-pedal threshold |
 | **Tyres** | Tyre life, tread temperatures, compound, tyre laps and flat spot estimates |
 | **Stint planner** | Estimated laps remaining, pit lap and fuel/energy consumption |
+| **Hybrid** | Battery charge, electric power, deploy/regen state and learned map suggestions |
 
 ### Widgets in motion
 

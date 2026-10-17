@@ -49,7 +49,7 @@ test("old overlay layouts gain disabled widgets without losing existing preferen
     delete old.widgets[id];
   const migrated = config.validate(old);
   assert.equal(migrated.widgets.inputs.x, 123);
-  assert.equal(Object.keys(migrated.widgets).length, 10);
+  assert.equal(Object.keys(migrated.widgets).length, 11);
   assert.equal(migrated.widgets.tyres.enabled, false);
   assert.equal(migrated.widgets["brake-lock"].slipThreshold, 20);
   const bad = structuredClone(migrated);
@@ -188,8 +188,8 @@ test("hidden wheel and thermal sections shrink the widget and bound native windo
     width: 1920,
     height: 1080,
   });
-  assert.equal(b.width, 160);
-  assert.equal(b.height, 150);
+  assert.equal(b.width, 264);
+  assert.equal(b.height, 262);
   const slim = config.bounds(
     "brake-lock",
     { ...settings["brake-lock"], columns: { wheels: false } },

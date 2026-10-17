@@ -1,7 +1,7 @@
 {
   "leaderboard": {
     "name": "Leaderboard",
-    "width": 440,
+    "width": 520,
     "height": 600
   },
   "relative": {
@@ -37,7 +37,7 @@
   "brake-lock": {
     "name": "Brake lock",
     "width": 400,
-    "height": 124
+    "height": 144
   },
   "tyres": {
     "name": "Tyres",
@@ -48,5 +48,10 @@
     "name": "Stint planner",
     "width": 400,
     "height": 176
+  },
+  "hybrid": {
+    "name": "Hybrid",
+    "width": 300,
+    "height": 124
   }
 }

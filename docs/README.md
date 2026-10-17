@@ -61,10 +61,13 @@ Your layout and preferences are saved for the next launch.
 
 **Brake lock** highlights wheels with estimated locking under braking. Adjust
 **Slip threshold** and **Minimum speed** to control its sensitivity; the displayed
-pedal threshold is estimated from recent events.
+pedal threshold uses recent wheel slip, speed, slip angle and brake input.
+Yellow warns of a predicted lock, red shows the slip threshold has been reached.
+The wheel name and estimated delay appear below the bar. **Prediction window**
+controls how far ahead the warning looks. Predictions assume the current trend continues.
 
-**Tyres** shows temperatures, tyre life and compounds. You can hide individual
-wheels or readings and change the cold/hot color thresholds. Tyre laps stay
+**Tyres** always shows all four tyres. You can hide readings and change the
+cold/hot color thresholds. Tyre laps stay
 unknown until Sector observes a fresh tyre or replacement. `puncture` comes from
 the game; `~flat spot` is Sector's estimate from sustained wheel locks. Increase
 **Flat spot sensitivity** for earlier warnings, or hide **Tyre condition** to
@@ -74,6 +77,17 @@ It cannot detect damage that happened before Sector started observing the tyres.
 **Stint planner** estimates remaining laps from fuel and virtual-energy consumption.
 Drive complete clean laps to collect the data, then choose how many laps to average
 and an optional reserve. Treat these figures as estimates that change with your pace.
+
+**Leaderboard** keeps your position and nearby rivals inside your class section.
+Driving a Hypercar puts your group in Hypercar, before the other classes. Its
+compound and virtual-energy columns show the available data for each car and
+can be hidden independently.
+
+**Hybrid** shows battery charge, electric power and deploy/regen state. Set the
+battery target and the number of laps to reach it. Sector learns battery changes
+from clean laps with a constant map; it suggests only maps observed over at least
+two laps each at a similar pace. The suggestion stays `-` until enough data exists.
+It does not change the map for you. Non-hybrid cars show `N/A`.
 
 ### Samples and missing information
 

@@ -1,8 +1,8 @@
 # Telemetry overlays
 
-Sector provides ten widgets based on the supplied `LMU Overlay.html` and
-`LMU Overlay - 2.html` designs: **Leaderboard, Relative, Weather, Delta, Inputs,
-Laps, Session, Brake lock, Tyres and Stint planner**. Artwork and
+Sector provides eleven widgets based on the supplied `LMU Overlay.html`,
+`LMU Overlay - 2.html` and `LMU Overlay - 3.html` designs: **Leaderboard, Relative,
+Weather, Delta, Inputs, Laps, Session, Brake lock, Tyres, Stint planner and Hybrid**. Artwork and
 fonts are bundled locally; the exported page's remote runtime is not executed.
 
 ## Configure the HUD
@@ -30,23 +30,40 @@ of reset shortcuts. Display changes keep widget geometry within accessible bound
 
 | Widget | Data and customization |
 | --- | --- |
-| Leaderboard | Scored positions and classifications; row, column and logo options; absent classes hidden |
+| Leaderboard | Scored positions, classes, per-car compound indicators and virtual energy; row, column and logo options; absent classes hidden |
 | Relative | Nearby cars and estimated relative gaps; configurable rows and columns |
 | Weather | Current SDK weather; independently hide unavailable forecast sections |
 | Delta | Player delta from telemetry; configurable visible sections |
 | Inputs | Pedals, input trace, steering, gear and speed; clutch can be hidden; steering rotation adjustable |
 | Laps | Observed lap history and supported usage statistics; configurable columns and rows |
 | Session | Session and player information; individually configurable sections |
-| Brake lock | Per-wheel slip estimate under braking, recent braking events and an observed pedal threshold; configurable slip threshold and minimum speed |
-| Tyres | Remaining tyre life, three tread-temperature bands, axle compound names, observed tyre age, punctures and estimated flat spots; each wheel and reading can be hidden |
+| Brake lock | Per-wheel slip, short-horizon lock forecast and estimated pedal threshold; configurable slip threshold, minimum speed and prediction window |
+| Tyres | All four tyres, remaining life, three tread-temperature bands, axle compound names, observed age, punctures and estimated flat spots; readings can be hidden |
 | Stint planner | Fuel/virtual-energy range, conservative pit lap, measured consumption and energy target for an extra lap; adjustable averaging window and lap reserve |
+| Hybrid | Battery charge, motor state, calculated shaft power, battery trend and observed map recommendation; section switches, battery target, horizon and power-bar scale |
+
+Leaderboard places the player and nearby rivals inside the player's own class
+box, after the class leaders when needed. A Hypercar player stays inside Hypercar,
+before LMP2 and GT3. Compound and energy fields are joined by SDK vehicle ID,
+with duplicate or stale telemetry rejected. Unknown compounds/energy show `-`.
+The four-circle indicator represents mixed compounds; it does not guess a compound
+from an unknown numeric index. Both new columns can be hidden.
 
 Brake lock compares each loaded wheel's rotational speed and deflected radius
-against its own longitudinal ground speed. It ignores detached, airborne and
-off-road wheels, and requires braking above the selected minimum speed. The
-`~` pedal threshold summarizes recent detected events; it is an estimate, not a
-fixed limit valid for every corner. The slip threshold defaults to 20% and the
-minimum speed to 20 km/h. The wheel diagram shows the current result.
+against its longitudinal ground speed. Slip angle is calculated from lateral and
+longitudinal wheel-ground velocity. Detached, airborne and off-road wheels are
+excluded, and braking must exceed the selected minimum speed. The slip threshold
+defaults to 20%, minimum speed to 20 km/h and prediction window to 500 ms.
+
+The forecast fits recent slip and brake-pedal trends over at most 400 ms using
+samples at comparable speed, slip angle and wheel load. It requires at least four
+samples over 100 ms and a consistent rising slip trend. It projects time to the
+selected slip threshold and the corresponding pedal percentage, assuming those
+trends continue. Releasing the brake, changing corner conditions, missing data or
+an inconsistent trend suppresses the prediction. Yellow means an estimated lock
+within the prediction window; red means the measured slip threshold is reached.
+`FL ~200 ms`, for example, identifies the front-left wheel and estimated delay.
+These are estimates, not a guaranteed limit or an ABS intervention measurement.
 
 Tyre temperatures are converted from Kelvin to Celsius. The three bands retain
 the SDK's left/centre/right order. Tyre life is the SDK remaining fraction; color
@@ -68,6 +85,21 @@ metres at 3 kN, scaled inversely with sensitivity. This is an uncalibrated heuri
 not a measurement of LMU's tyre deformation. The warning persists after braking
 and clears on an observed tyre replacement, reset or session/vehicle change.
 Hide **Tyre condition** to remove both the tread marker and warning text.
+All four tyres always remain visible; old per-wheel visibility preferences are
+discarded during settings migration.
+
+Hybrid reads the electric motor state and documented battery fraction. Shaft
+power is calculated from motor torque and RPM; the state determines deploy or
+regen direction. Non-hybrid/unavailable state displays `N/A`, without substituting
+virtual energy for battery charge. The power-bar scale is a display setting.
+
+Battery trend uses complete clean laps with a constant SDK motor-map index.
+Recommendations compare maps observed for at least two laps each, within 5% of
+the current map's average lap time. Sector chooses the observed map projected
+closest to the battery target over the chosen horizon. The recommendation is
+marked `~`; it remains unavailable until enough comparable laps exist. The SDK
+map index is shown as-is: no assumed LMH/LMDh kW steps or fabricated per-step
+gains are used. Sector never changes the map. Reset/session changes clear learning.
 
 Stint planner averages the most recent complete clean laps (five by default).
 Pit and invalid laps are excluded, and zero or missing consumption is not treated
@@ -132,7 +164,7 @@ SDK builds.
 
 `npm test` checks preference validation, bounds, stale/missing telemetry, lap
 history and shutdown races. `npm run test:telemetry` passes the compiled reader's
-synthetic SDK frame through the production widget models. `npm run test:ui` checks all ten designs, columns,
+synthetic SDK frame through the production widget models. `npm run test:ui` checks all eleven designs, columns,
 clutch and logo removal, live resize before pointer release, display selection,
 fixed button widths, window isolation and foreground gating. These fixture and
 desktop checks do not replace live-game qualification. See [test coverage](TEST_RESULTS.md).

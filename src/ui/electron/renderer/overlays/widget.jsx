@@ -22,6 +22,12 @@ const templates = Object.fromEntries(
     };
     if (["leaderboard", "relative", "laps"].includes(id)) {
       for (const grid of grids) {
+        // The compound cell contains a nested four-wheel grid, not table columns.
+        if (
+          id === "leaderboard" &&
+          !grid.style.gridTemplateColumns.startsWith("24px")
+        )
+          continue;
         grid.dataset.columnGrid = "true";
         [...grid.children].forEach((node, i) =>
           tag(node, layout.columns[id][i]?.[0]),

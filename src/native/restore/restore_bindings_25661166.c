@@ -57,7 +57,7 @@ int restore_binding_field(const RestoreBindings *b, uint32_t slot, uint32_t off,
             wo = 0xf8;
         } else
             return 0;
-        if (kind <= 2 && F(0x50, 48))
+        if (kind <= 3 && F(0x50, 48))
             return 1;
         for (uint32_t j = 0; j < rows; j++) {
             uint32_t d = j * stride;
@@ -85,7 +85,7 @@ int restore_binding_field(const RestoreBindings *b, uint32_t slot, uint32_t off,
     }
     if (slot < 104)
         return F(0x4b8, 8) || F(0x5d8, 8) || F(0x120, 16) || F(0x5e0, 32) || F(0x630, 8) ||
-               F(0x138, 8);
+               F(0x138, 8) || F(0x302, 1) || F(0x308, 32);
     if (slot == 104)
         return F(0x448, 8) || F(0x450, 8) || F(0x18, 8) || F(0x20, 8) || F(0x30, 8) || F(0x38, 8) ||
                F(0x46c8, 8) || F(0x48a0, 8) || F(0x48a8, 8) || F(0x48b0, 8) || F(0x48b8, 8) ||

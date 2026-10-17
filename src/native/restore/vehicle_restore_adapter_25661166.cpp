@@ -12,6 +12,9 @@ struct VehicleRestoreAdapter {
     uint64_t saved_epoch;
     bool bound, occupied, held, quarantined;
     SnapshotFrame saved, current;
+    WheelDeformation saved_deformation[4], current_deformation[4];
+    unsigned char saved_deformed[4], current_deformed[4];
+    double saved_hinge_axes[64][6], current_hinge_axes[64][6];
     RestoreBindings bindings;
     uintptr_t scoring;
     VehicleCheckpointWorkspace *workspace;
@@ -77,6 +80,34 @@ static bool read_current(VehicleRestoreAdapter *adapter) {
                 &adapter->current, &adapter->bindings) ||
         !owner(adapter, context.epoch))
         return false;
+    for (unsigned w = 0; w < 4; ++w) {
+        const auto wheel = adapter->bindings.address[RESTORE_WHEEL_BASE + w];
+        if (!field(wheel + 0x302, adapter->current_deformed[w]) ||
+            !field(wheel + 0x308, adapter->current_deformation[w]) ||
+            adapter->current_deformed[w] != adapter->current.wheel_phase[w].spin.deformed)
+            return false;
+    }
+    if (!wheel_phase_deformed_valid(adapter->current.wheel_phase, adapter->current_deformation,
+                                    adapter->current.bodies, adapter->current.total_count))
+        return false;
+    // PureHinge stores its two physical alignment axes separately from the
+    // solver row basis at +0xa8/+0x150. Impact repair changes the body-B axis
+    // at +0x68 through native setter 3F4D90 (parameter 3).
+    for (unsigned i = 0; i < adapter->current.constraint_count; ++i) {
+        if (adapter->current.recipes[i].kind != CONSTRAINT_HINGE)
+            continue;
+        auto &axes = adapter->current_hinge_axes[i];
+        if (!field(adapter->bindings.address[RESTORE_CONSTRAINT_BASE + i] + 0x50, axes) ||
+            !finite(axes))
+            return false;
+        for (unsigned side = 0; side < 2; ++side) {
+            double norm = 0;
+            for (unsigned k = 0; k < 3; ++k)
+                norm += axes[side * 3 + k] * axes[side * 3 + k];
+            if (std::fabs(norm - 1) > 1e-3)
+                return false;
+        }
+    }
     if (adapter->host.collision_vehicle)
         adapter->bindings.address[RESTORE_COLLISION_EXPORT_SLOT] =
             adapter->host.collision_vehicle + 0x159e8;
@@ -112,6 +143,12 @@ static int capture(void *user, const ResetIdentity *identity) {
         adapter->saved_collision_mass = mass;
     }
     adapter->saved = adapter->current;
+    std::memcpy(adapter->saved_deformation, adapter->current_deformation,
+                sizeof(adapter->saved_deformation));
+    std::memcpy(adapter->saved_deformed, adapter->current_deformed,
+                sizeof(adapter->saved_deformed));
+    std::memcpy(adapter->saved_hinge_axes, adapter->current_hinge_axes,
+                sizeof(adapter->saved_hinge_axes));
     adapter->saved_identity = *identity;
     adapter->saved_epoch = adapter->context.epoch;
     for (unsigned i = 0; i < 4; ++i) {
@@ -202,13 +239,50 @@ static int prepare(void *user, const ResetIdentity *identity, RestorePlan *plan,
             return 1;
     RestoreBackend backend{adapter, owner, allowed, read, nullptr};
     if (vehicle_checkpoint_prepare(adapter->workspace, &adapter->saved, &adapter->current,
-                                   &adapter->bindings, &backend, &flags, plan) ||
+                                   &adapter->bindings, &backend, &flags, plan,
+                                   adapter->current_deformation) ||
         !owner(adapter, adapter->context.epoch)) {
         plan->count = 0;
         return 1;
     }
     *bindings = adapter->bindings;
     *scoring = adapter->scoring;
+    // Restoring only row Jacobians leaves a damaged body-B reference axis.
+    // The next native bias update would then drive the healthy saved pose
+    // toward that damaged alignment. Include both axes in the transaction.
+    for (unsigned i = 0; i < adapter->saved.constraint_count; ++i) {
+        if (adapter->saved.recipes[i].kind != CONSTRAINT_HINGE)
+            continue;
+        if (plan->count >= RESTORE_MAX_FIELDS)
+            return 1;
+        auto &entry = plan->fields[plan->count++];
+        entry = {};
+        entry.object_slot = RESTORE_CONSTRAINT_BASE + i;
+        entry.field_offset = 0x50;
+        entry.size = sizeof(adapter->saved_hinge_axes[i]);
+        std::memcpy(entry.expected, adapter->current_hinge_axes[i], entry.size);
+        std::memcpy(entry.desired, adapter->saved_hinge_axes[i], entry.size);
+    }
+    // Restore deformation together with pose and saved constraint axes. Expected
+    // bytes participate in preflight, readback and transaction compensation.
+    if (plan->count > RESTORE_MAX_FIELDS - 8)
+        return 1;
+    for (unsigned w = 0; w < 4; ++w) {
+        auto &flag = plan->fields[plan->count++];
+        flag = {};
+        flag.object_slot = RESTORE_WHEEL_BASE + w;
+        flag.field_offset = 0x302;
+        flag.size = 1;
+        flag.expected[0] = adapter->current_deformed[w];
+        flag.desired[0] = adapter->saved_deformed[w];
+        auto &state = plan->fields[plan->count++];
+        state = {};
+        state.object_slot = RESTORE_WHEEL_BASE + w;
+        state.field_offset = 0x308;
+        state.size = sizeof(WheelDeformation);
+        std::memcpy(state.expected, &adapter->current_deformation[w], state.size);
+        std::memcpy(state.desired, &adapter->saved_deformation[w], state.size);
+    }
     // game_vehicle+0x1cf9c is scoring+0xd4. Restore the healthy checkpoint's
     // failure latch in the same transaction as engine/rigid state, including rollback.
     // Geometry, lifetime and contact checks still reject a detached/replaced assembly.

@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 import struct
 import wave
+from sector.runtime.physical_reset_hotkeys import rejection_reason
 
 TONES = {
     "save": ((660, 0.09), (880, 0.13)),
@@ -38,7 +39,9 @@ def write_sounds(directory):
 
 def report_feedback(row):
     if row["result"] != 0:
-        return "rejected", f"Command rejected (result {row['result']}, cause {row['cause']})."
+        return "rejected", rejection_reason(row) or (
+            f"Command rejected (result {row['result']}, cause {row['cause']})."
+        )
     if row["action"] == 1:
         return "save", "Checkpoint saved."
     if row["action"] == 3:

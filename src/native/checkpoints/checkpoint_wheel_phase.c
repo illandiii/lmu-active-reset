@@ -1,6 +1,7 @@
 #include "checkpoint_wheel_phase.h"
 #include <string.h>
-int wheel_phase_valid(const WheelPhase p[4], const RigidSavedBody *bodies, size_t n) {
+static int valid(const WheelPhase p[4], const WheelDeformation deformation[4],
+                 const RigidSavedBody *bodies, size_t n) {
     if (!p || !bodies || !n || n > 32)
         return 0;
     WheelSavedSpin spin[4];
@@ -16,7 +17,16 @@ int wheel_phase_valid(const WheelPhase p[4], const RigidSavedBody *bodies, size_
         hubs[w] = bodies[p[w].hub_index];
         wheels[w] = bodies[p[w].wheel_index];
     }
-    return wheel_prepare_consistent_checkpoint(spin, hubs, wheels, prepared) == RIGID_PREPARE_OK;
+    return (deformation ? wheel_validate_deformed_state(spin, deformation, hubs, wheels)
+                        : wheel_prepare_consistent_checkpoint(spin, hubs, wheels, prepared)) ==
+           RIGID_PREPARE_OK;
+}
+int wheel_phase_valid(const WheelPhase p[4], const RigidSavedBody *bodies, size_t n) {
+    return valid(p, NULL, bodies, n);
+}
+int wheel_phase_deformed_valid(const WheelPhase p[4], const WheelDeformation deformation[4],
+                               const RigidSavedBody *bodies, size_t n) {
+    return deformation && valid(p, deformation, bodies, n);
 }
 int wheel_phase_save(WheelPhaseBank *b, const PartialCheckpoint *s, const WheelPhase p[4]) {
     if (!b || !s || !s->sequence || !wheel_phase_valid(p, s->bodies, s->body_count))
@@ -27,8 +37,14 @@ int wheel_phase_save(WheelPhaseBank *b, const PartialCheckpoint *s, const WheelP
 }
 int wheel_phase_prepare(const WheelPhaseBank *b, const PartialCheckpoint *s, const WheelPhase p[4],
                         const RigidSavedBody *current, size_t n, WheelPhase out[4]) {
+    return wheel_phase_prepare_deformed(b, s, p, NULL, current, n, out);
+}
+int wheel_phase_prepare_deformed(const WheelPhaseBank *b, const PartialCheckpoint *s,
+                                 const WheelPhase p[4], const WheelDeformation deformation[4],
+                                 const RigidSavedBody *current, size_t n, WheelPhase out[4]) {
     if (!b || !s || !out || !b->sequence || b->sequence != s->sequence ||
-        !wheel_phase_valid(b->phase, s->bodies, s->body_count) || !wheel_phase_valid(p, current, n))
+        !wheel_phase_valid(b->phase, s->bodies, s->body_count) ||
+        !valid(p, deformation, current, n))
         return 0;
     for (int w = 0; w < 4; w++)
         if (b->phase[w].hub_index != p[w].hub_index || b->phase[w].wheel_index != p[w].wheel_index)

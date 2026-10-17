@@ -53,13 +53,13 @@ class ResidentIdentityTests(unittest.TestCase):
 
     def test_current_build_and_new_revisions(self):
         self.assertEqual(self.resolve(self.install()), self.profile)
-        for revision in (9, 15, 16, 17):
+        for revision in (9, 15, 16, 17, 18, 19):
             name = self.name.replace("v17", f"v{revision}")
             identity = physical_host_identity(name)
             self.assertEqual(identity[2], f"LMU_PhysicalReset_{name}_")
             self.assertEqual(identity[3], 0x4C4D555253543030 + revision)
         for name in (
-            self.name.replace("v17", "v18"),
+            self.name.replace("v17", "v20"),
             self.name.replace("v17", "v0"),
             self.name.replace("a" * 32, "bad"),
         ):

@@ -38,6 +38,30 @@ int main(void) {
     CHECK(fabs(out[1].angular_momentum_world[2] - 12) < 1e-12);
     CHECK(fabs(out[2].angular_velocity_world[0] - 1) < 1e-12 &&
           fabs(out[2].angular_velocity_world[1] - 4) < 1e-12);
+    WheelDeformation deformation[4] = {0};
+    deformation[0].rotation[2] = acos(-1.) / 2;
+    deformation[0].accumulated = .25;
+    spin[0].deformed = 1;
+    CHECK(wheel_prepare_deformed_spin(spin, deformation, hubs, mass, out) == RIGID_PREPARE_OK);
+    /* A local Z bend turns the spin axis from X to Y without rotating hub omega. */
+    CHECK(fabs(out[0].orientation[1] + 1) < 1e-12);
+    CHECK(fabs(out[0].orientation[3] - 1) < 1e-12);
+    CHECK(fabs(out[0].angular_velocity_world[0] - 1) < 1e-12);
+    CHECK(fabs(out[0].angular_velocity_world[1] - 4) < 1e-12);
+    RigidSavedBody bent[4] = {0};
+    for (int i = 0; i < 4; ++i) {
+        bent[i].mass = mass[i];
+        memcpy(bent[i].orientation, out[i].orientation, sizeof(bent[i].orientation));
+        memcpy(bent[i].momentum_world, out[i].angular_momentum_world,
+               sizeof(bent[i].momentum_world));
+    }
+    CHECK(wheel_validate_deformed_state(spin, deformation, hubs, bent) == RIGID_PREPARE_OK);
+    CHECK(wheel_prepare_consistent_checkpoint(spin, hubs, bent, out) != RIGID_PREPARE_OK);
+    deformation[0].rotation[2] += .01;
+    CHECK(wheel_validate_deformed_state(spin, deformation, hubs, bent) != RIGID_PREPARE_OK);
+    deformation[0].rotation[2] = NAN;
+    CHECK(wheel_validate_deformed_state(spin, deformation, hubs, bent) != RIGID_PREPARE_OK);
+    spin[0].deformed = 0;
     memset(out, 0xa5, sizeof(out));
     memcpy(untouched, out, sizeof(out));
     spin[3].deformed = 1;

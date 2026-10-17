@@ -16,7 +16,7 @@ static unsigned correction_calls, collision_prepare_calls;
 static unsigned collision_rebuild_calls, spatial_calls, removed_pairs;
 static double largest_restored_sweep;
 static bool monitor_restored_sweep;
-static constexpr unsigned expected_fields = 10085;
+static unsigned expected_fields;
 #else
 static constexpr unsigned expected_fields = 10077;
 #endif
@@ -265,6 +265,7 @@ static int run_fixture(int argc, char **argv) {
 #endif
     for (unsigned i = 0; i < source_frame.constraint_count; ++i)
         source_bindings.constraint_kind[i] = source_frame.recipes[i].kind;
+    expected_fields = 10093 + initialize_hinge_axes();
     init();
     for (unsigned i = 0; i < 4; ++i)
         source_bindings.address[96 + i] = reinterpret_cast<uintptr_t>(tire[i]);

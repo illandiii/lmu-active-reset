@@ -67,6 +67,20 @@ static void load_frame(const char *path) {
     std::fclose(file);
 }
 
+static unsigned initialize_hinge_axes() {
+    unsigned count = 0;
+    const double axes[6]{1, 0, 0, 1, 0, 0};
+    for (unsigned i = 0; i < source_frame.constraint_count; ++i) {
+        if (source_frame.recipes[i].kind != CONSTRAINT_HINGE)
+            continue;
+        std::memcpy(reinterpret_cast<void *>(source_bindings.address[32 + i] + 0x50), axes,
+                    sizeof(axes));
+        ++count;
+    }
+    assert(count > 0);
+    return count;
+}
+
 int main(int argc, char **argv) {
     assert(argc == 4);
     fault = std::atoi(argv[3]);
@@ -81,6 +95,7 @@ int main(int argc, char **argv) {
     source_bindings.engine_channels = source_frame.integration.channel_count;
     for (unsigned i = 0; i < source_frame.constraint_count; ++i)
         source_bindings.constraint_kind[i] = source_frame.recipes[i].kind;
+    const auto hinge_count = initialize_hinge_axes();
     init();
     for (unsigned i = 0; i < 4; ++i)
         source_bindings.address[96 + i] = reinterpret_cast<uintptr_t>(tire[i]);
@@ -165,6 +180,18 @@ int main(int argc, char **argv) {
                                               &request, original, 77);
     };
     assert(dispatch(1, RESET_SAVE).control_result == CONTROL_OK);
+    // A bad replacement must not overwrite the last complete checkpoint.
+    for (unsigned i = 0; i < source_frame.constraint_count; ++i) {
+        if (source_frame.recipes[i].kind != CONSTRAINT_HINGE)
+            continue;
+        auto *axis = reinterpret_cast<double *>(source_bindings.address[32 + i] + 0x68);
+        axis[0] = 0;
+        assert(ops.capture(ops.user, &context.identity) != 0);
+        axis[0] = NAN;
+        assert(ops.capture(ops.user, &context.identity) != 0);
+        axis[0] = 1;
+        break;
+    }
     put(collision_vehicle + 0x159e8, float{0}); // Singular collision-facing rotation.
     assert(ops.capture(ops.user, &context.identity) != 0);
     put(collision_vehicle + 0x159e8, float{1});
@@ -172,9 +199,51 @@ int main(int argc, char **argv) {
     source_frame.terminal_failure = 1;
     assert(dispatch(2, RESET_SAVE).control_result == CONTROL_SAVE_FAILED);
     load_frame(argv[2]);
+    // Native suspension damage changes the body-B axis, not only the row
+    // basis. A quarter-turn gives an independently known alignment error.
+    for (unsigned i = 0; i < source_frame.constraint_count; ++i) {
+        if (source_frame.recipes[i].kind != CONSTRAINT_HINGE)
+            continue;
+        const double bent_axis[3]{0, 1, 0};
+        std::memcpy(reinterpret_cast<void *>(source_bindings.address[32 + i] + 0x68), bent_axis,
+                    sizeof(bent_axis));
+    }
     // An impact may set the shared failure latch without replacing the assembly.
     // Loading must recover the healthy checkpoint; failed transactions restore 4.
     source_frame.terminal_failure = 4;
+    // Reproduce a bent attached wheel. Its live body and cached omega use the
+    // deformed axis; the saved checkpoint retains the original healthy axis.
+    WheelDeformation deformation[4]{};
+    deformation[1].rotation[1] = -.016417744545344597;
+    deformation[1].rotation[2] = .007167829343951416;
+    deformation[1].accumulated = .017914243312521002;
+    source_frame.wheel_phase[1].spin.deformed = 1;
+    WheelSavedSpin spin[4];
+    RigidSavedBody hubs[4];
+    RigidMassProperties wheel_mass[4];
+    WheelPreparedSpin bent[4];
+    for (unsigned w = 0; w < 4; ++w) {
+        const auto &phase = source_frame.wheel_phase[w];
+        spin[w] = phase.spin;
+        hubs[w] = source_frame.bodies[phase.hub_index];
+        wheel_mass[w] = source_frame.bodies[phase.wheel_index].mass;
+    }
+    assert(wheel_prepare_deformed_spin(spin, deformation, hubs, wheel_mass, bent) == 0);
+    for (unsigned w = 0; w < 4; ++w) {
+        auto index = source_frame.wheel_phase[w].wheel_index;
+        auto &body = source_frame.bodies[index];
+        auto &cache = source_frame.native_cache.bodies[index];
+        std::memcpy(body.orientation, bent[w].orientation, sizeof(body.orientation));
+        std::memcpy(body.momentum_world, bent[w].angular_momentum_world,
+                    sizeof(body.momentum_world));
+        std::memcpy(cache.inverse_world, bent[w].inverse_inertia_world,
+                    sizeof(cache.inverse_world));
+        std::memcpy(cache.omega, bent[w].angular_velocity_world, sizeof(cache.omega));
+        auto *wheel =
+            reinterpret_cast<unsigned char *>(source_bindings.address[RESTORE_WHEEL_BASE + w]);
+        put(wheel + 0x302, static_cast<unsigned char>(spin[w].deformed));
+        put(wheel + 0x308, deformation[w]);
+    }
     put(score + 0xd4, uint32_t{4});
     put(collision_vehicle + 0x15a50, float{1240});
     put(collision_vehicle + 0x15a24, float{-100});
@@ -197,13 +266,31 @@ int main(int argc, char **argv) {
     std::fprintf(stderr, "full adapter result=%d fields=%zu flow=%d cause=%d contacts=%llu\n",
                  result.control_result, runtime->plan.count, runtime->report.result,
                  runtime->report.cause, static_cast<unsigned long long>(calls));
-    assert(runtime->plan.count == 10085);
+    assert(runtime->plan.count == 10093 + hinge_count);
     assert(result.control_result == (fault == 2   ? CONTROL_QUARANTINED
                                      : fault != 0 ? CONTROL_RESTORE_RECOVERED
                                                   : CONTROL_OK));
     assert(result.forwarded == (fault != 2));
     assert(runtime->control.loads == (fault == 0 ? 1 : 0));
     if (fault != 2) {
+        unsigned hinge_fields = 0;
+        for (unsigned i = 0; i < source_frame.constraint_count; ++i) {
+            if (source_frame.recipes[i].kind != CONSTRAINT_HINGE)
+                continue;
+            const auto *axes =
+                reinterpret_cast<const double *>(source_bindings.address[32 + i] + 0x50);
+            assert(axes[0] == 1 && axes[1] == 0 && axes[2] == 0);
+            assert(axes[3] == (fault ? 0 : 1) && axes[4] == (fault ? 1 : 0) && axes[5] == 0);
+            // Cross product magnitude is zero only after the healthy restore;
+            // compensation must put back the original damaged alignment.
+            assert(std::fabs(axes[0] * axes[4] - axes[1] * axes[3]) == (fault ? 1 : 0));
+            for (size_t j = 0; j < runtime->plan.count; ++j) {
+                const auto &entry = runtime->plan.fields[j];
+                if (entry.object_slot == 32 + i && entry.field_offset == 0x50 && entry.size == 48)
+                    ++hinge_fields;
+            }
+        }
+        assert(hinge_fields == hinge_count);
         assert(get<uint32_t>(score + 0xd4) == (fault ? 4u : 0u));
         assert(calls == (fault == 1 ? 6 : fault == 3 ? 8 : 4));
         assert(collision_refreshes == (fault == 3 ? 2 : 1));
@@ -258,7 +345,9 @@ int main(int argc, char **argv) {
     DeleteCriticalSection(&gate_lock);
     assert(original_calls == (fault == 2 ? 5 : 9) && abi_errors == 0);
     puts("PASS full vehicle adapter: asynchronous control handoff -> saved/current capture -> "
-         "10085-field native boundary with impact failure recovery with collision cache "
+         "native boundary with hinge alignment, deformation and impact failure recovery with "
+         "collision "
+         "cache "
          "compensation "
          "transaction -> four contact rebuilds; failed save preserves checkpoint; stale contacts, "
          "missing lock/pin and changed session rejected. Owned memory only; refresh modeled.");

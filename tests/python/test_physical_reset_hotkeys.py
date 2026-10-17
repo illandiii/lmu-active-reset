@@ -48,6 +48,8 @@ class HotkeyTests(unittest.TestCase):
         # The incident prepared 10122 fields successfully; the old launcher
         # compared it to 10084 and never issued HOST_RESTORE.
         self.assertIsNone(expected_restore_fields(17))
+        self.assertIsNone(expected_restore_fields(18))
+        self.assertIsNone(expected_restore_fields(19))
         for count in (10084, 10122, 10085, 10123, 11000):
             self.keys = HotkeyCommands()
             self.saved()
@@ -118,9 +120,20 @@ class HotkeyTests(unittest.TestCase):
         self.assertEqual(self.poll(report=report), {})
         self.assertIn("complete native preflight required", self.keys.notice)
         self.assertTrue(self.keys.saved)
-        for revision in (0, 18):
+        for revision in (0, 20):
             with self.assertRaises(ValueError):
                 expected_restore_fields(revision)
+
+    def test_detachment_explains_refusal_and_preserves_checkpoint(self):
+        from sector.desktop.reset_feedback import report_feedback
+
+        self.saved()
+        self.poll(restore=True)
+        report = dict(id=2, action=2, result=2, cause=91004, fields=0)
+        self.assertEqual(self.poll(report=report), {})
+        self.assertTrue(self.keys.saved)
+        self.assertIn("Rear-right wheel detached", self.keys.notice)
+        self.assertEqual(report_feedback(report), ("rejected", self.keys.notice))
 
     def test_focus_context_and_timeout_cancel_prepare(self):
         for kwargs in ({"focused": False}, {"allowed": False}, {"modifiers": True}, {"now": 3}):

@@ -1,8 +1,10 @@
 # Physical reset: current status
 
-**Current desktop: 0.2.4. Native host: v17 for the verified Steam 25661166 /
+**Development desktop: 0.2.6. Native host: v19 for the verified Steam 25661166 /
 app build 14200 compatibility profile.** Matching the display version alone is
 insufficient: runtime admission also checks the pinned identities and hashes.
+The 0.2.5 impact trial crashed LMU. V19 fixes an identified omission in the
+suspension restore, but its live post-impact stability is not yet verified.
 
 ## Implemented behavior
 
@@ -52,6 +54,45 @@ and repeated restores on the tested car and circuit.
 
 ## Recovery after an impact
 
+The 17 October 0.2.4 capture identified a second refusal beyond the failure
+latch: host v17 rejected either wheel flag at offsets `+0x301/+0x302`.
+Report 16 in `20261017T144553439928Z_physical_reset_host_v17` returned cause
+115 with no plan and no writes. The read-only follow-up observed attached wheels
+with deformation flag 1, followed by a rear-right puncture and then detachment.
+Those are distinct conditions, not an identity mismatch.
+
+Version 0.2.5 / v18 admits **attached, deformed wheels** only after validating
+their orientation and world angular velocity against the native axis-angle
+deformation and wheel spin. It restores the saved deformation flag, rotation
+vector and accumulated suspension damage together with the existing saved
+constraint axes, rigid state and failure latch. All eight added fields are
+included in expected-value preflight, readback and compensation. The legacy
+snapshot ABI stays unchanged, and saving still requires a healthy checkpoint.
+
+Static analysis of the locally captured build identifies `EE4010` as the
+deformed wheel projection, `ECEF30` as the impact deformation update, and
+`ECF1F0/EEB650` as the suspension repair/update paths. The local regression uses
+the measured deformation vector and verifies both successful restore and
+rollback. **The live impact test of 0.2.5 failed:** after the second restore,
+the front-left tire diverged and LMU crashed in a tire table lookup. The user
+also confirmed that the front bodywork remained damaged.
+
+V19 additionally saves both PureHinge reference axes at `+0x50/+0x68`.
+Native impact handling changes the body-B axis at `+0x68`; restoring the
+row basis alone leaves that damaged reference active during the next bias
+update. These axes now participate in the same validated transaction and
+compensation as wheel deformation. Local tests pass with 10,097 fields for
+the recorded fixture. This corrects a demonstrated omission, but does not
+yet prove the crash is resolved in LMU. See the [impact report](IMPACT_RESET_INCIDENT.md).
+
+Detachment remains unsupported: native `EEB800` also changes the active
+constraint set. Merely clearing its flag would leave a broken suspension.
+V18 reports the detached corner explicitly and preserves the existing
+checkpoint. Bodywork/aero repair, puncture repair and missing-assembly
+reconstruction are not implemented.
+
+### Earlier failure-latch correction
+
 The 17 October runtime stopped at startup with `Vehicle terminal failure 4`.
 The reader also rejected any nonzero failure latch before restore preparation.
 V16 keeps the connection available and admits the damaged current frame for
@@ -65,11 +106,9 @@ This is recovery to an existing healthy checkpoint, not a new checkpoint
 created after the accident.
 
 The adapter fixture covers failure code 4, successful restore, contact failure,
-collision rebuild failure and compensation. The host fixture covers the complete
-10,085-field path and restart. **V16 has not yet been tested after an actual
-impact in LMU.** Detached wheels, changed topology and invalid mechanical
-geometry still cannot be restored by this path; recreating missing assemblies
-is not implemented.
+collision rebuild failure and compensation. V18 extends that fixture with
+deformed wheel state, its derived caches and the 10,093-field plan for the
+recorded assembly. Native host restart and missing-player refusal also pass.
 
 ## Collision correction
 

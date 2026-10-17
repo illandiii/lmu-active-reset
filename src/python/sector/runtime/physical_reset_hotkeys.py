@@ -3,7 +3,7 @@
 
 def expected_restore_fields(revision):
     """Legacy counts; v17 validates each vehicle's complete plan in native code."""
-    if revision == 17:
+    if revision in (17, 18, 19):
         return None
     if revision == 16:
         return 10085
@@ -12,6 +12,14 @@ def expected_restore_fields(revision):
     if 1 <= revision <= 14:
         return 10077
     raise ValueError(f"Unsupported reset host revision: {revision}")
+
+
+def rejection_reason(report):
+    cause = report.get("cause")
+    if cause in (91001, 91002, 91003, 91004):
+        wheel = ("Front-left", "Front-right", "Rear-left", "Rear-right")[cause - 91001]
+        return f"{wheel} wheel detached. This reset version cannot rebuild detached suspension."
+    return None
 
 
 def preparation_ready(report, expected_fields=None):
@@ -91,9 +99,10 @@ class HotkeyCommands:
                 elif action == 2:
                     if preparation_ready(report, self.expected_fields):
                         return self.issue(3, now)
-                    self.notice = (
+                    self.notice = rejection_reason(report) or (
                         "Restore preparation rejected: "
-                        f"result {report.get('result')}, fields {report.get('fields')} "
+                        f"result {report.get('result')}, cause {report.get('cause')}, "
+                        f"fields {report.get('fields')} "
                         "(complete native preflight required)."
                     )
             return {}

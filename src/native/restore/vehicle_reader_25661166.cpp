@@ -40,6 +40,7 @@ static uint64_t hash_bytes(uint64_t hash, const void *data, size_t size) {
 }
 struct Reader {
     SnapshotFrame *diagnostic;
+    WheelDeformation deformation[4];
     bool fail(unsigned line) {
         diagnostic->binding_status = line;
         return false;
@@ -110,9 +111,15 @@ struct Reader {
             uintptr_t hub = 0, rear = 0;
             unsigned char flags[2];
             auto &phase = f.wheel_phase[w];
-            if (!read_field(p + 0x20d8, rear) || !read_field(wheel + 0x301, flags) || flags[0] ||
-                flags[1])
+            if (!read_field(p + 0x20d8, rear) || !read_field(wheel + 0x301, flags) ||
+                !read_field(wheel + 0x308, deformation[w]))
                 return fail(__LINE__);
+            // A bent, attached wheel has a different spin axis, not a new identity.
+            // Detachment also changes the active constraint set and is not admitted.
+            if (flags[0])
+                return fail(91001 + w);
+            if (flags[1] > 1)
+                return fail(91010 + w);
             if (w >= 2 && rear)
                 hub = rear;
             else if (!read_field(wheel + 0x1d8, hub))
@@ -127,6 +134,7 @@ struct Reader {
                 return fail(__LINE__);
             phase.wheel_index = (uint32_t)links.wheels[w];
             phase.spin.attached = 1;
+            phase.spin.deformed = flags[1];
             if (!read_field(wheel + 0x120, phase.spin.angle) ||
                 !read_field(wheel + 0x128, phase.spin.angular_rate))
                 return fail(__LINE__);
@@ -548,7 +556,7 @@ struct Reader {
             return fail(__LINE__);
         if (!tread_history_valid(&f.tread_history))
             return fail(__LINE__);
-        if (!wheel_phase_valid(f.wheel_phase, f.bodies, f.total_count))
+        if (!wheel_phase_deformed_valid(f.wheel_phase, deformation, f.bodies, f.total_count))
             return fail(__LINE__);
         if (!brake_state_valid(f.brake_state))
             return fail(__LINE__);

@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.2.6",
+    "changes": [
+      "Save and restore both suspension hinge reference axes, including the axis changed by an impact.",
+      "Validate suspension alignment state and restore its previous values if the transaction fails.",
+      "Post-impact stability still needs a live test. Front bodywork, punctures and detached assemblies are not repaired."
+    ]
+  },
+  {
+    "version": "0.2.5",
+    "changes": [
+      "Experimental suspension deformation recovery. The live impact test exposed a crash; front bodywork repair remains incomplete.",
+      "Validate bent-wheel rotation and angular velocity instead of rejecting every impact damage flag.",
+      "Show a specific refusal for a detached wheel; rebuilding detached suspension is not supported yet."
+    ]
+  },
+  {
     "version": "0.2.4",
     "changes": [
       "Removed Brake lock from the widget list, settings, previews and saved layouts.",

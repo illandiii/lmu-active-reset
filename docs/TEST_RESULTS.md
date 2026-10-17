@@ -3,6 +3,53 @@
 This page separates automated checks from live-game observations. Historical
 counts and build-specific experiments are preserved in the [research archive](archive/README.md).
 
+## Impact recovery: 0.2.5 failed live test and 0.2.6 candidate
+
+The 0.2.4 impact capture reproduced a refusal at the wheel damage flags. SDK
+samples distinguished attached deformation, puncture and wheel detachment.
+The capture was read-only; the user was still running 0.2.4 during that test.
+
+The 0.2.5 / v18 update passes:
+
+- Analytical wheel deformation tests: independent quarter-turn rotation and
+  world angular velocity expectations, invalid rotation data and detached-state
+  refusal. Healthy checkpoint validation remains strict.
+- Complete adapter restore with the measured front-right deformation vector,
+  damage flag, saved constraint state and failure latch. Contact/rebuild faults
+  verify compensation of all 10,093 fields; failed compensation quarantines.
+- Loaded native host save/restore, missing-player refusal and clean restart.
+- 109 Python tests and 46 desktop model tests.
+- Packaged 0.2.5 executable startup, embedded Python imports, UI and overlays
+  in an isolated preview smoke test.
+
+**The packaged 0.2.5 impact test failed.** Two restore commands on the Alpine
+A424 wrote and verified all 10,131 planned fields, but the second, requested
+during an impact, was followed by a game crash (`0xC0000005`). The user saw
+suspension recovery while the front bodywork remained damaged. The physical
+trace shows front-left tire divergence beginning inside the first resumed
+Dynamics call. The dump records a tire lookup fault at executable RVA
+`EF394D`; it does not by itself establish which missing state caused divergence.
+
+Offline analysis then found a concrete omission: native suspension damage
+updates PureHinge's body-B reference axis at `+0x68`, while the restore plan
+only restored the angular row basis at `+0xA8/+0x150`. Version 0.2.6 / v19
+includes the two reference axes at `+0x50/+0x68` in capture, preflight, restore,
+readback and compensation. The snapshot file ABI is unchanged.
+
+The adapter fixture now changes the body-B axis independently of the restored
+row basis, verifies its corrected alignment, and checks compensation after
+contact/collision failures. The recorded fixture has four hinges and 10,097
+planned fields. Zero-length and nonfinite axes reject a replacement save while
+preserving the previous checkpoint. **Live stability of v19 remains unverified.**
+Bodywork/aero repair, detached suspension and puncture repair remain incomplete.
+
+V19 also passes loaded-host save/restore, missing-player admission refusal and
+two successive clean host lifetimes. All 109 Python tests, 46 desktop model
+tests and the isolated packaged 0.2.6 smoke test pass.
+
+See [impact investigation](IMPACT_RESET_INCIDENT.md) for evidence and the next
+test procedure. Do not use 0.2.5 to repeat the impact test.
+
 ## Live check: 17 October 2026
 
 Packaged 0.2.4 and native v17 connected in offline Practice without the earlier

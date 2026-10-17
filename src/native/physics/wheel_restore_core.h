@@ -20,6 +20,19 @@ typedef struct WheelPreparedSpin {
     double inverse_inertia_world[6];
 } WheelPreparedSpin;
 
+/* Axis-angle deformation vector and accumulated suspension damage, in native
+ * wheel coordinates. Kept outside the legacy snapshot/observer ABI. */
+typedef struct WheelDeformation {
+    double rotation[3];
+    double accumulated;
+} WheelDeformation;
+
+RigidPrepareResult wheel_prepare_deformed_spin(const WheelSavedSpin[4], const WheelDeformation[4],
+                                               const RigidSavedBody[4],
+                                               const RigidMassProperties[4], WheelPreparedSpin[4]);
+RigidPrepareResult wheel_validate_deformed_state(const WheelSavedSpin[4], const WheelDeformation[4],
+                                                 const RigidSavedBody[4], const RigidSavedBody[4]);
+
 /* Prepare all FOUR wheel bindings, publishing nothing on any failure.
  * Rebuild rotation, omega, L and world inertia from saved parent and spin.
  * Local math only: does not write LMU, rebuild contacts, or restore tire,

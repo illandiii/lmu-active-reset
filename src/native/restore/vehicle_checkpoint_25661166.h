@@ -14,5 +14,6 @@ int vehicle_checkpoint_validate(VehicleCheckpointWorkspace *, const SnapshotFram
 int vehicle_checkpoint_prepare(VehicleCheckpointWorkspace *, const SnapshotFrame *saved,
                                const SnapshotFrame *current, const RestoreBindings *,
                                const RestoreBackend *read_backend, const LapGuardFlags *,
-                               RestorePlan *output);
+                               RestorePlan *output,
+                               const WheelDeformation *current_deformation = nullptr);
 #endif

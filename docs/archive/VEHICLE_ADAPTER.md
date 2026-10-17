@@ -1,4 +1,18 @@
-# Full checkpoint adapter
+# Vehicle adapter contract and fixtures
+
+The adapter's original typed restore contract and owned-memory validation before live integration.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Full checkpoint adapter
 
 The full checkpoint pipeline is now connected to the native boundary dispatcher
 through `vehicle_restore_adapter_25661166`. It is not installed in LMU yet.

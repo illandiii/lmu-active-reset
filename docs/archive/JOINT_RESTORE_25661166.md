@@ -1,4 +1,18 @@
-# Transazione fisica/scoring e contatti — 12 ottobre 2026
+# Joint physics/scoring restore experiments
+
+The 12 October Steam 25661166 transaction plan and native contact evidence.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Transazione fisica/scoring e contatti — 12 ottobre 2026
 
 Il reset completo non e' operativo. Questa fase chiude due passaggi separati:
 ricostruzione contatti da fermo nel gioco e transazione congiunta su memoria

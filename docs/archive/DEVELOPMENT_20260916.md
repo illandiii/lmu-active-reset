@@ -1,4 +1,18 @@
-# Sviluppo Active Reset — 16 settembre 2026
+# Development notes: 16 September 2026
+
+Migration to build 14150 and the state of capture, runtime hooks and validation at that stage.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Sviluppo Active Reset — 16 settembre 2026
 
 **Il reset nel gioco non è ancora implementato.** Sono disponibili due componenti di preparazione provati fuori dal gioco, la diagnostica reale e l'analisi delle due build. Non esiste un comando operativo di salvataggio/ripristino né una prova di conservazione dei record dopo reset.
 

@@ -1,63 +1,90 @@
-# Sector 0.1.6 for Windows x64
+# Building a Windows release
 
-The portable release starts with `Sector.exe`. Keep its adjacent resources and DLLs.
-It includes Electron, embedded CPython 3.13.12, the overlay reader, telemetry diagnostic
-and revision 15 reset host. It does not require a developer checkout or installed
-Node/Python. This build is unsigned.
+The current development version is **0.1.6**. A portable package starts with
+`Sector.exe`; keep its adjacent DLLs and resources together. It bundles Electron,
+CPython 3.13.12, the telemetry reader/diagnostic and revision 15 reset host.
+The package is unsigned and does not require installed Node.js or Python.
 
-## Build
+## Prerequisites
 
-1. Build the native components with `scripts/build/Build-ResetDesktop.ps1` and the
-   locally verified LMU SDK/profile, or use their already verified local outputs.
-2. Download `https://www.python.org/ftp/python/3.13.12/python-3.13.12-embed-amd64.zip`
-   into `work/release-tools/`. The release script checks its pinned SHA-256.
-3. In `src/ui/electron`, run `npm ci`, `node node_modules/electron/install.js`, `npm run release`,
-   then `npm run test:release`.
-   The output is `releases/Sector-0.1.6-win-x64`. Existing outputs are never overwritten.
+| Requirement | Purpose |
+| --- | --- |
+| Windows x64 and PowerShell 7 | Native builds, launcher and packaging |
+| Node.js 22.12+ with npm | Electron dependencies, UI build and release script |
+| Python 3.11+ for source tooling | Python tests, captures and replay |
+| Zig 0.16.0 | Native component builds |
+| Locally verified LMU SDK, profiles and recorded fixture inputs | Exact native layout and compatibility verification |
+| Pinned embedded Python archive | Bundled portable runtime |
 
-Packaging follows Electron's [manual distribution layout](https://www.electronjs.org/docs/latest/tutorial/application-distribution)
-and uses Python's [embedded distribution](https://docs.python.org/3/using/windows.html#the-embeddable-package).
-The executable has the Sector icon and file/product version 0.1.6. Native binary
-hashes are checked against the shipped compatibility profiles. SDK headers, game
-binaries, captures, developer tools and machine-specific installation paths are excluded.
+The repository does not distribute game binaries, proprietary SDK headers,
+decompiled code or local compatibility manifests. A fresh clone can build a UI
+preview after installing its dependencies, but cannot reproduce the native release
+without these separately prepared prerequisites. A matching app version string
+does not replace the pinned compatibility checks.
 
-At first launch, the runtime is copied to a version-and-content-specific directory
-under the user's application data. It is never overwritten while a native module
-could be loaded. Logs and IPC files stay there; preferences retain their existing
-`LOCALAPPDATA/LMUActiveReset` location. The LMU install is resolved from the requested
-process and still must pass every pinned file/UI hash and offline Practice check.
+## Build procedure
 
-On first launch, confirm the LMU installation found in Steam's libraries or select
-its folder manually. The folder must contain `Le Mans Ultimate.exe`. Sector saves
-the choice and onboarding completion in `LOCALAPPDATA/LMUActiveReset/onboarding.json`,
-separately from runtime versions. Reset and telemetry only connect to that installation.
-If the installation disappears, setup is shown again. The optional tour can always
-be reopened through **Aiuto > Guida**.
+1. Close Sector and LMU before rebuilding native outputs. Never replace a DLL
+   still resident in the game.
+2. On the configured development machine, run:
 
-## Validation
+   ```powershell
+   ./scripts/build/Build-ResetDesktop.ps1 -ZigPath 'C:\tools\zig\zig.exe'
+   ```
 
-`npm run test:release` launches the actual EXE in isolated preview, verifies version,
-UI, overlays, bundled Python imports and absence of a reset listener. It does not
-exercise a live reset. The source UI, Python and native fixture suites remain required.
-`npm run test:onboarding` checks automatic/manual selection, invalid and canceled
-folder dialogs, both tutorial choices and persistence across relaunches in isolated
-preview. `node tests/onboarding-smoke.mjs --packaged` repeats this against the EXE.
+   This builds the desktop backend, overlay reader and renderer and runs their
+   configured checks. The recorded host fixture inputs must be available locally.
+3. Place the official [CPython 3.13.12 embedded x64 archive](https://www.python.org/ftp/python/3.13.12/python-3.13.12-embed-amd64.zip)
+   at `work/release-tools/python-3.13.12-embed-amd64.zip`. The packager verifies its
+   pinned SHA-256.
+4. From `src/ui/electron`, run:
 
-## Repository layout
+   ```powershell
+   npm ci
+   node node_modules/electron/install.js
+   npm run release
+   npm run test:release
+   ```
 
-- `src/native`: native restore, telemetry and observer components.
-- `src/python/sector`: runtime, desktop, telemetry, observers, replay and research.
-- `src/ui/electron`: Electron main/preload, renderer, shared model and release builder.
-- `scripts/build`: maintained native/UI builds.
-- `scripts/test`: test entry points.
-- `scripts/launch`: source-checkout launchers.
-- `scripts/dev`: formatting, inventory and research helpers.
-- `tests`: native and Python fixtures; Electron tests live beside the UI.
+The output is `releases/Sector-0.1.6-win-x64/`. The builder refuses an existing
+destination; preserve or deliberately remove a previous output before rebuilding.
+Generated releases are ignored by Git. Building or committing a version does not
+publish a GitHub release or promote `prod`.
 
-Thirty superseded snapshot observer build scripts were removed. Historical observer
-sources and replay layouts remain because audits and recorded captures still use them.
-Old documentation references to removed scripts describe historical experiments;
-the original scripts can be recovered from Git history.
+## Package contents and validation
 
-`dev` contains development releases. `prod` is the default branch and is promoted
-only on explicit user request; creating 0.1.6 does not promote it to production.
+Packaging uses Electron's [manual distribution layout](https://www.electronjs.org/docs/latest/tutorial/application-distribution)
+and Python's [embedded distribution](https://docs.python.org/3/using/windows.html#the-embeddable-package).
+The EXE receives the Sector icon and package version. Native hashes must match
+the included sanitized compatibility profiles. SDK headers, captures and local
+installation paths are excluded.
+
+The package includes `LICENSE-Sector.txt` alongside Electron's original `LICENSE`
+and Chromium notices. Dependency and font notices are retained under
+`resources/app/licenses/`, with `THIRD_PARTY_NOTICES.md` in the application payload.
+The root [MIT license](../LICENSE) applies to original Sector code/documentation;
+it does not replace third-party terms.
+
+`npm run test:release` launches the actual EXE in isolated preview and checks
+the version, UI, overlays, bundled Python imports and absence of a reset listener.
+It does not perform a live reset. For first-run changes, also run
+`npm run test:onboarding`; `node tests/onboarding-smoke.mjs --packaged` repeats
+onboarding checks against the built EXE. See [test coverage](TEST_RESULTS.md).
+
+## Runtime files and user preferences
+
+On packaged startup, runtime resources are copied into Electron's user-data
+directory under `runtime/<version>-<content-id>/`. Native logs and IPC files live
+inside that writable workspace. Content-specific directories prevent replacement
+of modules that might still be loaded.
+
+Preferences remain in `%LOCALAPPDATA%/LMUActiveReset/`: `settings.json`,
+`overlays.json` and `onboarding.json`. Installation selection and onboarding
+completion survive a runtime upgrade. First-run detection and manual selection
+are described in the [desktop guide](DESKTOP_GUI.md).
+
+## Branch policy
+
+Commit completed development parts to `dev`. `prod` is the default branch and
+changes only on explicit approval to promote a release. Version changes must keep
+the Electron package/lockfile and current user documentation consistent.

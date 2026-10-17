@@ -1,89 +1,96 @@
-# Sector overlays
+# Telemetry overlays
 
-The seven widgets reproduce the supplied `LMU Overlay.html`: Leaderboard,
-Relative, Weather, Delta, Inputs, Laps and Session. The original inline layout,
-font files, SVG artwork and colors are preserved in `renderer/overlays/designs`.
-`logos.png` preserves the supplied sheet. The HUD uses a transparent-background
-variant (`logos-transparent.png`), displayed through SVG viewports. The font license accompanies the bundled files.
-The exported page's runtime and remote resources are not executed or required.
+Sector provides seven widgets based on the supplied `LMU Overlay.html` design:
+**Leaderboard, Relative, Weather, Delta, Inputs, Laps and Session**. Artwork and
+fonts are bundled locally; the exported page's remote runtime is not executed.
 
-## Use
+## Configure the HUD
 
-In **Overlay**, enable the widgets you want, then enable **Overlays**. Select a
-widget to change X/Y, size, opacity, accent and row count. Inputs can independently
-hide clutch, trace, steering wheel and gear/speed; steering rotation is adjustable.
-Classifications can hide manufacturer logos. Values persist separately from reset
-hotkeys at `%LOCALAPPDATA%/LMUActiveReset/overlays.json`.
+1. Open **Overlay**, choose the widgets and enable **Overlays**.
+2. Select a widget to change position, size, opacity and its available options.
+3. Choose a display through **Modifica → Impostazioni → Overlay**.
+4. Select **Edit layout**, drag the blue strip or resize from the lower-right corner.
+5. Select **Lock layout**, the overlay check button or Escape to return mouse input to LMU.
 
-Choose a display and **Edit layout** to drag each window by its blue strip or resize
-it by its lower-right corner. **Lock layout**, its check button or Escape releases
-mouse input to LMU. Background mode also locks the layout. Editor examples carry a
-**Sample** label; a locked live HUD never displays example telemetry.
+Dragging and resizing update the windows while the pointer moves. Valid Size
+field changes also apply immediately; the editor preview may be fitted to its
+available space. Edit/Lock uses a fixed-width button. Background mode locks the
+layout automatically.
+
+Column and section switches are arranged in two columns. Hidden table columns,
+including manufacturer logos, remove their grid tracks and shrink the widget.
+The live leaderboard omits classes with no entries. Accent controls are available
+only where used: the Inputs steering wheel and the Session position section.
+
+Preferences persist in `%LOCALAPPDATA%/LMUActiveReset/overlays.json`, independently
+of reset shortcuts. Display changes keep widget geometry within accessible bounds.
+
+## Widgets and data
+
+| Widget | Data and customization |
+| --- | --- |
+| Leaderboard | Scored positions and classifications; row, column and logo options; absent classes hidden |
+| Relative | Nearby cars and estimated relative gaps; configurable rows and columns |
+| Weather | Current SDK weather; independently hide unavailable forecast sections |
+| Delta | Player delta from telemetry; configurable visible sections |
+| Inputs | Pedals, input trace, steering, gear and speed; clutch can be hidden; steering rotation adjustable |
+| Laps | Observed lap history and supported usage statistics; configurable columns and rows |
+| Session | Session and player information; individually configurable sections |
+
+Relative time gaps are distance-based estimates marked `~`, not timing-loop
+measurements. Lap differences remain the scored lap differences. Lap history
+starts when Sector observes the session. Partial first laps, pit laps and invalid
+laps do not become clean statistical samples; fuel and energy usage require both
+lap boundaries. Vehicle/session changes, backward clocks or laps, and detected
+position discontinuities reset history.
+
+Humidity, future forecasts, exact grip percentage and rain-arrival predictions
+are not supplied by this reader and display a dash. Car numbers are shown only
+when explicitly present as `#number` in the SDK vehicle name. Unknown values are
+never replaced with sample telemetry.
+
+## Visibility and input
 
 Each widget is a transparent, frameless, topmost Electron window. Locked windows
-are non-focusable and ignore mouse input. Live widgets appear only while telemetry
-is fresh, a session contains cars and LMU is the foreground process. Disabled widgets
-release their windows. Display changes clamp geometry to accessible bounds.
-Use LMU in windowed/borderless mode: an external desktop window is not an injected
-exclusive-fullscreen overlay. This behavior still needs a live-game check on the
-user's display configuration.
+are non-focusable and ignore mouse input. They appear only with fresh telemetry,
+a loaded session containing cars and LMU as the foreground process. This includes
+the pit monitor when the session is loaded. Stale telemetry or leaving LMU hides
+the live HUD; disabled widgets release their windows.
 
-## Telemetry and limits
+Use LMU in **windowed or borderless mode**. These are external desktop windows,
+not an injected exclusive-fullscreen overlay. Live behavior across the user's
+display setup still requires in-game validation.
 
-`overlay_reader.cpp` consumes the installed LMU SDK shared-memory layout for
-version 14200. `LMU_Data` is mapped read-only; the only writable mapping is the
-SDK's existing synchronization words. The reader uses the same nonblocking lock
-protocol as the diagnostic, copies bounded arrays, then serializes outside the
-lock. It neither injects into LMU nor sends reset commands. It exits on controller
-pipe closure or owner/game termination. The desktop never forcibly kills it while
-it might own the SDK lock.
+The layout editor can show clearly labelled samples with LMU closed. Locked live
+widgets never substitute those examples for missing data. Manufacturer artwork
+uses the transparent variant of the supplied logo sheet; see [notices](../src/ui/electron/THIRD_PARTY_NOTICES.md).
 
-The controller retries discovery, bounds JSON buffering, expires frozen scoring
-or player timestamps after 1.5 seconds, and clears frames on disconnect. Preview
-mode cannot start either the telemetry reader or the reset host.
+## Reader architecture
 
-- Inputs, speed, gear, delta, current weather, fuel, virtual energy, lap times,
-  positions, pit count and track-limit steps use SDK fields.
-- Relative gaps are distance-based estimates, prefixed with `~`; lap difference
-  remains the scored lap difference. They are not timing-loop measurements.
-- Lap history starts when Sector observes the session. A partial first lap, pit
-  lap or invalid lap cannot become a clean statistical sample. Fuel/energy usage
-  requires both lap boundaries. History resets on vehicle/session changes,
-  backward timestamps/laps or detected position discontinuities.
-- Humidity, future weather, exact grip percentage and rain-arrival predictions
-  are not supplied by this reader and show a dash. Car number is shown only when
-  explicitly present as `#number` in the SDK vehicle name. Unknown data is never
-  replaced by a demonstration value.
-- The seven example layouts remain available for editing when LMU is closed.
+`src/native/telemetry/overlay_reader.cpp` consumes the locally verified LMU SDK
+layout for build 14200. Game data is mapped read-only; the SDK synchronization
+words are the only writable mapping. The reader acquires the nonblocking SDK
+lock, copies bounded arrays and serializes outside the lock. It does not inject
+code or issue reset commands.
 
-## Build and checks
+The controller bounds JSON buffering, expires frozen scoring/player timestamps
+after 1.5 seconds and clears frames on disconnect. The reader exits when its
+controller pipe closes or its owner/game terminates. The desktop does not kill
+it while it might own the SDK lock. Isolated preview starts neither this reader
+nor the reset host.
 
-The existing configured machine has the generated reader in `bin/`. Rebuild with:
+## Build and verification
 
 ```powershell
-./scripts/build/Build-OverlayReader.ps1 -ZigPath <path-to-zig.exe> -SdkPath <LMU-SDK-directory>
+./scripts/build/Build-OverlayReader.ps1 -ZigPath <zig.exe> -SdkPath <LMU-SDK-directory>
 ```
 
-`Build-ResetDesktop.ps1` also builds this reader. Proprietary SDK headers and
-compiled binaries are not committed. The SDK's static layout checks intentionally
-reject an incompatible build.
+The desktop build also invokes this reader build. SDK headers and binaries are
+local prerequisites and are not committed; layout assertions reject incompatible
+SDK builds.
 
-`npm test` covers preference validation/persistence, screen bounds, real versus
-missing values, lap-history discontinuities, stale frames and shutdown races.
-`npm run test:ui` runs the existing desktop regression plus the overlay suite:
-all widget designs, logo assets, controls, clutch removal, independent sandboxed
-windows, movement persistence, locking, foreground gating and compact layouts.
-Native `--self-test` checks array bounds and scoring/telemetry player identity.
-These are fixture and desktop tests, not a live-game qualification.
-
-## 0.1.1
-
-Each widget exposes column/section toggles. Leaderboard, Relative and Laps remove
-the corresponding grid tracks and shrink their windows when columns are hidden.
-Absent car classes are excluded from the live leaderboard, whose height follows
-the displayed rows. A loaded session may display overlays at the pit monitor as
-well as in driving; leaving the game foreground or stale telemetry hides them.
-
-Humidity and future forecasts remain unavailable from the SDK and show a dash;
-their sections can be disabled. Current weather, scoring and player inputs use
-shared-memory readings. Live validation in LMU is still pending for this release.
+`npm test` checks preference validation, bounds, stale/missing telemetry, lap
+history and shutdown races. `npm run test:ui` checks all seven designs, columns,
+clutch and logo removal, live resize before pointer release, display selection,
+fixed button widths, window isolation and foreground gating. These fixture and
+desktop checks do not replace live-game qualification. See [test coverage](TEST_RESULTS.md).

@@ -1,4 +1,18 @@
-# Sviluppo del 2 ottobre 2026 — build 14200
+# Development notes: 2 October 2026
+
+Build 14200 migration and the mechanical-state investigations performed that day.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Sviluppo del 2 ottobre 2026 — build 14200
 
 Questa pagina descrive la prima fase del 2 ottobre. La successiva cattura con
 DLL dei collegamenti ruota/mozzo, completata nella stessa serata, e il lavoro del

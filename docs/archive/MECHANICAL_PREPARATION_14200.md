@@ -1,4 +1,18 @@
-# Preparazione meccanica e vincoli — continuazione del 3 ottobre
+# Mechanical preparation on build 14200
+
+Body/constraint geometry, warm-start calculations and accumulated impulse comparisons.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Preparazione meccanica e vincoli — continuazione del 3 ottobre
 
 ## Continuazione del 10 ottobre: stato degli impulsi e aggiornamento LMU
 
@@ -337,7 +351,7 @@ La stima comunicata del 45% è indicativa e riguarda l'obiettivo completo, non u
 percentuale misurata dai test. Mancano ancora copertura dello stato persistente
 dei vincoli e dei sottosistemi, adattatore di ripristino, contatti dopo spostamento,
 scoring/record e comandi utente. Non aumentare la stima contando soltanto i test.
-# Continuazione 10 ottobre: dipendenze snapshot v3
+## Continuazione 10 ottobre: dipendenze snapshot v3
 
 La cattura `20261010T125859007033Z_snapshot_observer_v3.frames.jsonl` contiene
 231 campioni su 29,6 secondi. Il bridge del banco RAM espone ora salvataggio e
@@ -358,4 +372,3 @@ dipendenza e provare la coerenza della fase di aggiornamento.
 
 Audit finale `20261010_snapshot_shutdown.json`: tre osservatori residenti ma
 arrestati, status 3/error 0, lease disabilitate, prologo Dynamics originale.
-

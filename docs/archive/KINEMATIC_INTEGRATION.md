@@ -1,4 +1,18 @@
-# Integrazione cinematica — 21 settembre 2026
+# Kinematic preparation experiments
+
+The 21 September capture and local replay of coherent rigid-body states.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Integrazione cinematica — 21 settembre 2026
 
 Aggiornamento 3 ottobre: acquisiti **17 corpi della Cadillac sulla 14200**,
 carburante e batteria; identificata la dipendenza delle inerzie pneumatici.
@@ -72,7 +86,7 @@ I moduli sono inattivi ma restano residenti fino alla chiusura del gioco. Chiude
 
 ```powershell
 .\Build-PoseObserver.ps1
-# Nuova osservazione offline; rifiuta un osservatore posa già residente.
+## Nuova osservazione offline; rifiuta un osservatore posa già residente.
 python .\src/python/sector/observers/run_pose_observer.py --pid <PID_ATTUALE> --seconds 12 --load --offline-launch-confirmed
 
 .\Build-KinematicPreparation.ps1

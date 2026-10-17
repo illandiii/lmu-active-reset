@@ -1,4 +1,18 @@
-# Ricostruzione contatti — stato al 21 settembre 2026
+# Native tire-contact reconstruction
+
+Build-specific contact experiments on 14150 and 14200, including four-wheel verification.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Ricostruzione contatti — stato al 21 settembre 2026
 
 Aggiornamento: la ricostruzione da fermo è stata migrata e provata anche sulla
 **14200 il 3 ottobre**, con 194 contatti. Routine, risultati e limiti sono in
@@ -87,10 +101,10 @@ Non era presente un miglior giro valido (`-1`): conservazione record e validità
 Su una nuova istanza offline senza EAC, già in Practice:
 
 ```powershell
-# Solo controllo preliminare: nessuna DLL caricata.
+## Solo controllo preliminare: nessuna DLL caricata.
 python .\src/python/sector/observers/run_contact_experiment.py --pid <PID_ATTUALE>
 
-# Esperimento esplicito, con auto ferma ai box in GUIDA e in folle.
+## Esperimento esplicito, con auto ferma ai box in GUIDA e in folle.
 python .\src/python/sector/observers/run_contact_experiment.py --pid <PID_ATTUALE> --seconds 120 --load --rebuild-once --offline-launch-confirmed
 ```
 

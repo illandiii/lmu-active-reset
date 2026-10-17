@@ -1,4 +1,18 @@
-# Sviluppo del 3 ottobre 2026 — LMU 14200
+# Development notes: 3 October 2026
+
+Build 14200 body and constraint capture work preceding the complete reset host.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Sviluppo del 3 ottobre 2026 — LMU 14200
 
 La continuazione successiva risolve le dipendenze delle inerzie nella preparazione
 locale e verifica geometria/impulsi dei 20 Bar:

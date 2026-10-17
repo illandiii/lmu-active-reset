@@ -1,6 +1,20 @@
+# Initial executable and session findings
+
+Early build 14130/14150 observations, hypotheses and unresolved research questions.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
 > Aggiornamento 16 settembre 2026: il gioco è ora 14150. Le sezioni seguenti descrivono la ricerca storica su 14130; per codice nuovo, migrazione, prove e limiti vedere [DEVELOPMENT_20260916.md](DEVELOPMENT_20260916.md). La DLL precedente non è abilitata sulla nuova build.
 
-# Riscontri, ipotesi e blocchi
+## Riscontri, ipotesi e blocchi
 
 ## Fatti verificati
 

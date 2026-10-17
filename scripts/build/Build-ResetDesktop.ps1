@@ -39,4 +39,4 @@ $profile | Add-Member -NotePropertyName continuous_capture -NotePropertyValue $t
 & (Join-Path (Split-Path -Parent $PSScriptRoot) 'build/Build-OverlayReader.ps1') -ZigPath $ZigPath
 & (Join-Path (Split-Path -Parent $PSScriptRoot) 'build/Build-SectorUi.ps1')
 & (Join-Path (Split-Path -Parent $PSScriptRoot) 'test/Test-ResetGui.ps1') -IncludeElectron
-Write-Output 'Desktop build ready. Start-Sector.cmd opens the automatic GUI.'
+Write-Output 'Desktop build ready. Run ./scripts/launch/Start-ResetGui.ps1 to open Sector.'

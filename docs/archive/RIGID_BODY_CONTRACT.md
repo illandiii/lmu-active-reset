@@ -1,6 +1,20 @@
+# Early rigid-body capture contract
+
+Historical layouts and invariants from the 14130/14150 body-capture investigation.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
 > Aggiornamento 21 settembre 2026: acquisizione coerente di 16 corpi sulla build 14150 e preparazione cinematica parziale provata su 1.456 stati, in [KINEMATIC_INTEGRATION.md](KINEMATIC_INTEGRATION.md). Nessun ripristino di posa nel processo. Le sezioni seguenti descrivono la ricerca storica su 14130; la DLL precedente non è abilitata sulla nuova build.
 
-# Corpi fisici: contratto parziale verificato
+## Corpi fisici: contratto parziale verificato
 
 Build: EXE SHA-256 `BB8661CF6F96A056374AFAC29018C1FDD71F86164C158A71043BB7C244F7407E`. Questi risultati descrivono letture e aritmetica osservate; **non costituiscono un contratto completo di ripristino**.
 

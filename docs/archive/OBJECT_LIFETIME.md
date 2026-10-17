@@ -1,4 +1,18 @@
-# Object lifetime and control changes
+# Object lifetime and admission research
+
+Lifecycle hooks, asynchronous ownership handoff and the 13 October live admission observations.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Object lifetime and control changes
 
 This investigation separates pointer identity from object lifetime. The game
 writer remains disabled until the complete host-side lifetime contract is met.

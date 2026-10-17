@@ -1,9 +1,15 @@
-# High-speed reset and launcher lifecycle
+# Collision jump investigation and v15 correction
 
-Latest result, 16 October: the v14 live trace identifies a new collision sweep
-across the teleport, followed by native collision correction. V15 contains a
-targeted repair, tested on owned memory but awaiting a live confirmation. The
-earlier sections below retain the evidence available at each investigation stage.
+**Outcome, 16 October 2026:** v15 corrected the collision sweep across the
+pre-reset and saved positions. Seven live restores verified all 10,084 fields
+and four contacts per reset, with no immediate collision jump in the recorded
+20-step windows. The user confirmed successful teleports, including in turns.
+See [current status](PHYSICAL_RESET_STATUS.md) for scope and remaining qualification.
+
+This report preserves the investigation chronologically. Claims of an unresolved
+fault or pending test in earlier sections describe the evidence available at
+that stage. The final section records the successful v15 trials and intentional
+listener shutdown. Capture identifiers refer to local evidence excluded from Git.
 
 ## Confirmed incident
 

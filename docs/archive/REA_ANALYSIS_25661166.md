@@ -1,4 +1,18 @@
-# REA e stati trasmissione — 12 ottobre 2026
+# REA analysis and transmission-state captures
+
+Loaded-code analysis, powertrain probes and native preparation results from 12 October.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## REA e stati trasmissione — 12 ottobre 2026
 
 REA 6.4.0 e Ghidra 12.1.4 sono stati usati per decompilare sei routine della
 build Steam 25661166. Il reset completo non e' ancora operativo.

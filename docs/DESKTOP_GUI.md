@@ -1,168 +1,126 @@
-# Sector desktop — Electron
+# Sector desktop
 
-Sector 0.2 replaces the WPF window with Electron, React and a locally built Vite
-renderer. `Start-Sector.cmd` and its `Start-Reset.cmd` alias open the new app.
-The v15 physical reset host and Python hotkey supervisor remain the source of
-truth. This UI migration does not alter native physics or reset admission.
+Sector 0.1.6 uses Electron, React and a locally built Vite renderer. The Python
+supervisor and v15 native host own reset commands; the desktop displays their
+acknowledged state. See [overlays](OVERLAYS.md) for the separate telemetry path.
 
-## Setup
+## Launch and first-run setup
 
-On the configured Windows x64 machine, install Node.js 22.12+ with npm. The
-launcher installs the lockfile dependencies when needed, fetches Electron on
-first use, builds the renderer, then opens Sector. First setup needs internet;
-fonts, icons, scripts and sound previews are local after setup. Startup errors
-point to `logs/desktop-startup.log`.
-
-For an explicit UI build or an isolated preview:
+Open `Sector.exe` from the complete portable folder. For a source checkout:
 
 ```powershell
-./scripts/build/Build-SectorUi.ps1
+./scripts/launch/Start-ResetGui.ps1
+```
+
+The source launcher needs Node.js 22.12+ and npm, installs locked dependencies
+when necessary and builds the renderer. The backend also requires Python and
+locally generated native binaries with matching compatibility profiles. See
+[release prerequisites](RELEASE.md). Startup failures are logged to
+`logs/desktop-startup.log` in the source workspace.
+
+First launch searches Steam libraries for LMU. Confirm the proposed installation
+or browse to a folder containing `Le Mans Ultimate.exe`. Both reset and telemetry
+discovery use that choice. Setup offers a short tutorial and saves completion
+independently of runtime versions. If the saved installation disappears, setup
+is shown again.
+
+For an isolated UI preview:
+
+```powershell
 ./scripts/launch/Start-ResetGui.ps1 -Preview
-./scripts/test/Test-ResetGui.ps1 -IncludeElectron
 ```
 
-Preview never starts the game detector or Python reset host,
-and does not write real preferences. Its Electron profile is under
-`work/electron-preview`. Tests use this same isolated mode.
+Preview does not start the game detector, telemetry reader or reset host. It uses
+an isolated profile under `work/electron-preview`, not the real preferences.
 
-The physical backend still needs Python 3.11+, local generated binaries and the
-pinned compatibility manifest. `SECTOR_PYTHON` (or launcher `-PythonPath`) selects
-Python; otherwise the configured local runtime, then `python.exe`, is used.
-A public clone does not contain private installation manifests or recorded frames.
-To rebuild the native backend on the configured machine, close LMU and Sector and
-run `scripts/build/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`.
+## Controls and menus
 
-## Window and settings
+| Location | Controls |
+| --- | --- |
+| Active Reset | Checkpoint availability, save/restore shortcuts and confirmation sounds |
+| Overlay | Widget visibility, layout editor and per-widget configuration |
+| Modifica → Impostazioni | Reduced motion and overlay display selection |
+| Aiuto → Guida | Optional guided tour with anchored popups and arrows |
+| Window close | Run in background, Quit Sector or Cancel |
 
-- Active Reset shows acknowledged checkpoint availability, shortcut assignment
-  and confirmation audio. The compact layout omits counters, saved time and speed.
-- The header gear opens an embedded Settings dialog with Reduce motion.
-  This preference is stored with existing settings;
-  old files default to normal motion, while the OS reduced-motion setting is
-  always respected.
-- Connection phase and the latest command result live in the bottom status bar
-  on both tabs. Page eyebrows, the old product footer and the blue card's
-  Offline Practice label have been removed; the title bar only says sector.
-- The Guide button beside each page title starts an optional seven-step tour.
-  Anchored popups and arrows explain checkpoints, keys, audio, connection, settings,
-  overlays and background mode. Next, Previous, Skip and Escape work with
-  keyboard focus containment. Finishing returns to the starting tab; the tour
-  never triggers a save or restore.
-- Overlay contains seven configurable transparent widgets; see [OVERLAYS.md](OVERLAYS.md).
-- Click a shortcut to capture one key. Escape or window focus loss cancels.
-  Duplicates, held repeats and modifier combinations are rejected. Tab navigates
-  the dialog; **Use Tab** explicitly assigns that key. Enter/Space activate a
-  focused dialog button; from the capture surface they can be assigned.
-- Save/restore defaults remain F6/F7. Letters, digits, F1–F24, navigation, numpad
-  and OEM punctuation use the shared Python keymap. Windows virtual-key values
-  preserve keyboard-layout mapping. Select keys not already bound in LMU.
-- Sound previews use the same generated WAVs as the Python listener. Real success
-  sounds and counters depend on native acknowledgements, never the keypress.
-- Closing offers **Run in background**, **Quit Sector**, and **Cancel** inside
-  the app window. The tray and a second launcher can reopen the existing window.
+The connection/result status bar belongs to Active Reset. There is no connection
+banner on the Overlay page. The optional tour never triggers a save or restore;
+Next, Previous, Skip and Escape support keyboard navigation. Onboarding and guide
+transitions respect both the app preference and the operating system's reduced
+motion setting.
 
-Settings remain at `%LOCALAPPDATA%/LMUActiveReset/settings.json`. Updates are
-validated and atomically replaced; the existing Python settings reader applies
-changes when no command is in flight and requires fresh key release. Invalid
-stored preferences stop automatic attachment and offer explicit restoration of
-defaults. Failed writes remain visible and do not pretend to apply preferences.
+### Shortcuts and feedback
 
-## Process ownership and shutdown
+F6 saves; F7 restores. Click a shortcut and press the desired key. Escape or focus
+loss cancels capture. Duplicates, held repeats and modifier combinations are
+rejected. Tab navigates the dialog; its **Use Tab** button explicitly assigns Tab.
+The shared key map covers letters, digits, F1–F24, navigation, numpad and OEM keys.
 
-`main/runtime.cjs` discovers one LMU process, creates a unique `work/gui/<id>`
-channel, writes its heartbeat, starts `scripts/sector.py runtime.start_reset_hotkeys`
-with an argument array and reads versioned atomic `status.json` snapshots.
-The existing supervisor waits for offline Practice driving, checks EAC and game
-compatibility, and owns all native lifecycle checks and key polling. Electron
-registers no global reset shortcuts and exposes no save/restore IPC command.
+After changing a shortcut, release both keys before using them in LMU. Sector
+observes keys without swallowing them, so avoid existing game bindings. Sound
+previews use the listener's generated WAV files; actual success feedback depends
+on native acknowledgement.
 
-The main process owns the heartbeat even when the renderer is hidden. A
-single-instance lock prevents duplicate desktop listeners; process identity
-includes creation time to distinguish reused PIDs. Unexpected listener failure
-is shown and blocks automatic retry against the same game instance. A clean
-vehicle reconstruction is handled inside the Python supervisor, which clears the
-old checkpoint and waits for driving before connecting a new host.
+### Preferences
 
-Quit creates the cooperative `stop` file and keeps status/heartbeat polling alive
-until Python exits. It never kills LMU or forcibly terminates an active restore.
-A quit arriving during process discovery cannot start a listener afterward. If
-Electron crashes, heartbeat expiry requests native shutdown through the existing
-watchdog. Stopped DLLs remain resident until LMU exits, as before.
+Normal preferences live in `%LOCALAPPDATA%/LMUActiveReset/`:
 
-A rejected replacement save retains the old checkpoint. Pause/focus loss alone
-does not delete it; native identity or lifecycle invalidation does. No desktop
-session timer, checkpoint age, speed or distance limit is introduced here.
+| File | Purpose |
+| --- | --- |
+| `settings.json` | Reset shortcuts, sound and app preferences |
+| `overlays.json` | Widget visibility, geometry, sections and display |
+| `onboarding.json` | Selected LMU installation and first-run completion |
 
-## Renderer boundary
+Writes are validated and replaced atomically. Invalid settings block automatic
+attachment and offer an explicit reset to defaults. Write failures are displayed.
+The Python reader applies key changes when no command is in flight and requires
+a fresh key release.
 
-`main/index.cjs` owns window/tray, validated settings, sound previews and runtime.
-The sandboxed `preload.cjs` exposes named operations, not Electron, Node, shell,
-filesystem paths or generic IPC. Context isolation and web security stay enabled.
-All IPC checks the exact main frame and local URL. Navigation, new windows,
-webviews and permission requests are denied. A bounded `sector://app` protocol
-serves only the built renderer; CSP blocks remote scripts and connections.
-A future overlay may consume acknowledged status without becoming a second
-controller or refreshing the desktop heartbeat.
+## Runtime ownership and shutdown
 
-## Design and motion sources
+The main process discovers LMU, starts the Python supervisor through
+`scripts/sector.py runtime.start_reset_hotkeys`, maintains a heartbeat and reads
+versioned status snapshots. The supervisor waits for eligible driving, validates
+compatibility and owns native lifecycle checks and key polling. Electron does
+not register global reset shortcuts or expose a renderer save/restore command.
 
-The user requested [MengTo/Skills](https://github.com/MengTo/Skills) and
-[emilkowalski/skills](https://github.com/emilkowalski/skills). Applied references:
+A single-instance lock prevents duplicate desktop listeners. Background mode
+keeps the heartbeat active and locks the overlay layout. The tray or another
+launch restores the same window. The window hides after the close-dialog exit
+animation has completed.
 
-- MengTo `build-awwwards-quality-sites` and `dark-blue-contrasting-clean`,
-  revision `83a47fee32f0b6349bff1fede99257a5ef03dc93`.
-- Emil `emil-design-eng`, `animate`, its recipes and `pick-ui-library`,
-  revision `2d228630ba1446365f614a108cb8252f1feda202`.
+Quit requests a cooperative stop and waits for cleanup. It does not terminate
+LMU or interrupt an active restore by force. Heartbeat expiry handles unexpected
+desktop termination. Stopped native DLLs remain resident until LMU exits.
 
-Direction: a composed trackside utility with graphite/navy surfaces, one cobalt
-checkpoint focal region, Manrope interface type and Barlow Condensed numerals.
-The established Sector mark remains; Solar Linear SVG icons are bundled locally.
-The layout flows from feature tabs to checkpoint state, then shortcut/audio
-settings. No reference identity, imagery or copy is reproduced.
+A clean vehicle reconstruction clears the checkpoint and returns the supervisor
+to waiting. Pause or focus loss alone does not discard it. Unexpected listener
+failure is reported and blocks automatic retry against that same game instance.
 
-The website-oriented skill is adapted to a desktop utility: native scrolling,
-no scroll takeover, GSAP intro, Three.js scene or continuous decorative animation.
-Emil's task-specific animation guidance takes precedence for repeated app use:
-CSS transform/opacity transitions only, 120–200 ms, with
-`cubic-bezier(0.23, 1, 0.32, 1)`. Tabs and switches communicate spatial changes;
-modals use a centered 0.96-scale entry. Keyboard interactions and checkpoint
-numbers update immediately. Reduced motion removes movement. Base UI owns dialog
-focus containment and tab keyboard navigation. Controls have visible focus;
-custom scrolling, compact layouts and forced-color fallbacks are included.
+## Renderer boundary and design
 
-Asset attribution and font licenses live in
-`src/ui/electron/THIRD_PARTY_NOTICES.md`. All UI source comments are English.
+Electron's main process owns windows, tray, settings and subprocesses. The
+sandboxed preload exposes named operations rather than generic IPC or filesystem
+access. Context isolation and web security stay enabled; IPC validates the main
+frame and local URL. The bounded `sector://app` protocol serves local renderer
+assets. Navigation, new windows, webviews and permission requests are denied.
 
-## Verification and limits
+The interface uses local fonts and SVG icons, graphite surfaces and a blue accent.
+Short transform/opacity transitions communicate state changes without delaying
+key handling. Base UI provides dialog focus containment and keyboard tab behavior.
+See [asset notices](../src/ui/electron/THIRD_PARTY_NOTICES.md).
 
-Run from `src/ui/electron`:
+Design references used during the Electron migration:
 
-```powershell
-npm run format:check
-npm test
-npm run build
-npm run test:ui
-```
+- [MengTo/Skills](https://github.com/MengTo/Skills), revision `83a47fee32f0b6349bff1fede99257a5ef03dc93`: `build-awwwards-quality-sites` and `dark-blue-contrasting-clean`.
+- [emilkowalski/skills](https://github.com/emilkowalski/skills), revision `2d228630ba1446365f614a108cb8252f1feda202`: `emil-design-eng`, animation recipes and `pick-ui-library`.
 
-The controller tests cover settings migration/atomic writes, invalid input,
-keyboard mapping, acknowledged status, listener identity, discovery races and
-cooperative stop. The real Electron smoke suite covers isolation, tabs, actual
-key events, duplicate/modifier rejection, Escape, sound generation, mute,
-acknowledged checkpoint updates, focus containment, background/reopen,
-second-instance exclusion, compact layout, guided tour navigation and dismissal,
-  reduced motion and quit. Screenshots
-are written to ignored `work/electron-screenshots` and visually inspected.
-Python regressions run with `python scripts/sector.py test`.
+These references guided layout and motion. Their sites are not runtime dependencies.
 
-Verified on Windows on 16 October 2026: 9 desktop controller tests, 95 Python
-tests, production build, formatting, and the Electron smoke suite all passed.
-The smoke suite also runs the real PowerShell launcher to reveal the hidden
-instance. Both launcher and game discovery prefer the current PowerShell
-interpreter's modules, avoiding a PowerShell 7 module path inherited by Windows
-PowerShell through Node.
+## Validation
 
-These are desktop/fixture checks, not a new live-game reset qualification. The
-seven successful v15 driving trials remain documented in
-[the collision incident report](HIGH_SPEED_RESET_INCIDENT.md). The complete
-Electron-to-LMU workflow still needs a live session; the overlay live-game validation and a
-standalone distributable bundling Python/native assets remain outstanding.
+Run `npm run format:check`, `npm test`, `npm run build` and `npm run test:ui`
+from `src/ui/electron`; run `npm run test:onboarding` for first-run changes.
+Desktop smoke tests exercise the actual Electron window in isolated preview.
+See [test coverage](TEST_RESULTS.md) for what these checks establish and what
+still requires a live LMU session.

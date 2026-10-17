@@ -1,150 +1,117 @@
 # Sector
 
-A sim-racing companion for Le Mans Ultimate, starting with checkpoint and
-physical-state restoration in offline Practice on Windows x64. Seven configurable telemetry overlays are available in the Overlay tab.
+[![Star this repo](https://img.shields.io/badge/Star_this_repo-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sector-lmu/Sector)
+[![GitHub stars](https://img.shields.io/github/stars/sector-lmu/Sector?style=for-the-badge&label=Stars&color=73B7FF)](https://github.com/sector-lmu/Sector/stargazers)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/illandiii)
+[![License: MIT](https://img.shields.io/badge/License-MIT-73B7FF?style=for-the-badge)](LICENSE)
 
-**V15 fixes the collision sweep that launched the car after moving resets.**
-Seven live restores on 16 October verified all 10,084 fields, with current speeds
-up to 242.6 km/h and distances up to 797 metres from the checkpoint. The user
-confirmed successful teleports, including while cornering. The detailed traces
-show no collision-induced jump in the first 20 physics steps after each restore;
-broader stability and lifecycle qualification remain ongoing.
+A Windows companion for **Le Mans Ultimate**, with physical checkpoints and
+customizable telemetry overlays. Current development version: **0.1.6**.
 
-**The first near-stationary physical reset succeeded in offline Practice.** The
-experimental host restored and verified all 10,077 planned fields, rebuilt four
-native tire contacts and resumed simulation without transaction recovery. Its
-11 hooks stopped cleanly. This is a bounded initial experiment, not qualification
-for moving resets, damage recovery or lap validity. Focused save/restore hotkeys
-are connected to this host. See the [host evidence](docs/PHYSICAL_RESET_HOST.md).
+## 🏁 Active Reset
 
-## Try the local build
+Save a checkpoint, keep driving, then restore the saved vehicle state: position,
+orientation, velocity and the physical subsystems covered by the reset host.
+Restoring a checkpoint saved at 80 km/h restores that saved velocity, even if
+you request the reset at 200 km/h.
 
-Run `Start-Sector.cmd` to open the English, dark-only Electron app (`Start-Reset.cmd`
-remains an alias). It automatically
-detects LMU and waits for driving in offline Practice without EAC. There are no
-start/stop buttons or session countdown. Release both keys before using them:
-
-- **F6** saves the checkpoint.
-- **F7** prepares and restores it after successful native acknowledgement.
-- Select a shortcut and press its new key; settings persist across launches.
-  Letters, digits, function keys, navigation and numpad keys are supported.
-  Escape cancels capture; modifiers and combinations are not assigned.
-- Distinct sounds confirm save, restore and rejection; preview or mute them in the GUI.
-- The checkpoint card shows availability; shortcuts and confirmation audio sit below it.
-- Use **Guide** beside the page title for a brief tour with arrows and popups.
-- **Overlay** contains seven widgets with per-widget position, size, opacity and visibility.
-  Use **Edit layout** to drag them, then **Lock layout** to return input to LMU.
-  See [overlay setup and supported data](docs/OVERLAYS.md).
-- The gear button opens app settings, including a persistent Reduce motion option.
-- Connection status and the latest result remain visible in the bottom status bar.
-- Closing the window offers **Run in background**, **Quit Sector** or **Cancel**
-  in a popup inside the app.
-- In the background, shortcuts remain active. Reopen from the tray or launcher.
-- Quit waits for native cleanup; a second launcher reveals the existing app.
-
-The top tabs separate **Active Reset** from the **Overlay** placeholder. Scrolling
-uses the app's dark theme. Overlay functionality will be added in a later version.
-The launcher builds the local renderer and installs its locked dependencies on
-first use. Node.js 22.12+ and npm are required, with internet access for initial
-setup. Later launches use local assets. Existing shortcuts and sound preferences
-are retained. For a UI-only preview, run `scripts/launch/Start-ResetGui.ps1 -Preview`.
-
-A checkpoint has no time-based expiry. The v15 host has no session-duration cap;
-vehicle reconstruction, including a reset to the pits, invalidates its checkpoint.
-After a clean detach, the app waits for driving and connects a fresh host automatically.
-Pausing driving or moving focus alone does not discard a checkpoint. Existing
-identity/lifecycle checks can also invalidate it when the underlying vehicle changes.
-
-The host has no speed or checkpoint-distance limit. Moving and long-distance
-restores pass isolated model tests and the seven live v15 trials described above.
-Identity, lifecycle, coherent physical state and valid contact
-reconstruction remain required. The keys are observed, not swallowed: select unused game bindings.
-For different keys run `scripts/launch/Start-ResetHotkeys.ps1 -SaveKey F9 -RestoreKey F10`.
-The launcher discovers the process and worker, chooses an unused locally built
-v15 host under a unique instance filename, and never replaces a resident DLL or
-falls back to older builds. Stopped modules remain resident until LMU exits.
-Generated binaries and the local Python runtime are required; a fresh
-clone must be built before this launcher can be used. On the configured Windows
-machine, close LMU and run `scripts/build/Build-ResetDesktop.ps1 -ZigPath C:\tools\zig\zig.exe`
-to rebuild v15 and the continuous telemetry reader. See
-[desktop setup and verification](docs/DESKTOP_GUI.md).
-
-The current host records collision preparation/correction around the restore,
-using the diagnostics introduced in v12 and a continuous ring in v14.
-Further live tests are documented in Italian in
-[the collision test procedure](docs/TEST_RESET_COLLISIONI.md). The 16 October capture identified a collision sweep across the pre-reset and saved
-locations. V15 restores the aggregate/exported kinematics and rebuilds collision
-state before physics resumes. Local regression and compensation tests pass;
-the subsequent live results are recorded in the
-[collision incident history](docs/HIGH_SPEED_RESET_INCIDENT.md).
-
-## Repository layout
-
-| Directory | Contents |
+| Default key | Action |
 | --- | --- |
-| `src/native/physics/` | Physical state, constraint and inertia calculations |
-| `src/native/checkpoints/` | Saved state banks and subsystem checkpoints |
-| `src/native/restore/` | Restore plans, transactions, vehicle adapters and contacts |
-| `src/native/runtime/` | Physics-thread host, synchronization, lifecycle and hooks |
-| `src/native/observers/` | Historical capture modules and their wire layouts |
-| `src/native/telemetry/` | Native telemetry reader |
-| `src/python/sector/` | Python package, split into runtime, desktop, telemetry, observers, analysis, research and replay |
-| `src/ui/electron/` | Electron main process, isolated preload, React renderer and desktop tests |
-| `tests/native/`, `tests/python/` | Native fixtures/bridges and Python unit tests |
-| `tools/rea/` | Offline REA JavaScript integration |
-| `scripts/` | PowerShell builds, tests and installation inspection |
-| `docs/` | Design contracts, development history, evidence summaries and limitations |
-| `third_party/minhook/` | MinHook source with its original license and authors |
+| **F6** | Save a checkpoint |
+| **F7** | Restore the checkpoint |
 
-Generated binaries (`bin/`), captures (`logs/`), reverse-engineering output
-(`analysis/`), machine-specific manifests (`compatibility/`) and toolchains/caches
-(`work/`) stay local and are excluded from Git. No game executable, memory dump
-or decompiled game source is distributed here. Historical observer versions are
-retained because replay tools import their exact data layouts.
+Click either shortcut in **Active Reset** and press a new key to reassign it.
+Confirmation sounds are configurable on the same page. Sector waits for driving
+in offline Practice without EAC; checkpoints and results follow native
+acknowledgements. Keys remain available to LMU, so choose unused game bindings.
 
-## Build and test
+There is no speed, distance or checkpoint-age cap. Compatibility, vehicle identity,
+lifecycle and physical-state checks still apply. Rebuilding the vehicle can
+invalidate a checkpoint; a failed save does not silently replace a valid one.
 
-Requirements: Windows x64, PowerShell 7 and Zig 0.16.0. Python replay tools require
-Python 3.11 or later; disassembly tools additionally require `pefile` and `capstone`.
+## 📊 Telemetry overlays
+
+Seven widgets: **Leaderboard · Relative · Weather · Delta · Inputs · Laps · Session**.
+
+- Toggle widgets, columns and sections, including clutch input and manufacturer logos.
+- Set position, size, opacity and supported widget-specific options.
+- Use **Edit layout** to drag and resize widgets in real time, then **Lock layout**.
+- Choose a monitor in **Modifica → Impostazioni → Overlay**.
+
+Locked overlays pass mouse input through to the game. They appear when LMU is in
+the foreground with a loaded session and fresh telemetry. Use windowed or
+borderless mode. Missing telemetry is shown as unavailable; editor samples are
+never substituted into the live HUD. See [overlay data and limitations](docs/OVERLAYS.md).
+
+## Get started
+
+With a built portable package, open **`Sector.exe`** and keep the complete extracted
+folder together. Node.js and Python are bundled; users do not need to install them.
+
+1. Confirm the detected LMU folder or select it manually on first launch.
+2. Choose the optional tutorial, available again through **Aiuto → Guida**.
+3. For Active Reset, start LMU without EAC, load offline Practice and enter **GUIDA**.
+4. Wait for the connection, focus LMU and release both shortcut keys before using them.
+
+Closing the window asks whether to run in the background, quit Sector or cancel.
+The tray or a second launch reopens the existing app. Background mode keeps the
+listener active; quitting requests cooperative native cleanup.
+
+Portable outputs are local under `releases/Sector-0.1.6-win-x64/` and excluded from
+Git. A source download is not a ready-to-run portable package.
+See [build and packaging](docs/RELEASE.md) for prerequisites.
+
+## Verification status
+
+The v15 host completed **seven live moving resets** on 16 October 2026, verifying
+10,084 fields and rebuilding four contacts each time. Current speeds reached
+242.61 km/h and checkpoint distances reached 797.36 m. The user confirmed
+teleports including while cornering. The recorded first 20 physics steps per
+reset showed no recurrence of the immediate collision jump.
+
+This evidence does not qualify every car, track, damage state or long session.
+Desktop and overlay automation uses isolated previews; complete live overlay
+validation remains pending. See [current reset status](docs/PHYSICAL_RESET_STATUS.md),
+[test coverage](docs/TEST_RESULTS.md) and the [collision investigation](docs/HIGH_SPEED_RESET_INCIDENT.md).
+
+## Development
+
+Work is committed to **`dev`**. **`prod`** is the default branch and receives only
+explicitly approved promotions. The documentation on each branch describes that
+branch's state.
+
+For a UI-only preview on Windows with Node.js 22.12+ and npm:
 
 ```powershell
-./scripts/test/Test-Core.ps1 -ZigPath 'C:\tools\zig\zig.exe'
-python scripts/sector.py test
+./scripts/launch/Start-ResetGui.ps1 -Preview
 ```
 
-This suite runs isolated fixtures and does not load code into LMU. Live observer
-builds additionally require local installation/compatibility manifests and exact
-matching game binaries. An empty checkout does not contain local capture data.
+The source launcher installs locked dependencies and builds the renderer when
+needed. First setup needs internet access. Preview does not attach to LMU.
+The real reset backend additionally requires locally verified native binaries,
+compatibility profiles and Python. Those prerequisites are not part of a public clone.
 
-Run Python tools through the package launcher, for example
-`python scripts/sector.py analysis.analyze_physical_reset_trace <capture.physical.jsonl>`.
-The launcher resolves repository paths independently of the working directory;
-it also supplies the package path to child capture/replay processes. See
-[source organization](docs/SOURCE_LAYOUT.md) for entry points and build rules.
+| Path | Purpose |
+| --- | --- |
+| `src/native/` | Physics, checkpoints, transactions, runtime and telemetry |
+| `src/python/sector/` | Supervision, diagnostics, capture analysis and replay |
+| `src/ui/electron/` | Desktop, overlays, onboarding and release builder |
+| `tests/` | Native fixtures and Python tests |
+| `scripts/` | Maintained launch, build, test and development commands |
+| `docs/` | Current guides and an indexed research archive |
+| `assets/` | Sector logo and Windows icon |
+| `third_party/` | Vendored dependencies with their original notices |
 
-Format C/C++ with clang-format 21.1.8 and Python with Ruff 0.14.1:
+See [contributing](CONTRIBUTING.md), [source layout](docs/SOURCE_LAYOUT.md) and the
+[documentation index](docs/README.md). Captures, generated binaries, proprietary
+game files, local compatibility manifests and toolchains stay outside Git.
 
-```powershell
-./scripts/dev/Format-Code.ps1 -ClangFormat clang-format -Ruff ruff
-```
+## Support and license
 
-## Current work
+If Sector is useful to you, give the repository a star. You can also support its
+development through a **[voluntary donation on Ko-fi](https://ko-fi.com/illandiii)**.
 
-1. Qualify lifecycle transitions and physical stability across more cars and tracks.
-2. Validate lap validity and longer sessions with repeated moving resets.
-3. Validate the complete desktop workflow during longer live-game sessions.
-
-The Electron desktop UI passes Windows layout, status and lifecycle smoke tests. The seven
-live v15 reset trials used the same engine through the hotkey launcher; the new
-tray workflow has been tested independently of LMU. See [desktop architecture,
-design sources and tests](docs/DESKTOP_GUI.md).
-See [physics thread findings](docs/PHYSICS_THREAD_2026-10-13.md)
-and [restore integration](docs/RESTORE_INTEGRATION_2026-10-13.md).
-The [development archive](docs/README.md) preserves earlier results chronologically;
-older paths and source hashes refer to the pre-reorganization working tree.
-
-## Windows development release 0.1.6
-
-Open `releases/Sector-0.1.6-win-x64/Sector.exe`. Keep the complete folder together;
-Node.js and Python do not need to be installed. See [release instructions](docs/RELEASE.md)
-for the repeatable build and packaged-app checks.
+Sector's original code and documentation are licensed under [MIT](LICENSE).
+Dependencies and third-party assets retain their own terms; manufacturer marks
+belong to their respective owners. See [third-party notices](src/ui/electron/THIRD_PARTY_NOTICES.md).
+Sector is an independent project and is not affiliated with Le Mans Ultimate.

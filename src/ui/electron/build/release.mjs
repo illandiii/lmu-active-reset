@@ -7,9 +7,9 @@ import { rcedit } from "rcedit";
 
 const ui = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const root = path.resolve(ui, "../../..");
-const version = JSON.parse(
+const { version, license } = JSON.parse(
   fs.readFileSync(path.join(ui, "package.json")),
-).version;
+);
 const output = path.join(root, "releases", `Sector-${version}-win-x64`);
 if (fs.existsSync(output))
   throw new Error(
@@ -23,6 +23,7 @@ const copy = (from, to) => {
   });
 };
 copy(path.join(ui, "node_modules/electron/dist"), output);
+copy(path.join(root, "LICENSE"), path.join(output, "LICENSE-Sector.txt"));
 fs.renameSync(
   path.join(output, "electron.exe"),
   path.join(output, "Sector.exe"),
@@ -37,6 +38,7 @@ fs.writeFileSync(
     name: "sector",
     productName: "Sector",
     version,
+    license,
     main: "main/index.cjs",
   }),
 );

@@ -1,6 +1,6 @@
 # Prova del reset e delle collisioni — host v15
 
-Aggiornata il 16 ottobre 2026 dopo la cattura dello sbalzo. La v15 corregge
+Procedura aggiornata per Sector 0.1.6; evidenza live del 16 ottobre 2026. La v15 corregge
 il volume delle collisioni che attraversava la posizione precedente e quella
 salvata: ripristina anche le cache cinematiche, aggiorna la geometria con le
 routine native e rimuove le coppie di collisione obsolete. I test locali e sette
@@ -13,11 +13,13 @@ salti da collisione. La procedura seguente serve ad ampliare la verifica.
 
 1. Avvia LMU senza EAC, in Practice offline. Per confrontare la cattura precedente,
    usa possibilmente Spa e Mercedes GT3, con una vettura sana.
-2. Apri **una sola volta `Start-Reset.cmd`** nella cartella del progetto. Si apre
-   la UI; se sei al monitor, il programma attende GUIDA. La build selezionata è v15.
+2. Apri **`Sector.exe`** dalla cartella della build portabile (oppure esegui
+   `./scripts/launch/Start-ResetGui.ps1` dal checkout configurato). Si apre la UI;
+   se sei al monitor, il programma attende GUIDA. Il modulo selezionato è v15.
 3. Entra in GUIDA, attendi lo stato **Connected**, torna a dare il focus a LMU e
    rilascia F6 e F7. I tasti non devono avere altri comandi di gioco assegnati.
-   Il programma resta attivo finché chiudi la UI o termina la connessione.
+   Per arrestarlo scegli **Quit Sector** nel popup di chiusura;
+   **Run in background** mantiene attivo il listener.
 
 ## Prima prova: controllo da fermo
 
@@ -30,9 +32,9 @@ salti da collisione. La procedura seguente serve ad ampliare la verifica.
 ## Seconda prova: velocità salvata diversa da quella attuale
 
 Eseguila solo se la prima prova è passata e sei disponibile a riprodurre il difetto.
-Chiudi prima la UI e attendi che termini; riapri `Start-Reset.cmd` per avere una
-cattura separata. Non sovrapporre due istanze. Se hai cambiato le hotkey nelle
-impostazioni, usa i tasti selezionati al posto di F6/F7.
+Scegli **Quit Sector** e attendi che termini; riapri `Sector.exe` per avere una
+cattura separata. Non sovrapporre due istanze. Se hai cambiato le hotkey nella
+pagina Active Reset, usa i tasti selezionati al posto di F6/F7.
 
 1. In un rettilineo libero premi **F6 intorno a 80 km/h**, con l'auto stabile e
    senza urti. Attendi il segnale di salvataggio riuscito.
@@ -42,8 +44,8 @@ impostazioni, usa i tasti selezionati al posto di F6/F7.
 3. Osserva per cinque secondi: deve tornare alla posizione, orientamento e
    velocità salvati. La sola scritta «stato applicato» non dimostra la stabilità.
 4. Se si verifica lo sbalzo o un crash, non ripetere F7. Se LMU resta aperto,
-   chiudi la UI per arrestare il listener. Se LMU si chiude, attendi che la UI
-   rilevi la disconnessione e che il riepilogo venga salvato in `logs/`.
+   scegli **Quit Sector** per arrestare il listener. Se LMU si chiude, attendi
+   che la UI rilevi la disconnessione e salvi il riepilogo nei log indicati sotto.
 
 ## Terza prova: sterzata prima del ripristino
 
@@ -57,7 +59,10 @@ si è chiuso LMU oppure soltanto il programma delle hotkey. Non serve filmare.
 
 ## Dati da conservare
 
-I file vengono salvati automaticamente in `logs/`, con lo stesso prefisso
+Nel checkout i file vengono salvati in `logs/`. Nella build portabile sono
+nella sottocartella `logs/` del runtime in `%APPDATA%/sector/runtime/<versione>-<id>/`
+(con il percorso predefinito di Electron). Per la struttura vedi la
+[guida alla release](RELEASE.md). I file condividono il prefisso
 `<data>_physical_reset_host_v15`:
 
 - `.physical.jsonl`: corpi fisici, contatti pneumatici, corpo collisioni e stato
@@ -73,8 +78,11 @@ campioni sovrascritti prima della lettura sono indicati con `trace_gap`.
 
 ## Analisi tecnica dopo la prova
 
-Eseguire `python scripts/sector.py analysis.analyze_physical_reset_trace <file.physical.jsonl>
---output <file.analysis.json>` usando il Python locale del progetto.
+Dal checkout, con il Python locale del progetto:
+
+```powershell
+python scripts/sector.py analysis.analyze_physical_reset_trace <file.physical.jsonl> --output <file.analysis.json>
+```
 
 Verificare nell'ordine:
 

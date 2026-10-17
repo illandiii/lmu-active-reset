@@ -1,70 +1,96 @@
-# Source organization
+# Source layout and entry points
 
-Sector separates production native code, Python orchestration, UI and tests.
-The reorganization changes paths and imports, not native layouts or reset policy.
+Production code is split by responsibility. Native state/restore code does not
+depend on the desktop renderer; Python owns supervision and Electron owns the
+desktop and overlay windows.
 
 ```text
 src/
   native/
     physics/       Rigid bodies, inertia and constraints
-    checkpoints/   Saved subsystem state and checkpoint banks
-    restore/       Plans, transactions, vehicle adapters and contact rebuilds
-    runtime/       Host callbacks, synchronization, lifecycle and diagnostics
-    observers/     Versioned historical capture modules and wire layouts
-    telemetry/     Shared-memory telemetry reader
+    checkpoints/   Subsystem snapshots and checkpoint banks
+    restore/       Plans, transactions, adapters and contact reconstruction
+    runtime/       Physics callbacks, synchronization, lifecycle and diagnostics
+    observers/     Historical captures and versioned wire layouts
+    telemetry/     Shared-memory reader
   python/sector/
-    runtime/       Hotkey supervision, native host commands and physical traces
-    desktop/       UI snapshots, feedback sounds and shared key definitions
+    runtime/       Hotkey supervision, host commands and physical traces
+    desktop/       UI status, feedback sounds and shared key definitions
     telemetry/     Context capture, admission observations and wire types
-    observers/     Historical observer runners and clean-shutdown audits
-    analysis/      Capture summaries and physical trace analysis
+    observers/     Observer runners and shutdown audits
+    analysis/      Capture summaries and trace analysis
     research/      Read-only probes, executable inspection and relocation studies
-    replay/        Recorded-frame replay and fixture preparation tools
-    paths.py       Repository paths independent of the working directory
-  ui/electron/     Electron main/preload, React renderer and desktop tests
+    replay/        Recorded-frame replay and fixture preparation
+    paths.py       Workspace paths independent of the working directory
+  ui/electron/
+    main/          Privileged Electron controllers and isolated preload
+    renderer/      React desktop, overlays, styles and local assets
+    shared/        Shared models
+    build/         Portable release packaging
+    tests/         Controller tests and Electron smoke suites
 tests/
-  native/          Isolated native fixtures and Python fixture bridges
-  python/          Python unit and source-layout tests
-tools/rea/         Offline JavaScript REA analysis
-scripts/           Launchers, PowerShell desktop controller, builds and checks
+  native/          Owned-memory fixtures and fixture bridges
+  python/          Unit tests and source-layout checks
+scripts/
+  build/          Maintained native and UI builds
+  launch/         Source-checkout GUI and console launchers
+  test/           Test entry points
+  dev/            Formatting, source resolution and research helpers
+  sector.py       Python package launcher
+tools/rea/         Offline REA JavaScript analysis
+docs/archive/      Historical experiments and build-specific contracts
 ```
 
-## Running Python
+## Commands
 
-Use the repository launcher rather than executing package files directly:
+Use the package launcher rather than running Python modules as loose files:
 
 ```powershell
 python scripts/sector.py test
 python scripts/sector.py runtime.start_reset_hotkeys --help
 python scripts/sector.py analysis.analyze_physical_reset_trace logs/example.physical.jsonl
-python scripts/sector.py replay.test_vehicle_partial_checkpoint work/example.frames.jsonl --verify-plan
 ```
 
-The launcher inserts `src/python` and the repository root into the module path
-and passes the same paths to subprocesses. A configured environment can instead
-set `PYTHONPATH=src/python` and use `python -m sector.<area>.<module>`.
-The desktop and console launchers use the common launcher automatically.
-Settings remain in their existing user directory; local captures and binaries
-remain in `logs`, `work`, `bin` and `compatibility`.
+The launcher supplies `src/python` and the repository root to the process and
+its children. An explicitly configured environment can instead use
+`python -m sector.<area>.<module>` with `PYTHONPATH=src/python`.
 
-## Native builds
+| Task | Entry point |
+| --- | --- |
+| Start source UI | `./scripts/launch/Start-ResetGui.ps1` |
+| Isolated UI preview | `./scripts/launch/Start-ResetGui.ps1 -Preview` |
+| Console reset diagnostics | `./scripts/launch/Start-ResetHotkeys.ps1` |
+| Native/desktop build | `./scripts/build/Build-ResetDesktop.ps1 -ZigPath <zig.exe>` |
+| Native core checks | `./scripts/test/Test-Core.ps1 -ZigPath <zig.exe>` |
+| C++/Python formatting | `./scripts/dev/Format-Code.ps1 -ClangFormat clang-format -Ruff ruff` |
 
-`SourcePaths.ps1` indexes only `src/native` and `tests/native`, rejects duplicate
-filenames and fails if a requested source is missing. Build source lists remain
-readable basename lists. Headers use relative paths across source areas, so the
-compiler does not depend on an artificial flat include directory. Historical
-observer classes, IPC layouts and field offsets are preserved for replay.
+The redundant root `.cmd` aliases have been removed. Portable users launch
+`Sector.exe`; contributors use the maintained PowerShell entry points above.
+See [contributing](../CONTRIBUTING.md) for per-component checks.
 
-The repository retains no forwarding copies at old source paths. Documentation
-links and runnable examples use the new layout. Earlier log messages and local
-capture metadata can still contain historical filenames.
+## Build rules and retained history
 
-## Migration verification
+`scripts/dev/SourcePaths.ps1` indexes `src/native` and `tests/native`, rejects
+duplicate filenames and fails for missing sources. Build lists use unique
+basenames; headers use relative includes across areas. No forwarding files are
+needed at obsolete flat source paths.
 
-The reorganized tree passes 95 Python tests, the Windows WPF interaction suite,
-all `Test-Core.ps1` native suites and the complete v15 host fixtures (10,084 fields,
-four contacts, missing-callback refusal and two-instance restart). The telemetry
-reader compiles from its new directory and passes all 24 self-tests. Replay of
-two recorded frames passes its 58 negative checks. The 50 historical Python
-observer class definitions are unchanged apart from their enclosing imports.
-No live-game reset was needed for this path-only migration.
+Historical observer classes and wire layouts remain because replay tools import
+them. Their versioned field offsets are part of recorded-data decoding, not
+permission to load an old module against a newer game. Earlier logs can retain
+old filenames; historical reports are indexed in [the archive](archive/README.md).
+
+## Generated and local files
+
+| Directory | Local contents |
+| --- | --- |
+| `bin/` | Generated native executables and DLLs |
+| `logs/` | Captures, diagnostics and test logs |
+| `analysis/` | Local reverse-engineering output |
+| `compatibility/` | Machine/build-specific manifests |
+| `work/` | Toolchains, fixture material, preview profiles and screenshots |
+| `releases/` | Portable outputs and archives |
+
+These directories, dependency caches and the renderer build output are ignored.
+Do not delete local evidence or compatibility inputs as generic cleanup: they
+can be required to reproduce a native result or build.

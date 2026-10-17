@@ -2,6 +2,7 @@
   "name": "sector-desktop",
   "version": "0.1.6",
   "private": true,
+  "license": "MIT",
   "description": "Sector desktop companion for Le Mans Ultimate",
   "type": "module",
   "main": "main/index.cjs",

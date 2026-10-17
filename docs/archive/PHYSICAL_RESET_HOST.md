@@ -1,4 +1,18 @@
-# Experimental physical reset host
+# Physical reset host development
+
+The initial bounded host, subsequent revisions and the evidence available before the final v15 moving-reset trials.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Experimental physical reset host
 
 The host connects the full vehicle/scoring adapter to the outer physics callback
 on Steam build 25661166 (app build 14200). It is a bounded offline experiment,
@@ -114,7 +128,8 @@ Raw captures, game dumps and decompiled game code remain local and are not commi
 
 ## Hotkey connection
 
-`Start-Reset.cmd` now starts a four-minute session using F6 to save and F7 to
+At this stage, the console launcher (the since-removed `Start-Reset.cmd`) started
+a four-minute session using F6 to save and F7 to
 prepare/restore. The controller requires a clean key release in the foreground
 game window, ignores chords/modifiers and does not repeat held keys. Restore
 requires an acknowledged successful save and a matching 10,077-field preparation;

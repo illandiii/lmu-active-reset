@@ -1,4 +1,18 @@
-# Stati persistenti ‚Äî Steam 25661166, 10 ottobre 2026
+# Persistent vehicle-state research
+
+Steam 25661166 captures of fuel, inertia, tires, brakes and partial powertrain state.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Stati persistenti ‚Äî Steam 25661166, 10 ottobre 2026
 
 Il reset fisico resta incompleto. Questa estensione acquisisce e conserva pi√π
 stati e prepara payload numerici in RAM; non scrive la fisica del gioco.
@@ -252,7 +266,7 @@ Suite Python: 44 test passati. L'audit include ripristino dei prologhi di
 Dynamics, Contacts e ScoreUpdate; tutti i 21 moduli osservati sono arrestati,
 zero scritture fisiche e zero scritture scoring. Le DLL restano residenti fino
 alla chiusura di LMU. Hotkey e reset operativo completo non sono implementati.
-# Aggiornamento 12 ottobre: REA e v20
+## Aggiornamento 12 ottobre: REA e v20
 
 Successiva prova dinamica v22: 70 campioni, 16 variazioni di marcia e 69 variazioni
 di due output trasmissione. 68 preparazioni native e zero rifiuti; replay completo
@@ -268,14 +282,14 @@ nessuna prova di transizione dinamica o ripristino fisico. Dettagli e limiti in
 
 
 
-# Stato aggiornato dopo v25, 12 ottobre
+## Stato aggiornato dopo v25, 12 ottobre
 
 Le note precedenti sono cronologiche e superate dove indicano che la prova
-contatti v2 non Ë stata eseguita. La ricostruzione ai box Ë riuscita su quattro
-ruote: 211 profondit‡ ritirate, nodi ricostruiti nativamente, nessuno spostamento.
+contatti v2 non √® stata eseguita. La ricostruzione ai box √® riuscita su quattro
+ruote: 211 profondit√† ritirate, nodi ricostruiti nativamente, nessuno spostamento.
 Il checkpoint include ora controllo powertrain e transitori cambio: 10.074
 campi fisici / 255.090 byte, 10.077 campi con scoring nella transazione locale.
 V25: 55 campioni persistiti in folle, 54 preparazioni, zero rifiuti; test integrali
-Win32 e rollback superati su memoria posseduta. Nessun checkpoint completo Ë
+Win32 e rollback superati su memoria posseduta. Nessun checkpoint completo √®
 stato caricato nel gioco. Tutti i moduli sono arrestati; Dynamics/Contacts
 originali. Consultare REA_ANALYSIS_25661166.md per prove, hash e limiti attuali.

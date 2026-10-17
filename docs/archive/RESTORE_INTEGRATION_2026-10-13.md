@@ -1,4 +1,18 @@
-# Integrazione reset — 13 ottobre 2026
+# Restore integration: 13 October 2026
+
+The coordinated physics/scoring/contact transaction and its local recovery tests.
+
+> **Historical report.** Dates, offsets, field counts, commands and statements of
+> unfinished work below apply to the recorded development stage. For current
+> behavior, read [reset status](../PHYSICAL_RESET_STATUS.md) and the
+> [documentation index](../README.md).
+
+The original technical record follows so that measurements and limitations remain
+traceable. Referenced local capture files are not included in Git.
+
+---
+
+## Integrazione reset — 13 ottobre 2026
 
 Il reset fisico completo nel gioco non è ancora operativo. La UI è sospesa su richiesta dell’utente. Nessun accesso o scrittura alla memoria LMU effettuato in questa fase.
 

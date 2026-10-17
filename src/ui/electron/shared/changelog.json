@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.7",
+    "changes": [
+      "Active Reset now includes impact-altered aerodynamic coefficients and their dependent calculations.",
+      "Aerodynamic recovery has passed local transaction and rollback tests; the new module still requires validation in LMU.",
+      "Visible bodywork deformation, punctures and detached parts remain outside the supported restore."
+    ]
+  },
+  {
     "version": "0.2.6",
     "changes": [
       "Save and restore both suspension hinge reference axes, including the axis changed by an impact.",

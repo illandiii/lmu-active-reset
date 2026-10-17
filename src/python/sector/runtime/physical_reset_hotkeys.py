@@ -1,9 +1,11 @@
 """Focused key edges and acknowledged prepare/restore sequencing."""
 
+from sector.runtime.resident_identity import HOST_REVISION
+
 
 def expected_restore_fields(revision):
     """Legacy counts; v17 validates each vehicle's complete plan in native code."""
-    if revision in (17, 18, 19):
+    if 17 <= revision <= HOST_REVISION:
         return None
     if revision == 16:
         return 10085

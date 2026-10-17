@@ -1,5 +1,6 @@
 #include "vehicle_restore_adapter_25661166.h"
 #include "vehicle_checkpoint_25661166.h"
+#include "aero_restore_25661166.h"
 #include "../runtime/native_lock_witness.h"
 #include <cmath>
 #include <cstring>
@@ -15,6 +16,7 @@ struct VehicleRestoreAdapter {
     WheelDeformation saved_deformation[4], current_deformation[4];
     unsigned char saved_deformed[4], current_deformed[4];
     double saved_hinge_axes[64][6], current_hinge_axes[64][6];
+    sector_aero::State saved_aero, current_aero;
     RestoreBindings bindings;
     uintptr_t scoring;
     VehicleCheckpointWorkspace *workspace;
@@ -80,6 +82,8 @@ static bool read_current(VehicleRestoreAdapter *adapter) {
                 &adapter->current, &adapter->bindings) ||
         !owner(adapter, context.epoch))
         return false;
+    if (!sector_aero::capture(context.physics, adapter->current_aero, field<double>))
+        return false;
     for (unsigned w = 0; w < 4; ++w) {
         const auto wheel = adapter->bindings.address[RESTORE_WHEEL_BASE + w];
         if (!field(wheel + 0x302, adapter->current_deformed[w]) ||
@@ -117,7 +121,7 @@ static bool read_current(VehicleRestoreAdapter *adapter) {
 static int capture(void *user, const ResetIdentity *identity) {
     auto *adapter = static_cast<VehicleRestoreAdapter *>(user);
     if (!identity || !same_identity(*identity, adapter->context.identity) ||
-        !read_current(adapter) ||
+        !read_current(adapter) || !sector_aero::healthy(adapter->current_aero) ||
         vehicle_checkpoint_validate(adapter->workspace, &adapter->current) ||
         !prepare_contacts(adapter) || !owner(adapter, adapter->context.epoch))
         return 1;
@@ -143,6 +147,7 @@ static int capture(void *user, const ResetIdentity *identity) {
         adapter->saved_collision_mass = mass;
     }
     adapter->saved = adapter->current;
+    adapter->saved_aero = adapter->current_aero;
     std::memcpy(adapter->saved_deformation, adapter->current_deformation,
                 sizeof(adapter->saved_deformation));
     std::memcpy(adapter->saved_deformed, adapter->current_deformed,
@@ -219,7 +224,8 @@ static int prepare(void *user, const ResetIdentity *identity, RestorePlan *plan,
     *scoring = 0;
     if (!identity || !adapter->occupied || adapter->saved_epoch != adapter->context.epoch ||
         !same_identity(*identity, adapter->saved_identity) ||
-        !same_identity(*identity, adapter->context.identity) || !read_current(adapter))
+        !same_identity(*identity, adapter->context.identity) || !read_current(adapter) ||
+        !sector_aero::same_config(adapter->saved_aero, adapter->current_aero))
         return 1;
     adapter->scoring =
         vehicle_scoring_25661166(adapter->host.module_base, adapter->context.physics);
@@ -247,6 +253,19 @@ static int prepare(void *user, const ResetIdentity *identity, RestorePlan *plan,
     }
     *bindings = adapter->bindings;
     *scoring = adapter->scoring;
+    // Aero coefficients and their dependent caches belong to the same atomic
+    // restore as suspension state, including readback and compensation.
+    if (plan->count > RESTORE_MAX_FIELDS - AERO_FIELD_COUNT)
+        return 1;
+    for (unsigned i = 0; i < AERO_FIELD_COUNT; ++i) {
+        auto &entry = plan->fields[plan->count++];
+        entry = {};
+        entry.object_slot = 104;
+        entry.field_offset = aero_field_offsets[i];
+        entry.size = sizeof(double);
+        std::memcpy(entry.expected, &adapter->current_aero.values[i], entry.size);
+        std::memcpy(entry.desired, &adapter->saved_aero.values[i], entry.size);
+    }
     // Restoring only row Jacobians leaves a damaged body-B reference axis.
     // The next native bias update would then drive the healthy saved pose
     // toward that damaged alignment. Include both axes in the transaction.

@@ -265,7 +265,8 @@ static int run_fixture(int argc, char **argv) {
 #endif
     for (unsigned i = 0; i < source_frame.constraint_count; ++i)
         source_bindings.constraint_kind[i] = source_frame.recipes[i].kind;
-    expected_fields = 10093 + initialize_hinge_axes();
+    expected_fields = 10093 + initialize_hinge_axes() + AERO_FIELD_COUNT;
+    write_fixture_aero(fixture_aero(false));
     init();
     for (unsigned i = 0; i < 4; ++i)
         source_bindings.address[96 + i] = reinterpret_cast<uintptr_t>(tire[i]);

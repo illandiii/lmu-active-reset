@@ -1,10 +1,11 @@
 # Physical reset: current status
 
-**Development desktop: 0.2.6. Native host: v19 for the verified Steam 25661166 /
+**Development desktop: 0.2.7. Native host: v20 for the verified Steam 25661166 /
 app build 14200 compatibility profile.** Matching the display version alone is
 insufficient: runtime admission also checks the pinned identities and hashes.
-The 0.2.5 impact trial crashed LMU. V19 fixes an identified omission in the
-suspension restore, but its live post-impact stability is not yet verified.
+The 0.2.5 impact trial crashed LMU. V19 passed the subsequent ordinary and
+settled-impact trial on the Oreca 07. V20 adds aerodynamic damage recovery;
+it has passed local tests but has not yet been validated in LMU.
 
 ## Implemented behavior
 
@@ -82,14 +83,21 @@ Native impact handling changes the body-B axis at `+0x68`; restoring the
 row basis alone leaves that damaged reference active during the next bias
 update. These axes now participate in the same validated transaction and
 compensation as wheel deformation. Local tests pass with 10,097 fields for
-the recorded fixture. This corrects a demonstrated omission, but does not
-yet prove the crash is resolved in LMU. See the [impact report](IMPACT_RESET_INCIDENT.md).
+the recorded fixture. The 0.2.6 live trial restored the suspension and teleported
+without a reported crash, but left the front visibly damaged. Restoring during
+an ongoing collision is still unverified. See the [impact report](IMPACT_RESET_INCIDENT.md).
+
+V20 includes seven aerodynamic coefficients and ten dependent caches, with
+finite/coherence checks and unchanged setup dependencies. All 17 fields take
+part in preflight, readback and rollback. The fixture now restores 10,114 fields.
+The change follows measured damaged/repaired values and native repair analysis.
+It does not yet repair the visible bodywork mesh.
 
 Detachment remains unsupported: native `EEB800` also changes the active
 constraint set. Merely clearing its flag would leave a broken suspension.
 V18 reports the detached corner explicitly and preserves the existing
-checkpoint. Bodywork/aero repair, puncture repair and missing-assembly
-reconstruction are not implemented.
+checkpoint. Visible bodywork repair, puncture repair and missing-assembly
+reconstruction are not implemented. Aerodynamic recovery still needs a live v20 test.
 
 ### Earlier failure-latch correction
 

@@ -2,6 +2,7 @@
 #include "../../src/native/runtime/active_reset_boundary.h"
 #include "../../src/native/runtime/native_lifetime_handoff.h"
 #include "vehicle_contact_fixture_model.h"
+#include "../../src/native/restore/aero_restore_25661166.h"
 #include <memory>
 #include <cstdlib>
 
@@ -81,6 +82,46 @@ static unsigned initialize_hinge_axes() {
     return count;
 }
 
+// Measured Oreca coefficients before and after the 0.2.6 impact. The native
+// repair returned all seven primary values to these original baselines.
+static sector_aero::State fixture_aero(bool damaged) {
+    sector_aero::State state{};
+    const double healthy[7]{-.45014228, -.1380634, -.5527169, .1959759,
+                            .0996095,   .36494141, -.759812};
+    const double impact[7]{-.43189216454673435, -.12378070094961822, -.5452281828519195,
+                           .2018366351593673,   .16069502279442752,  .4127474713173781,
+                           -.7219578267997724};
+    const unsigned baseline[7]{1, 2, 11, 12, 7, 8, 9};
+    for (unsigned i = 0; i < 7; ++i) {
+        state.values[i] = damaged ? impact[i] : healthy[i];
+        state.config[baseline[i]] = healthy[i];
+    }
+    state.config[5] = state.config[6] = 1;
+    state.config[10] = -6.2;
+    state.config[19] = -.01686412;
+    state.config[20] = .000120458;
+    state.config[21] = .0064862;
+    state.config[22] = .000009266;
+    for (unsigned i = 29; i < 33; ++i)
+        state.config[i] = 1;
+    double cache[10];
+    sector_aero::derived(state, cache);
+    std::memcpy(state.values + 7, cache, sizeof(cache));
+    assert(std::fabs(state.values[11] - (damaged ? -.43604023333191955 : -.44352895048)) < 1e-12);
+    assert(std::fabs(state.values[12] - (damaged ? .16197838019936733 : .15611764504)) < 1e-12);
+    assert(sector_aero::coherent(state));
+    assert(sector_aero::healthy(state) == !damaged);
+    return state;
+}
+
+static void write_fixture_aero(const sector_aero::State &state) {
+    auto *physics = reinterpret_cast<unsigned char *>(source_bindings.address[104]);
+    for (unsigned i = 0; i < AERO_FIELD_COUNT; ++i)
+        put(physics + aero_field_offsets[i], state.values[i]);
+    for (unsigned i = 0; i < AERO_CONFIG_COUNT; ++i)
+        put(physics + sector_aero::config_offsets[i], state.config[i]);
+}
+
 int main(int argc, char **argv) {
     assert(argc == 4);
     fault = std::atoi(argv[3]);
@@ -96,6 +137,7 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < source_frame.constraint_count; ++i)
         source_bindings.constraint_kind[i] = source_frame.recipes[i].kind;
     const auto hinge_count = initialize_hinge_axes();
+    write_fixture_aero(fixture_aero(false));
     init();
     for (unsigned i = 0; i < 4; ++i)
         source_bindings.address[96 + i] = reinterpret_cast<uintptr_t>(tire[i]);
@@ -180,6 +222,17 @@ int main(int argc, char **argv) {
                                               &request, original, 77);
     };
     assert(dispatch(1, RESET_SAVE).control_result == CONTROL_OK);
+    auto broken_aero = fixture_aero(true);
+    write_fixture_aero(broken_aero);
+    assert(ops.capture(ops.user, &context.identity) != 0); // damaged replacement
+    broken_aero.values[7] += 1;
+    write_fixture_aero(broken_aero);
+    assert(ops.capture(ops.user, &context.identity) != 0); // inconsistent derived cache
+    broken_aero = fixture_aero(false);
+    broken_aero.config[15] = NAN;
+    write_fixture_aero(broken_aero);
+    assert(ops.capture(ops.user, &context.identity) != 0);
+    write_fixture_aero(fixture_aero(false));
     // A bad replacement must not overwrite the last complete checkpoint.
     for (unsigned i = 0; i < source_frame.constraint_count; ++i) {
         if (source_frame.recipes[i].kind != CONSTRAINT_HINGE)
@@ -199,6 +252,7 @@ int main(int argc, char **argv) {
     source_frame.terminal_failure = 1;
     assert(dispatch(2, RESET_SAVE).control_result == CONTROL_SAVE_FAILED);
     load_frame(argv[2]);
+    write_fixture_aero(fixture_aero(true));
     // Native suspension damage changes the body-B axis, not only the row
     // basis. A quarter-turn gives an independently known alignment error.
     for (unsigned i = 0; i < source_frame.constraint_count; ++i) {
@@ -261,18 +315,33 @@ int main(int argc, char **argv) {
     assert(dispatch(5, RESET_LOAD).control_result == CONTROL_REJECTED && calls == 0);
     assert(runtime->plan.count == 0);
     source_frame.topology_token = topology;
+    // A coherent but changed setup must not receive caches from the old setup.
+    auto changed_setup = fixture_aero(true);
+    changed_setup.config[0] = 2;
+    write_fixture_aero(changed_setup);
+    auto plan = std::make_unique<RestorePlan>();
+    RestoreBindings bindings{};
+    uintptr_t scoring = 0;
+    assert(ops.prepare(ops.user, &context.identity, plan.get(), &bindings, &scoring) != 0);
+    assert(plan->count == 0 && calls == 0);
+    write_fixture_aero(fixture_aero(true));
     samples();
     auto result = dispatch(6, RESET_LOAD);
     std::fprintf(stderr, "full adapter result=%d fields=%zu flow=%d cause=%d contacts=%llu\n",
                  result.control_result, runtime->plan.count, runtime->report.result,
                  runtime->report.cause, static_cast<unsigned long long>(calls));
-    assert(runtime->plan.count == 10093 + hinge_count);
+    assert(runtime->plan.count == 10093 + hinge_count + AERO_FIELD_COUNT);
     assert(result.control_result == (fault == 2   ? CONTROL_QUARANTINED
                                      : fault != 0 ? CONTROL_RESTORE_RECOVERED
                                                   : CONTROL_OK));
     assert(result.forwarded == (fault != 2));
     assert(runtime->control.loads == (fault == 0 ? 1 : 0));
     if (fault != 2) {
+        const auto expected_aero = fixture_aero(fault != 0);
+        for (unsigned i = 0; i < AERO_FIELD_COUNT; ++i)
+            assert(get<double>(reinterpret_cast<void *>(source_bindings.address[104] +
+                                                        aero_field_offsets[i])) ==
+                   expected_aero.values[i]);
         unsigned hinge_fields = 0;
         for (unsigned i = 0; i < source_frame.constraint_count; ++i) {
             if (source_frame.recipes[i].kind != CONSTRAINT_HINGE)

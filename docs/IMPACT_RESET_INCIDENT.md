@@ -1,7 +1,7 @@
 # Impact reset investigation
 
 The 17 October 2026 packaged 0.2.5 test failed. This page records the evidence
-and the v19 correction without treating successful memory writes as proof of
+and the v19/v20 changes without treating successful memory writes as proof of
 physical stability. Raw dumps, captured game code and telemetry remain local
 and excluded from Git.
 
@@ -70,15 +70,58 @@ repair. Component reattachment at `F6DE50` also changes global object lists
 and recursively handles related components. Those operations cannot be
 replaced by simply clearing a damage byte.
 
-Before adding them to reset, capture the healthy, damaged and native-repaired
-values and establish ownership, component identity and derived dependencies.
-No calls to these repair routines or writes to their fields have been added.
+The 0.2.6 Oreca recording confirms seven coefficients remain altered after
+successful F7. After the user's native repair, all seven returned exactly to
+the initial baseline and the user reported an intact front. The recording also
+contains a transition out of GUIDA and a new host lifetime. The physics address
+was reused. This is evidence of the repaired values, not proof of an uninterrupted
+pit-service operation on the same vehicle generation.
+
+V20 captures those seven coefficients and ten dependent caches under the existing
+physics/control locks. Its sidecar validates finite values and the dependencies
+computed by ED8130, ED8070 and ED7DE0. All 33 read-only setup inputs must still
+match the checkpoint before restoration. The 17 writes use the normal expected
+values, preflight, readback and compensation. Saving damaged aerodynamic values
+cannot replace a healthy checkpoint. No native repair function is called, and
+the snapshot ABI is unchanged.
+
+| Primary field | Repaired value | Damaged value after F7 with v19 |
+| --- | ---: | ---: |
+| Physics +39D8 | -0.45014228 | -0.43189216455 |
+| Physics +39F0 | -0.1380634 | -0.12378070095 |
+| Physics +3A08 | -0.5527169 | -0.54522818285 |
+| Physics +3A20 | 0.1959759 | 0.20183663516 |
+| Physics +3A38 | 0.0996095 | 0.16069502279 |
+| Physics +3A48 | 0.36494141 | 0.41274747132 |
+| Physics +40D8 | -0.759812 | -0.72195782680 |
+
+These are build-specific observations, not universal vehicle constants.
+The test fixture uses this measured difference and verifies rollback as well
+as forward restoration. V20 has not yet been tested in LMU.
+
+## Live v19 result
+
+In `20261017T153328903460Z_physical_reset_host_v19`, restore report 15 wrote
+10,097 fields and rebuilt all four contacts. The front-left, rear-left and
+rear-right body-B hinge axes returned to their saved directions and all wheel
+deformation flags cleared. The user confirmed teleport and continued stability,
+with the front bodywork still damaged. The trace contains no nonfinite body
+values. This validates the tested settled-impact recovery only; restoring
+during a continuing impact still needs a separate trial.
+
+The component flags at collision-vehicle +18B40 did not change in the damaged
+capture. The collision subobject starts at game-owner +8; using the owner's
+address directly mislabels these fields. The initial capture's component data
+had this offset error and is excluded from the conclusion. The corrected
+capture identifies visual deformation separately from a detached-component flag.
 
 ## Remaining work and next live check
 
-Front bodywork/aero state is outside the current checkpoint. Suspension
-deformation recovery does not imply repair of those components. Punctures and
-detached assemblies also remain unsupported.
+Visible front bodywork deformation is still outside the checkpoint. V20 adds
+aerodynamic state but does not restore mesh deformation or detached components.
+Puncture repair also remains unsupported. Identifying the graphics-owned damage
+state and its synchronization is the next implementation task; the broad memory
+diff across a reconstructed vehicle is not sufficient to authorize blind copies.
 
 Use a new offline Practice without EAC and the new packaged build, after
 quitting the previous Sector process. Start with an ordinary save and restore
@@ -88,6 +131,8 @@ and physical traces before and after that restore. Verify teleport, saved
 velocity, suspension alignment, continued driving and absence of a crash.
 Stop after a refusal or instability and preserve the same vehicle for capture.
 
+The ordinary and settled-impact checks passed with v19. Repeat them with v20
+and capture the seven primary coefficients and ten caches before and after F7.
 Only after that check should a separate trial restore during an active impact.
 The stopped-car step isolates suspension recovery from concurrent collision
 handling; it is a test sequence, not a product speed restriction. Bodywork

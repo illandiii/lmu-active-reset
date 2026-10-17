@@ -1,4 +1,5 @@
 #include "restore_bindings_25661166.h"
+#include "aero_restore_25661166.h"
 #include <stdint.h>
 #include <stdlib.h>
 static int field(uint32_t offset, uint32_t size, uint32_t wanted, uint32_t bytes) {
@@ -86,7 +87,10 @@ int restore_binding_field(const RestoreBindings *b, uint32_t slot, uint32_t off,
     if (slot < 104)
         return F(0x4b8, 8) || F(0x5d8, 8) || F(0x120, 16) || F(0x5e0, 32) || F(0x630, 8) ||
                F(0x138, 8) || F(0x302, 1) || F(0x308, 32);
-    if (slot == 104)
+    if (slot == 104) {
+        for (unsigned i = 0; i < AERO_FIELD_COUNT; ++i)
+            if (F(aero_field_offsets[i], 8))
+                return 1;
         return F(0x448, 8) || F(0x450, 8) || F(0x18, 8) || F(0x20, 8) || F(0x30, 8) || F(0x38, 8) ||
                F(0x46c8, 8) || F(0x48a0, 8) || F(0x48a8, 8) || F(0x48b0, 8) || F(0x48b8, 8) ||
                F(0x48e8, 8) || F(0x48f0, 8) || F(0x48f8, 8) || F(0x49d8, 8) || F(0x4a18, 8) ||
@@ -95,6 +99,7 @@ int restore_binding_field(const RestoreBindings *b, uint32_t slot, uint32_t off,
                F(0x4ba8, 16) || F(0x4ae8, 8) || F(0x48, 8) || F(0x4810, 8) || F(0x4818, 8) ||
                F(0x4820, 2) || F(0x4828, 24) || F(0x24b0, 24) || F(0x2500, 72) || F(0x4bc8, 48) ||
                F(0x2498, 24) || F(0x2550, 24);
+    }
     if (slot == 105) {
         if (F(0x1f8, 8) || F(0x250, 8) || F(0x260, 8) || F(0x280, 8) || F(0x208, 56) ||
             F(0x240, 12) || F(0x50, 8) || F(0x1b0, 8))

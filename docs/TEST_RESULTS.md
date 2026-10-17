@@ -3,7 +3,25 @@
 This page separates automated checks from live-game observations. Historical
 counts and build-specific experiments are preserved in the [research archive](archive/README.md).
 
-## Impact recovery: 0.2.5 failed live test and 0.2.6 candidate
+## Impact recovery: 0.2.6 live result and 0.2.7 candidate
+
+The Oreca 07 / Monza 0.2.6 trial passed ordinary and settled-impact reset:
+the user confirmed teleport, stable simulation and repaired suspension. The
+front bodywork remained visibly damaged. Report 15 verified 10,097 writes and
+four contacts; the measured hinge axes returned to their saved directions.
+This does not yet verify reset during a continuing collision.
+
+The native repair comparison found seven aerodynamic coefficients left damaged
+by F7. Their repaired values and ten dependent caches are now included in v20.
+The local fixture verifies all 10,114 fields on success and compensation after
+contact/collision faults. It rejects damaged replacement saves, inconsistent
+caches, nonfinite configuration and changed setup while preserving the previous
+checkpoint. Loaded-host save/restore, missing-player refusal and restart pass.
+All 109 Python tests, 46 desktop model tests and the isolated packaged 0.2.7
+executable smoke test pass.
+The 0.2.7 aerodynamic change has not yet run in LMU; visual mesh repair remains
+unimplemented. The native-repair recording crossed a vehicle lifetime change
+and cannot establish the graphical repair sequence on an unchanged generation.
 
 The 0.2.4 impact capture reproduced a refusal at the wheel damage flags. SDK
 samples distinguished attached deformation, puncture and wheel detachment.
@@ -40,8 +58,8 @@ The adapter fixture now changes the body-B axis independently of the restored
 row basis, verifies its corrected alignment, and checks compensation after
 contact/collision failures. The recorded fixture has four hinges and 10,097
 planned fields. Zero-length and nonfinite axes reject a replacement save while
-preserving the previous checkpoint. **Live stability of v19 remains unverified.**
-Bodywork/aero repair, detached suspension and puncture repair remain incomplete.
+preserving the previous checkpoint. The subsequent live result is recorded above.
+Visible bodywork, detached suspension and puncture repair remain incomplete.
 
 V19 also passes loaded-host save/restore, missing-player admission refusal and
 two successive clean host lifetimes. All 109 Python tests, 46 desktop model

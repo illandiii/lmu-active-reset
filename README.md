@@ -1,15 +1,26 @@
-# Sector
+<p align="center">
+  <img src="assets/sector-logo.png" width="112" height="112" alt="Sector logo">
+</p>
 
-[![Star this repo](https://img.shields.io/badge/Star_this_repo-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sector-lmu/Sector)
-[![GitHub stars](https://img.shields.io/github/stars/sector-lmu/Sector?style=for-the-badge&label=Stars&color=73B7FF)](https://github.com/sector-lmu/Sector/stargazers)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/illandiii)
-[![License: MIT](https://img.shields.io/badge/License-MIT-73B7FF?style=for-the-badge)](LICENSE)
+<h1 align="center">Sector</h1>
+
+<p align="center">
+  <a href="https://github.com/sector-lmu/Sector"><img src="https://img.shields.io/badge/Star_this_repo-181717?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="Star this repo"></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://github.com/sector-lmu/Sector/stargazers"><img src="https://img.shields.io/github/stars/sector-lmu/Sector?style=for-the-badge&amp;label=Stars&amp;color=73B7FF" alt="GitHub stars"></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://ko-fi.com/illandiii"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&amp;logo=ko-fi&amp;logoColor=white" alt="Support Sector on Ko-fi"></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-73B7FF?style=for-the-badge" alt="License: MIT"></a>
+</p>
 
 **Practice your driving and keep useful race information in view.**
 
 Sector is a Windows app for **Le Mans Ultimate**. Save a point on track and return
 to it to practice a corner or section again. Add customizable widgets over the
 game to see standings, lap times, pedal inputs and more.
+
+![Sector Active Reset page with checkpoint controls, keyboard shortcuts and confirmation sounds](docs/media/active-reset.png)
 
 ## 📥 Install Sector
 
@@ -73,6 +84,10 @@ is rejected. You can preview or mute them on the same page.
 Overlays are small widgets displayed over the game. Choose the information you
 want to keep in view:
 
+![The seven Sector widgets: Leaderboard, Inputs, Relative, Laps, Session, Weather and Delta](docs/media/widgets.png)
+
+*Widget previews use demo data.*
+
 | Widget | What it shows |
 | --- | --- |
 | **Leaderboard** | Standings and car classes |
@@ -83,6 +98,14 @@ want to keep in view:
 | **Laps** | Lap history and available usage information |
 | **Session** | Session and player information |
 
+### Widgets in motion
+
+Watch the pedals, steering, gears and lap delta update in this demo.
+
+![Animated preview of the Inputs and Delta widgets using demo data](docs/media/widgets-demo.gif)
+
+### Make it your own
+
 Open **Overlay**, enable the widgets you want and turn on **Overlays**.
 Use **Edit layout** to move and resize them, then select **Lock layout** when
 finished. Once locked, mouse clicks pass through to the game.
@@ -90,6 +113,15 @@ finished. Once locked, mouse clicks pass through to the game.
 Each widget has its own options. You can change size and transparency, hide
 columns or logos, and remove elements such as the clutch input. To choose a
 monitor, open **Modifica → Impostazioni → Overlay**.
+
+![Sector overlay editor with the Inputs preview, section switches, position, size and appearance controls](docs/media/overlay-editor.png)
+
+<details>
+<summary>View app settings</summary>
+
+![Sector settings with reduced motion and overlay display selection](docs/media/settings.png)
+
+</details>
 
 Run LMU in **windowed or borderless mode**. The live widgets appear when you are
 in a session with the game in the foreground. The editor can show sample data

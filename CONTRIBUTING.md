@@ -44,6 +44,17 @@ operate on owned memory. Neither replaces a live-game test. Report the car,
 track, build and observed result when documenting live evidence; preserve failures
 and limitations rather than describing successful field writes as proof of stability.
 
+## Refresh README screenshots
+
+From `src/ui/electron`, run `npm run build`, then `node build/capture-readme.mjs`.
+This requires FFmpeg on `PATH`. It captures the real desktop in isolated preview
+and renders the production widget components with explicitly labelled demo data.
+It never connects to LMU. Final PNGs and the six-second GIF go to `docs/media/`;
+intermediate frames and the gallery build stay under ignored `work/readme-media/`.
+
+Review the images before committing them. Keep test results and implementation
+details in developer documentation rather than the user-facing README.
+
 ## Native runtime and repository hygiene
 
 Never overwrite a DLL while it is resident in LMU, including after its hooks stop.

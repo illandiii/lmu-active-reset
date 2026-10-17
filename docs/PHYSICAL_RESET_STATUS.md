@@ -47,7 +47,8 @@ writing. Request identity, focus/context and timeout checks remain in place.
 
 Regression coverage includes the incident's differing plan counts, missing or
 partial verification, stale requests, host restart and the complete native
-save/prepare/restore path. A live test of V17 in LMU is still pending.
+save/prepare/restore path. The packaged 0.2.4 live test below confirms V17 admission
+and repeated restores on the tested car and circuit.
 
 ## Recovery after an impact
 
@@ -82,6 +83,30 @@ See the [collision investigation](HIGH_SPEED_RESET_INCIDENT.md) for the chronolo
 evidence, the initially blocked v15 launcher and the subsequent successful trials.
 
 ## Live evidence
+
+On 17 October 2026, packaged Sector 0.2.4 with host v17 connected to offline
+Practice on Monza Curva Grande Circuit with the BMW M Hybrid V8. Recording
+`20261017T144326039314Z_physical_reset_host_v17` contains two successful saves
+and eight successful restores. Each restore verified all 10,123 plan fields,
+rebuilt four contacts and required no compensation. All commands returned success;
+the supervisor error log remained empty. The user confirmed that the test worked.
+
+The 800-record physical trace has no gaps or nonfinite body values. At application,
+all five traced bodies matched the saved position, velocity, orientation and
+angular momentum exactly. This qualifies these observed resets; impact recovery,
+other vehicle assemblies and longer sessions still need separate testing.
+
+After changing to the Oreca 07 in the same LMU process, recording
+`20261017T144553439928Z_physical_reset_host_v17` shows successful re-admission
+with two cleanly stopped v17 modules already resident. Its first five restores
+all succeeded, verified 10,085 fields and rebuilt four contacts without
+compensation. This also exercises the vehicle-dependent plan count and resident
+module audit in the packaged app, rather than only in fixtures.
+
+The same session supplied 37 identified cars across Hypercar, LMP2 and GT3. The
+production logo resolver recognized every car, including team-only scoring names.
+The user confirmed the combined F6/F7 and logo test. The diagnostic SDK reader
+stops independently of Sector's listener and does not send reset commands.
 
 The 16 October 2026 recording contains seven restores from one checkpoint saved
 at **178.67 km/h**. Current speeds ranged from **191.37 to 242.61 km/h**, and

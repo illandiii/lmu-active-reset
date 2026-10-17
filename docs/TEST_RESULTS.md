@@ -3,6 +3,26 @@
 This page separates automated checks from live-game observations. Historical
 counts and build-specific experiments are preserved in the [research archive](archive/README.md).
 
+## Live check: 17 October 2026
+
+Packaged 0.2.4 and native v17 connected in offline Practice without the earlier
+resident-identity errors. The BMW M Hybrid V8 at Monza Curva Grande completed
+two saves and eight restores, with every command successful. Each restore
+verified 10,123 fields and rebuilt four contacts without compensation. The
+800-record trace contains no gaps or nonfinite body values; saved and applied
+pose, velocity and angular momentum match on all five traced bodies.
+
+Changing to an Oreca 07 in the same game process also passed re-admission with
+stopped v17 modules resident. The first five P2 restores succeeded with 10,085
+verified fields, four contacts and no compensation. This checks the two different
+vehicle plan sizes and live resident-module reuse checks.
+
+SDK data contained 37 cars, including eleven P2 and fifteen GT3 entries. Every
+entry resolved to a manufacturer logo through the production model. The user
+confirmed the combined save/restore and logo test. This is one live session,
+not qualification of all cars, impact recovery or long-session logo continuity.
+See [physical reset status](PHYSICAL_RESET_STATUS.md) for the recording reference.
+
 ## Automated coverage
 
 The 0.2.4 update passed 46 Node tests and the native SDK serialization check.
@@ -10,8 +30,8 @@ Regressions cover cached per-car identity during missing telemetry, invalidation
 on car/session changes and removal of Brake lock from existing saved layouts.
 Tyre flat-spot coverage remains active. The desktop and ten-widget Electron
 smoke checks passed, along with Home and the packaged 0.2.4 EXE. Documentation
-screenshots were regenerated for the ten remaining widgets. Live logo continuity
-remains to be confirmed in LMU.
+screenshots were regenerated for the ten remaining widgets. The live check above
+adds in-session evidence; longer-session logo continuity remains to be qualified.
 
 The latest reported unknown-v17 error came from the 0.2.2 runtime logs, not the
 0.2.3 supervisor. The 0.2.3 runtime had no reset logs. Launching a new executable

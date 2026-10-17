@@ -34,11 +34,6 @@
     "width": 440,
     "height": 332
   },
-  "brake-lock": {
-    "name": "Brake lock",
-    "width": 400,
-    "height": 144
-  },
   "tyres": {
     "name": "Tyres",
     "width": 360,

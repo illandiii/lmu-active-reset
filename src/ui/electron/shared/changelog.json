@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.4",
+    "changes": [
+      "Removed Brake lock from the widget list, settings, previews and saved layouts.",
+      "Keep recognized manufacturer logos through temporary opponent telemetry gaps while clearing them when the car or session changes.",
+      "Show a notice when another Sector instance is already running, so launching a newer executable does not silently reopen an older background version."
+    ]
+  },
+  {
     "version": "0.2.3",
     "changes": [
       "Fixed reset reconnection after updating Sector while LMU retains a stopped module from an earlier release.",

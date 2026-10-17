@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import config from "../shared/overlay-config.cjs";
 import model from "../shared/overlay-model.cjs";
+import { VehicleIdentity } from "../shared/vehicle-identity.cjs";
 const raw = (patch = {}) => ({
   schema: 1,
   connected: true,
@@ -62,7 +63,7 @@ const raw = (patch = {}) => ({
 test("requested opacity defaults migrate once without overwriting custom values", () => {
   assert.deepEqual(
     Object.values(config.defaults().widgets).map((w) => w.opacity),
-    [0.35, 0.6, 0.35, 0.5, 0.65, 0.35, 0.35, 0.75, 0.5, 0.35, 0.35],
+    [0.35, 0.6, 0.35, 0.5, 0.65, 0.35, 0.35, 0.5, 0.35, 0.35],
   );
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sector-opacity-"));
   const file = path.join(dir, "overlays.json");
@@ -146,6 +147,68 @@ test("manufacturer logos use each car's telemetry model and vehicle file, not te
   ).classes[0].rows[0];
   assert.equal(unknown.make, "");
   assert.equal(unknown.hasImg, false);
+});
+
+test("removed Brake lock is migrated out of saved layouts without changing other widgets", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sector-removed-widget-"));
+  const file = path.join(dir, "overlays.json");
+  try {
+    const old = config.defaults();
+    old.widgets.inputs.x = 234;
+    old.widgets.tyres.opacity = 0.23;
+    old.widgets["brake-lock"] = { enabled: true };
+    fs.writeFileSync(file, JSON.stringify(old));
+    const next = config.read(file);
+    assert.equal(Object.keys(next.widgets).length, 10);
+    assert.equal(next.widgets["brake-lock"], undefined);
+    assert.equal(next.widgets.inputs.x, 234);
+    assert.equal(next.widgets.tyres.opacity, 0.23);
+    assert.equal(
+      JSON.parse(fs.readFileSync(file)).widgets["brake-lock"],
+      undefined,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("vehicle logos survive missing opponent telemetry without leaking across identities", () => {
+  const state = new model.TelemetryModel();
+  const frame = raw();
+  frame.cars[0].vehicle = "Team #22";
+  frame.cars[0].model = "Oreca 07";
+  const settings = config.defaults().widgets.leaderboard;
+  const logo = (data) =>
+    model.valuesFor("leaderboard", data, settings).classes[0].rows[0].make;
+  assert.equal(logo(state.update(structuredClone(frame))), "ORE");
+  delete frame.cars[0].model;
+  frame.et++;
+  frame.player.et++;
+  assert.equal(logo(state.update(structuredClone(frame))), "ORE");
+  frame.cars[0].vehicle = "New team #22";
+  assert.equal(logo(state.update(structuredClone(frame))), "");
+  frame.cars[0].model = "Ferrari 296";
+  assert.equal(logo(state.update(structuredClone(frame))), "FER");
+  delete frame.cars[0].model;
+  frame.session++;
+  assert.equal(logo(state.update(structuredClone(frame))), "");
+});
+
+test("identity cache expires at disconnect, rewind, track change or roster removal", () => {
+  for (const change of [
+    (raw) => ({ ...raw, connected: false }),
+    (raw) => ({ ...raw, et: 0 }),
+    (raw) => ({ ...raw, track: "Monza" }),
+    (raw) => ({ ...raw, cars: [] }),
+  ]) {
+    const cache = new VehicleIdentity();
+    const frame = raw();
+    frame.cars[0].model = "Mercedes AMG";
+    cache.update(frame);
+    delete frame.cars[0].model;
+    cache.update(change(frame));
+    assert.equal(cache.update(frame).cars[0].model, "");
+  }
 });
 
 test("overlay preferences persist independently and reject invalid geometry", () => {

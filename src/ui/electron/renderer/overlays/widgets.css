@@ -22,17 +22,6 @@
 .lmu-widget .dbar-l {
   transform-origin: right center;
 }
-.widget-brake-lock .lockzone {
-  background-color: #e2483d2e;
-  background-image: repeating-linear-gradient(
-    135deg,
-    #ff5a4e52 0 2px,
-    transparent 2px 7px
-  );
-}
-.widget-brake-lock .fill {
-  transform-origin: left center;
-}
 .widget-hybrid .pl {
   transform-origin: right center;
 }

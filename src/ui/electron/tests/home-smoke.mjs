@@ -22,7 +22,7 @@ try {
   page.setDefaultTimeout(15000);
   page.on("pageerror", (e) => errors.push(e.message));
   await page.getByRole("heading", { name: "Home.", exact: true }).waitFor();
-  await page.getByText("2 of 11 selected, Locked", { exact: true }).waitFor();
+  await page.getByText("2 of 10 selected, Locked", { exact: true }).waitFor();
   await app.evaluate(() => global.sectorTest.window().showInactive());
   assert.equal(
     await page

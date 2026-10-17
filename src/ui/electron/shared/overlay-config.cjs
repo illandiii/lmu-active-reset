@@ -3,9 +3,7 @@ const path = require("node:path");
 const { randomUUID } = require("node:crypto");
 const layout = require("./overlay-layout.cjs");
 const definitions = require("./overlay-definitions.json");
-const opacities = [
-  0.35, 0.6, 0.35, 0.5, 0.65, 0.35, 0.35, 0.75, 0.5, 0.35, 0.35,
-];
+const opacities = [0.35, 0.6, 0.35, 0.5, 0.65, 0.35, 0.35, 0.5, 0.35, 0.35];
 function defaults() {
   return {
     defaultsVersion: 2,
@@ -29,9 +27,6 @@ function defaults() {
           showGear: true,
           showLogos: true,
           lockDeg: 270,
-          ...(id === "brake-lock"
-            ? { slipThreshold: 20, minimumSpeed: 20, predictionMs: 500 }
-            : {}),
           ...(id === "tyres"
             ? { coldTemp: 80, hotTemp: 105, flatSpotSensitivity: 50 }
             : {}),
@@ -58,8 +53,7 @@ function validate(value) {
     const w = value.widgets[id];
     if (!w) {
       // Older installations do not have entries for newly added widgets.
-      if (["brake-lock", "tyres", "stint-planner", "hybrid"].includes(id))
-        continue;
+      if (["tyres", "stint-planner", "hybrid"].includes(id)) continue;
       throw new Error("Missing widget settings.");
     }
     for (const key of [
@@ -94,30 +88,24 @@ function validate(value) {
       throw new Error("Invalid accent color.");
     result.widgets[id].accent = w.accent;
     const ranges =
-      id === "brake-lock"
+      id === "tyres"
         ? [
-            ["slipThreshold", 5, 90],
-            ["minimumSpeed", 5, 150],
-            ["predictionMs", 100, 1000],
+            ["coldTemp", 0, 150],
+            ["hotTemp", 20, 200],
+            ["flatSpotSensitivity", 10, 100],
           ]
-        : id === "tyres"
+        : id === "stint-planner"
           ? [
-              ["coldTemp", 0, 150],
-              ["hotTemp", 20, 200],
-              ["flatSpotSensitivity", 10, 100],
+              ["consumptionLaps", 1, 20],
+              ["reserveLaps", 0, 5],
             ]
-          : id === "stint-planner"
+          : id === "hybrid"
             ? [
-                ["consumptionLaps", 1, 20],
-                ["reserveLaps", 0, 5],
+                ["targetSoc", 10, 90],
+                ["targetLaps", 1, 10],
+                ["powerScale", 50, 500],
               ]
-            : id === "hybrid"
-              ? [
-                  ["targetSoc", 10, 90],
-                  ["targetLaps", 1, 10],
-                  ["powerScale", 50, 500],
-                ]
-              : [];
+            : [];
     for (const [key, min, max] of ranges) {
       const candidate = w[key] ?? result.widgets[id][key];
       if (!Number.isInteger(candidate) || candidate < min || candidate > max)
@@ -151,7 +139,10 @@ function read(file) {
           widget.opacity = base.widgets[id].opacity;
       }
     }
-    return validate(saved);
+    const result = validate(saved);
+    if (Object.hasOwn(saved.widgets || {}, "brake-lock"))
+      return write(file, result);
+    return result;
   } catch (error) {
     if (error.code === "ENOENT") return defaults();
     throw new Error("Overlay settings could not be read.");

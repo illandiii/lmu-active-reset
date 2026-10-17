@@ -1,6 +1,6 @@
 # Building a Windows release
 
-The current development version is **0.2.3**. A portable package starts with
+The current development version is **0.2.4**. A portable package starts with
 `Sector.exe`; keep its adjacent DLLs and resources together. It bundles Electron,
 CPython 3.13.12, the telemetry reader/diagnostic and revision 17 reset host.
 The package is unsigned and does not require installed Node.js or Python.
@@ -46,7 +46,7 @@ does not replace the pinned compatibility checks.
    npm run test:release
    ```
 
-The output is `releases/Sector-0.2.3-win-x64/`. The builder refuses an existing
+The output is `releases/Sector-0.2.4-win-x64/`. The builder refuses an existing
 destination; preserve or deliberately remove a previous output before rebuilding.
 Generated releases are ignored by Git. Building or committing a version does not
 publish a GitHub release or promote `prod`.

@@ -45,13 +45,11 @@ const frame = () => ({
 test("old overlay layouts gain disabled widgets without losing existing preferences", () => {
   const old = config.defaults();
   old.widgets.inputs.x = 123;
-  for (const id of ["brake-lock", "tyres", "stint-planner"])
-    delete old.widgets[id];
+  for (const id of ["tyres", "stint-planner"]) delete old.widgets[id];
   const migrated = config.validate(old);
   assert.equal(migrated.widgets.inputs.x, 123);
-  assert.equal(Object.keys(migrated.widgets).length, 11);
+  assert.equal(Object.keys(migrated.widgets).length, 10);
   assert.equal(migrated.widgets.tyres.enabled, false);
-  assert.equal(migrated.widgets["brake-lock"].slipThreshold, 20);
   const bad = structuredClone(migrated);
   bad.widgets.tyres.hotTemp = 70;
   assert.throws(() => config.validate(bad), /Cold temperature/);
@@ -60,56 +58,11 @@ test("old overlay layouts gain disabled widgets without losing existing preferen
   assert.throws(() => config.validate(bad), /consumptionLaps/);
 });
 
-test("lock detection requires braking and loaded wheels, respects individual ground speed", () => {
-  const raw = frame();
-  let values = wheels.brakeValues(raw, settings["brake-lock"]);
-  assert.deepEqual(
-    values.tyres.map((w) => w.locked),
-    [true, false, false, false],
-  );
-  for (const patch of [
-    { load: 0 },
-    { groundSpeed: 1 },
-    { radius: 0 },
-    { attached: false },
-    { surface: 3 },
-    { rotation: null },
-  ]) {
-    raw.player.wheels[0] = wheel({ rotation: 45, ...patch });
-    assert.equal(
-      wheels.brakeValues(raw, settings["brake-lock"]).tyres[0].locked,
-      false,
-    );
-  }
-  raw.player.wheels[0] = wheel({ rotation: 60, groundSpeed: 18 });
-  assert.equal(
-    wheels.brakeValues(raw, settings["brake-lock"]).tyres[0].locked,
-    false,
-  );
-  raw.player.wheels[0] = wheel({ rotation: 45 });
-  raw.player.brake = 0;
-  assert.equal(
-    wheels.brakeValues(raw, settings["brake-lock"]).tyres[0].locked,
-    false,
-  );
-  raw.player.brake = 0.84;
-  assert.equal(
-    wheels.brakeValues(raw, { ...settings["brake-lock"], slipThreshold: 80 })
-      .tyres[0].locked,
-    false,
-  );
-});
-
-test("lock events and observed tyre age reset after rewind and tyre replacement", () => {
+test("observed tyre age reset after rewind and tyre replacement", () => {
   const state = new model.TelemetryModel();
   const raw = frame();
   let data = state.update(structuredClone(raw));
-  assert.equal(data.brakeEvents.length, 1);
   assert.deepEqual(data.tyreLaps, [null, null, null, null]);
-  assert.equal(
-    model.valuesFor("brake-lock", data, settings["brake-lock"]).threshold,
-    "-", // A single locked sample is not a learned pedal threshold.
-  );
   raw.player.et++;
   raw.player.wheels[0].wear = 1;
   data = state.update(structuredClone(raw));
@@ -121,7 +74,6 @@ test("lock events and observed tyre age reset after rewind and tyre replacement"
   raw.player.et = 1;
   raw.player.brake = 0;
   data = state.update(structuredClone(raw));
-  assert.equal(data.brakeEvents.length, 0);
   assert.deepEqual(data.tyreLaps, [null, null, null, null]);
   const reader = new telemetry.OverlayTelemetry("unused");
   reader.model = state;
@@ -190,12 +142,6 @@ test("hidden wheel and thermal sections shrink the widget and bound native windo
   });
   assert.equal(b.width, 264);
   assert.equal(b.height, 262);
-  const slim = config.bounds(
-    "brake-lock",
-    { ...settings["brake-lock"], columns: { wheels: false } },
-    { x: 0, y: 0, width: 1920, height: 1080 },
-  );
-  assert.equal(slim.width, 338);
 });
 
 function lockSequence({

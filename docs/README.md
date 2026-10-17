@@ -59,13 +59,6 @@ The widget adjusts to the remaining content.
 For multiple monitors, choose the display in **Edit → Settings → Overlay**.
 Your layout and preferences are saved for the next launch.
 
-**Brake lock** highlights wheels with estimated locking under braking. Adjust
-**Slip threshold** and **Minimum speed** to control its sensitivity; the displayed
-pedal threshold uses recent wheel slip, speed, slip angle and brake input.
-Yellow warns of a predicted lock, red shows the slip threshold has been reached.
-The wheel name and estimated delay appear below the bar. **Prediction window**
-controls how far ahead the warning looks. Predictions assume the current trend continues.
-
 **Tyres** always shows all four tyres. You can hide readings and change the
 cold/hot color thresholds. Tyre laps stay
 unknown until Sector observes a fresh tyre or replacement. `puncture` comes from

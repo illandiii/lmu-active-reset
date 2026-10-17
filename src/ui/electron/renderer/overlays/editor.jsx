@@ -310,36 +310,30 @@ export function OverlayEditor() {
                 suffix="°"
               />
             )}
-            {(selected === "brake-lock"
+            {(selected === "tyres"
               ? [
-                  ["slipThreshold", "Slip threshold", 5, 90, "%"],
-                  ["minimumSpeed", "Minimum speed", 5, 150, "km/h"],
-                  ["predictionMs", "Prediction window", 100, 1000, "ms"],
+                  ["coldTemp", "Cold below", 0, 150, "°C"],
+                  ["hotTemp", "Hot above", 20, 200, "°C"],
+                  [
+                    "flatSpotSensitivity",
+                    "Flat spot sensitivity",
+                    10,
+                    100,
+                    "%",
+                  ],
                 ]
-              : selected === "tyres"
+              : selected === "stint-planner"
                 ? [
-                    ["coldTemp", "Cold below", 0, 150, "°C"],
-                    ["hotTemp", "Hot above", 20, 200, "°C"],
-                    [
-                      "flatSpotSensitivity",
-                      "Flat spot sensitivity",
-                      10,
-                      100,
-                      "%",
-                    ],
+                    ["consumptionLaps", "Consumption average", 1, 20, "laps"],
+                    ["reserveLaps", "Reserve", 0, 5, "laps"],
                   ]
-                : selected === "stint-planner"
+                : selected === "hybrid"
                   ? [
-                      ["consumptionLaps", "Consumption average", 1, 20, "laps"],
-                      ["reserveLaps", "Reserve", 0, 5, "laps"],
+                      ["targetSoc", "Battery target", 10, 90, "%"],
+                      ["targetLaps", "Target horizon", 1, 10, "laps"],
+                      ["powerScale", "Power bar scale", 50, 500, "kW"],
                     ]
-                  : selected === "hybrid"
-                    ? [
-                        ["targetSoc", "Battery target", 10, 90, "%"],
-                        ["targetLaps", "Target horizon", 1, 10, "laps"],
-                        ["powerScale", "Power bar scale", 50, 500, "kW"],
-                      ]
-                    : []
+                  : []
             ).map(([key, label, min, max, suffix]) => (
               <NumberField
                 key={key}

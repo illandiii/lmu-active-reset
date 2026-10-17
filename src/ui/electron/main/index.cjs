@@ -280,7 +280,19 @@ function installBridge() {
 }
 
 if (!app.requestSingleInstanceLock()) {
-  app.quit();
+  // An older tray instance otherwise silently receives launches of a new EXE.
+  if (preview) app.quit();
+  else
+    app.whenReady().then(async () => {
+      await dialog.showMessageBox({
+        type: "info",
+        title: `Sector ${app.getVersion()}`,
+        message: "Sector is already running",
+        detail: `The open instance has been brought to the front. To start version ${app.getVersion()}, choose Quit Sector in that app, then open this executable again.`,
+        buttons: ["OK"],
+      });
+      app.quit();
+    });
 } else {
   app.on("second-instance", showWindow);
   app.on("before-quit", (event) => {

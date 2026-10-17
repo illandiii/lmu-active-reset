@@ -93,7 +93,7 @@ is rejected. You can preview or mute them on the same page.
 Overlays are small widgets displayed over the game. Choose the information you
 want to keep in view:
 
-![The eleven Sector widgets, including Brake lock, Tyres, Stint planner and Hybrid](docs/media/widgets.png)
+![The ten Sector widgets, including Tyres, Stint planner and Hybrid](docs/media/widgets.png)
 
 *Widget previews use demo data.*
 
@@ -106,7 +106,6 @@ want to keep in view:
 | **Inputs** | Pedals, steering, gear and speed |
 | **Laps** | Lap history and available usage information |
 | **Session** | Session and player information |
-| **Brake lock** | Per-wheel locking warnings, predicted timing and brake-pedal threshold |
 | **Tyres** | Tyre life, tread temperatures, compound, tyre laps and flat spot estimates |
 | **Stint planner** | Estimated laps remaining, pit lap and fuel/energy consumption |
 | **Hybrid** | Battery charge, electric power, deploy/regen state and learned map suggestions |
@@ -127,8 +126,8 @@ Each widget has its own options. You can change size and transparency, hide
 columns or logos, and remove elements such as the clutch input. To choose a
 monitor, open **Edit → Settings → Overlay**.
 
-Brake lock has adjustable slip and minimum-speed thresholds. Tyres lets you
-choose which wheels and readings to show and set the temperature color ranges.
+Tyres shows all four wheels and lets you choose which readings to display and
+set the temperature color ranges.
 Stint planner has a consumption averaging window and a lap reserve. Its estimates
 become available after Sector records complete clean laps; unknown readings show `-`.
 

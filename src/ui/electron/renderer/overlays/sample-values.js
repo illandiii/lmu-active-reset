@@ -67,7 +67,7 @@ export function sampleValues(id, settings) {
       },
       settings,
     );
-  if (["brake-lock", "tyres", "stint-planner"].includes(id)) {
+  if (["tyres", "stint-planner"].includes(id)) {
     const data = {
       connected: true,
       driving: true,
@@ -101,31 +101,11 @@ export function sampleValues(id, settings) {
       cars: [{ id: 1, laps: 48 }],
       tyreLaps: [6, 6, 18, 18],
       flatSpots: [{ exposure: 60, duration: 2 }, null, null, null],
-      brakeTrace: [
-        Array.from({ length: 7 }, (_, i) => ({
-          time: i * 0.05,
-          slip: 0.05 + i * 0.015,
-          brake: 0.4 + i * 0.04,
-          speed: 108,
-          angle: (Math.atan2(2, 30) * 180) / Math.PI,
-          load: 3000,
-        })),
-        [],
-        [],
-        [],
-      ],
-      brakeEvents: [0.81, 0.86, 0.79, 0.92, 0.84, 0.8].map((brake) => ({
-        brake,
-        slip: 0.6,
-        speed: 108,
-      })),
       laps: [{ clean: true, energy: 3.6, fuel: 2.42 }],
     };
-    return id === "brake-lock"
-      ? wheels.brakeValues(data, settings)
-      : id === "tyres"
-        ? wheels.tyreValues(data, settings)
-        : stint.stintValues(data, settings);
+    return id === "tyres"
+      ? wheels.tyreValues(data, settings)
+      : stint.stintValues(data, settings);
   }
   const result = JSON.parse(
     JSON.stringify({ ...common, ...samples[id] })

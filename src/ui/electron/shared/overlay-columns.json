@@ -51,13 +51,6 @@
     ["throttle", "Throttle", 0],
     ["brake", "Brake", 0]
   ],
-  "brake-lock": [
-    ["threshold", "Predicted threshold", 0],
-    ["events", "Lock events", 0],
-    ["wheels", "Wheels", 62],
-    ["scale", "Pedal scale", 0],
-    ["prediction", "Lock forecast", 0]
-  ],
   "tyres": [
     ["heat", "Temperature bands", 0],
     ["compound", "Compound", 0],

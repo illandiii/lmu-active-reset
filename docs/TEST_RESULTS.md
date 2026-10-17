@@ -5,6 +5,19 @@ counts and build-specific experiments are preserved in the [research archive](ar
 
 ## Automated coverage
 
+The 0.2.4 update passed 46 Node tests and the native SDK serialization check.
+Regressions cover cached per-car identity during missing telemetry, invalidation
+on car/session changes and removal of Brake lock from existing saved layouts.
+Tyre flat-spot coverage remains active. The desktop and ten-widget Electron
+smoke checks passed, along with Home and the packaged 0.2.4 EXE. Documentation
+screenshots were regenerated for the ten remaining widgets. Live logo continuity
+remains to be confirmed in LMU.
+
+The latest reported unknown-v17 error came from the 0.2.2 runtime logs, not the
+0.2.3 supervisor. The 0.2.3 runtime had no reset logs. Launching a new executable
+while an older instance owns the desktop lock previously reopened that older
+instance silently; 0.2.4 adds an explicit notice to quit it before changing versions.
+
 The 0.2.3 update passed 108 Python tests and 49 Node tests. New regressions cover
 current and previous-release resident identity, changed DLLs/profiles/manifests,
 unrecognized paths, active or failed modules, v17 IPC and restored hook targets.
@@ -31,7 +44,7 @@ Live V17 recovery and threshold accuracy still require in-game validation.
 | Native host | `scripts/build/Build-PhysicalResetHost25661166.ps1` | Native plan verification, contacts, collision reconstruction, callback refusal and restart cases |
 | Python | `python scripts/sector.py test` | Supervision, acknowledgements, key behavior, lifecycle, analysis and source layout |
 | Desktop/controller | `npm test` in `src/ui/electron` | Settings, discovery, runtime ownership and overlay models |
-| Desktop/widgets | `npm run test:ui` | Real Electron interactions in isolated preview, including all eleven widgets |
+| Desktop/widgets | `npm run test:ui` | Real Electron interactions in isolated preview, including all ten widgets |
 | SDK/widget integration | `npm run test:telemetry` | Compiled native reader's synthetic SDK frame through production wheel and stint models |
 | Onboarding | `npm run test:onboarding` | Automatic/manual selection, invalid/canceled paths, tutorial choices and persistence |
 | Startup | `npm run test:startup` | SVG drawing, automatic exit, click/key skip, reduced motion and no replay on background restore or reload |

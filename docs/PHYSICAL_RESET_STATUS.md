@@ -1,6 +1,6 @@
 # Physical reset: current status
 
-**Current desktop: 0.2.3. Native host: v17 for the verified Steam 25661166 /
+**Current desktop: 0.2.4. Native host: v17 for the verified Steam 25661166 /
 app build 14200 compatibility profile.** Matching the display version alone is
 insufficient: runtime admission also checks the pinned identities and hashes.
 

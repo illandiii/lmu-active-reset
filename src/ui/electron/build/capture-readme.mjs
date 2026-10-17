@@ -142,5 +142,5 @@ execFileSync(
   { stdio: "inherit", windowsHide: true },
 );
 console.log(
-  "Captured Sector app screenshots, eleven-widget gallery and six-second demo GIF.",
+  "Captured Sector app screenshots, ten-widget gallery and six-second demo GIF.",
 );

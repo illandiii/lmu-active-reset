@@ -1,5 +1,6 @@
 const dash = "-";
-const { WheelHistory, brakeValues, tyreValues } = require("./wheel-model.cjs");
+const { WheelHistory, tyreValues } = require("./wheel-model.cjs");
+const { VehicleIdentity } = require("./vehicle-identity.cjs");
 const { stintValues } = require("./stint-model.cjs");
 const { resourceValues } = require("./compound-model.cjs");
 const { HybridHistory, hybridValues } = require("./hybrid-model.cjs");
@@ -81,6 +82,7 @@ class TelemetryModel {
     this.reset();
   }
   reset() {
+    this.identities = new VehicleIdentity();
     this.wheels = new WheelHistory();
     this.hybrid = new HybridHistory();
     this.history = [];
@@ -118,6 +120,7 @@ class TelemetryModel {
           p.lap === old.player.lap))
     )
       this.reset();
+    raw = this.identities.update(raw);
     if (!this.previous) {
       this.scoreLap = car?.laps ?? 0;
       this.start =
@@ -198,7 +201,6 @@ class TelemetryModel {
   }
 }
 function valuesFor(id, data, settings) {
-  if (id === "brake-lock") return brakeValues(data, settings);
   if (id === "tyres") return tyreValues(data, settings);
   if (id === "stint-planner") return stintValues(data, settings);
   if (id === "hybrid") return hybridValues(data, settings);

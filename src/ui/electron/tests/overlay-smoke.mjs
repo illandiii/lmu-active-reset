@@ -20,6 +20,10 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.getByRole("tab", { name: "Overlay", exact: true }).click();
   await page.getByRole("switch", { name: "Enable overlays" }).waitFor();
+  assert.equal(
+    await page.getByRole("button", { name: "Brake lock", exact: true }).count(),
+    0,
+  );
   await page.evaluate(() => document.fonts.ready);
   await app.evaluate(() => global.sectorTest.window().showInactive());
   await page.screenshot({
@@ -78,7 +82,6 @@ try {
     "Delta",
     "Laps",
     "Session",
-    "Brake lock",
     "Tyres",
     "Stint planner",
     "Hybrid",
@@ -121,37 +124,6 @@ try {
     if (["Leaderboard", "Relative"].includes(name))
       assert.ok((await widget.locator(".manufacturer-logo").count()) > 0);
   }
-  await page.getByRole("button", { name: "Brake lock", exact: true }).click();
-  await page
-    .locator(".widget-brake-lock")
-    .getByText(/FL ~\d+ ms/)
-    .waitFor();
-  assert.equal(
-    await page.locator('.widget-brake-lock [data-predicted="true"]').count(),
-    1,
-  );
-  await page
-    .getByRole("checkbox", { name: "Column Wheels", exact: true })
-    .uncheck();
-  await page.waitForFunction(
-    () =>
-      document.querySelector(".widget-brake-lock > div").style.width ===
-      "338px",
-  );
-  const slip = page.getByRole("spinbutton", {
-    name: "Slip threshold",
-    exact: true,
-  });
-  await slip.fill("70");
-  await slip.press("Tab");
-  await page.waitForFunction(
-    () =>
-      document.querySelectorAll('.widget-brake-lock [data-locked="true"]')
-        .length === 0,
-  );
-  await page
-    .getByRole("checkbox", { name: "Column Wheels", exact: true })
-    .check();
   await page.getByRole("button", { name: "Tyres", exact: true }).click();
   const flatSpot = page
     .locator(".widget-tyres")
@@ -633,7 +605,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: all eleven widgets, logos, settings, clutch removal, independent overlay windows, drag persistence, locking, foreground visibility and isolated preview.",
+    "PASS: all ten widgets, logos, settings, clutch removal, independent overlay windows, drag persistence, locking, foreground visibility and isolated preview.",
   );
 } catch (error) {
   const page = app.windows()[0];

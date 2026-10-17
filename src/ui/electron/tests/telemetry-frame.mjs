@@ -44,14 +44,6 @@ assert.equal(
   71,
 );
 assert.equal(
-  model.valuesFor("brake-lock", data, settings["brake-lock"]).tyres[0].locked,
-  true,
-);
-assert.equal(
-  model.valuesFor("brake-lock", data, settings["brake-lock"]).tyres[1].locked,
-  false,
-);
-assert.equal(
   model.valuesFor("stint-planner", data, settings["stint-planner"]).boxLaps,
   "-",
 );

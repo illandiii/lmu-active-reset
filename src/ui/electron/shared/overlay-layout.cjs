@@ -9,13 +9,6 @@ function dimensions(id, settings, values) {
     .reduce((sum, [, , width]) => sum + width, 0);
   let height = def.height;
   let width = Math.max(160, def.width - removed);
-  if (id === "brake-lock") {
-    if (!visible(settings, "prediction")) height -= 20;
-    if (!visible(settings, "wheels")) {
-      if (!visible(settings, "events")) height -= 14;
-      if (!visible(settings, "scale")) height -= 14;
-    }
-  }
   if (id === "tyres") {
     const count = 4;
     const cols = Math.min(2, Math.max(1, count));

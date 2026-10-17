@@ -1,14 +1,17 @@
 # Telemetry overlays
 
-Sector provides eleven widgets based on the supplied `LMU Overlay.html`,
+Sector provides ten widgets based on the supplied `LMU Overlay.html`,
 `LMU Overlay - 2.html` and `LMU Overlay - 3.html` designs: **Leaderboard, Relative,
-Weather, Delta, Inputs, Laps, Session, Brake lock, Tyres, Stint planner and Hybrid**. Artwork and
+Weather, Delta, Inputs, Laps, Session, Tyres, Stint planner and Hybrid**. Artwork and
 fonts are bundled locally; the exported page's remote runtime is not executed.
 
 Leaderboard and Relative identify manufacturer logos using each car's SDK model,
 then its vehicle filename and scoring name. Models are matched by vehicle ID;
 missing, stale or ambiguous opponent telemetry never borrows the player's model.
-This supports scoring names containing only a team and race number. Unknown
+Recognized models stay associated with the same vehicle while its telemetry is
+temporarily unavailable. Identity changes, roster removal, rewinds and session
+changes clear that association. This supports scoring names containing only a
+team and race number. Unknown
 models remain unidentified rather than receiving another manufacturer's logo.
 
 ## Configure the HUD
@@ -26,7 +29,7 @@ layout automatically.
 
 Native dragging suspends geometry synchronization until release, so telemetry
 cannot snap a moving widget back to its previous location. Default opacities in
-the widget order above are 35, 60, 35, 50, 65, 35, 35, 75, 50, 35 and 35 percent.
+the widget order above are 35, 60, 35, 50, 65, 35, 35, 50, 35 and 35 percent.
 Existing default values migrate once; other saved opacity values are preserved.
 
 Column and section switches are arranged in two columns. Hidden table columns,
@@ -48,7 +51,6 @@ of reset shortcuts. Display changes keep widget geometry within accessible bound
 | Inputs | Pedals, input trace, steering, gear and speed; clutch can be hidden; steering rotation adjustable |
 | Laps | Observed lap history and supported usage statistics; configurable columns and rows |
 | Session | Session and player information; individually configurable sections |
-| Brake lock | Per-wheel slip, short-horizon lock forecast and estimated pedal threshold; configurable slip threshold, minimum speed and prediction window |
 | Tyres | All four tyres, remaining life, three tread-temperature bands, axle compound names, observed age, punctures and estimated flat spots; readings can be hidden |
 | Stint planner | Fuel/virtual-energy range, conservative pit lap, measured consumption and energy target for an extra lap; adjustable averaging window and lap reserve |
 | Hybrid | Battery charge, motor state, calculated shaft power, battery trend and observed map recommendation; section switches, battery target, horizon and power-bar scale |
@@ -59,37 +61,6 @@ before LMP2 and GT3. Compound and energy fields are joined by SDK vehicle ID,
 with duplicate or stale telemetry rejected. Unknown compounds/energy show `-`.
 The four-circle indicator represents mixed compounds; it does not guess a compound
 from an unknown numeric index. Both new columns can be hidden.
-
-Brake lock compares each loaded wheel's rotational speed and deflected radius
-against its longitudinal ground speed. Slip angle is calculated from lateral and
-longitudinal wheel-ground velocity. Detached, airborne and off-road wheels are
-excluded, and braking must exceed the selected minimum speed. The slip threshold
-defaults to 20%, minimum speed to 20 km/h and prediction window to 500 ms.
-
-The widget learns the local relationship between pedal percentage and each
-wheel's longitudinal slip. Learning needs at least four samples spanning 100 ms,
-an eight-percentage-point pedal change and a consistent response. It compares
-steering input, speed and wheel load, and uses slip angle to reduce the remaining
-longitudinal slip allowance in a turn. The response is inverted to estimate the
-pedal percentage that reaches the configured slip limit. The smallest wheel
-limit is displayed as `LIMIT EST.` with the wheel identified below the bar.
-
-The estimate remains visible below the warning region, at a steady pedal and
-briefly after releasing the brake. It expires after twelve seconds or when
-conditions no longer match, and resets after telemetry interruption, a rewind
-or tyre replacement. Until enough useful braking data exists it shows `-`;
-it never substitutes the current pedal percentage for a learned limit.
-Values beyond the pedal range show `>100%`.
-
-Yellow `RISK` means the pedal has reached the estimated limit. A yellow ETA
-projects that crossing using the recent pedal trend. Red means the measured
-longitudinal slip threshold has been reached. Slip angle alone never confirms
-a lock. This combines a locally learned pedal response with a combined-slip
-heuristic, not the game's hidden tyre model or a guaranteed physical limit.
-The distinction between longitudinal and lateral slip follows the
-[combined-slip wheel model](https://www.mathworks.com/help/vdynblks/ref/combinedslipwheelcpi.html).
-`FL ~200 ms`, for example, identifies the front-left wheel and estimated delay.
-These are estimates, not a guaranteed limit or an ABS intervention measurement.
 
 Tyre temperatures are converted from Kelvin to Celsius. The three bands retain
 the SDK's left/centre/right order. Tyre life is the SDK remaining fraction; color
@@ -198,7 +169,7 @@ SDK builds.
 
 `npm test` checks preference validation, bounds, stale/missing telemetry, lap
 history and shutdown races. `npm run test:telemetry` passes the compiled reader's
-synthetic SDK frame through the production widget models. `npm run test:ui` checks all eleven designs, columns,
+synthetic SDK frame through the production widget models. `npm run test:ui` checks all ten designs, columns,
 clutch and logo removal, live resize before pointer release, display selection,
 fixed button widths, window isolation and foreground gating. These fixture and
 desktop checks do not replace live-game qualification. See [test coverage](TEST_RESULTS.md).

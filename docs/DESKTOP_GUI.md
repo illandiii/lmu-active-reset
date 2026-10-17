@@ -1,12 +1,18 @@
 # Sector desktop
 
-Sector 0.2.3 uses Electron, React and a locally built Vite renderer. The Python
+Sector 0.2.4 uses Electron, React and a locally built Vite renderer. The Python
 supervisor and v17 native host own reset commands; the desktop displays their
 acknowledged state. See [overlays](OVERLAYS.md) for the separate telemetry path.
 
 ## Launch and first-run setup
 
-Open `Sector.exe` from the complete portable folder. For a source checkout:
+Open `Sector.exe` from the complete portable folder.
+
+When switching versions, choose **Quit Sector** in the running app first. Closing
+the window into background mode keeps that instance active. A second executable
+brings the running instance forward and shows a notice explaining how to switch.
+
+For a source checkout:
 
 ```powershell
 ./scripts/launch/Start-ResetGui.ps1

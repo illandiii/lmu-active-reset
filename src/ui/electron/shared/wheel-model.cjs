@@ -1,5 +1,4 @@
 const { FlatSpotHistory, flatSpotDetected } = require("./flatspot-model.cjs");
-const { BrakeTrace, predictLock } = require("./brake-prediction.cjs");
 const finite = Number.isFinite;
 const names = ["FL", "FR", "RL", "RR"];
 const keys = ["frontLeft", "frontRight", "rearLeft", "rearRight"];
@@ -30,34 +29,15 @@ function wheelSlip(w) {
 
 class WheelHistory {
   constructor() {
-    this.events = [];
-    this.braking = null;
     this.previous = null;
     this.born = [null, null, null, null];
     this.flatSpots = new FlatSpotHistory();
-    this.brakeTrace = new BrakeTrace();
   }
   update(raw) {
     const p = raw.player;
     const car = raw.cars?.find((c) => c.id === p?.id);
     const previous = this.previous;
     const wheels = p?.wheels || [];
-    if (!raw.driving || !finite(p?.brake) || p.brake <= 0.02)
-      this.braking = null;
-    else {
-      const candidates = wheels
-        .map(wheelSlip)
-        .filter((w) => w && w.slip >= 0.05);
-      const peak = candidates.sort((a, b) => b.slip - a.slip)[0];
-      if (peak && (!this.braking || peak.slip > this.braking.slip)) {
-        if (!this.braking) {
-          this.braking = {};
-          this.events.push(this.braking);
-          if (this.events.length > 12) this.events.shift();
-        }
-        Object.assign(this.braking, peak, { brake: clamp(p.brake) });
-      }
-    }
     const replacements = [false, false, false, false];
     for (let i = 0; i < 4; i++) {
       const w = wheels[i],
@@ -104,100 +84,13 @@ class WheelHistory {
         loadFactor: Math.max(0.25, Math.min(3, w.load / 3000)),
       };
     });
-    const brakeTrace = this.brakeTrace.update(
-      raw,
-      wheels.map(wheelSlip),
-      replacements,
-    );
     return {
-      brakeTrace,
-      brakeModels: this.brakeTrace.models.map((m) => (m ? { ...m } : null)),
       flatSpots: this.flatSpots.update(p?.et, contacts, replacements),
-      brakeEvents: this.events.map((e) => ({ ...e })),
       tyreLaps: this.born.map((lap) =>
         lap === null ? null : Math.max(0, p.lap - lap),
       ),
     };
   }
-}
-
-function brakeValues(data, settings) {
-  const p = data?.connected ? data.player : null;
-  const threshold = (settings.slipThreshold ?? 20) / 100;
-  const minimumSpeed = settings.minimumSpeed ?? 20;
-  const events = (data?.connected ? data.brakeEvents || [] : []).filter(
-    (e) => e.slip >= threshold && e.speed >= minimumSpeed,
-  );
-  const brake = finite(p?.brake) ? clamp(p.brake) : 0;
-  const predictions = names.map((_, i) =>
-    p ? predictLock(data, settings, i, wheelSlip(p.wheels?.[i])) : null,
-  );
-  const locked = predictions.map((p) => Boolean(p?.locked));
-  const limiting = predictions
-    .map((p, index) => ({ ...p, index }))
-    .filter((p) => finite(p.threshold))
-    .sort((a, b) => a.threshold - b.threshold)[0];
-  const earliest = predictions
-    .filter((p) => p?.locked || p?.predicted)
-    .sort((a, b) => a.eta - b.eta)[0];
-  const observed = limiting?.threshold ?? null;
-  const upcoming = predictions
-    .map((p, i) =>
-      (p?.locked || p?.predicted) && p.eta <= earliest.eta + 0.05
-        ? names[i]
-        : null,
-    )
-    .filter(Boolean)
-    .join("/");
-  return {
-    brake,
-    brakePct: finite(p?.brake) ? Math.round(brake * 100) : "-",
-    threshold:
-      observed === null
-        ? "-"
-        : observed > 1
-          ? ">100"
-          : `~${Math.round(observed * 100)}`,
-    hasThreshold: observed !== null,
-    thresholdOpacity: observed === null ? 0 : 1,
-    thrLeft: `${clamp(observed ?? 1) * 100}%`,
-    zoneW: `${(1 - clamp(observed ?? 1)) * 100}%`,
-    thresholdColor: locked.some(Boolean)
-      ? "#FF8A80"
-      : earliest
-        ? "#FFC062"
-        : "#F2F4F6",
-    fillColor: locked.some(Boolean)
-      ? "#E2483D"
-      : earliest
-        ? "#F5A524"
-        : "#6B7A8C",
-    events: events.map((e) => ({ left: `${e.brake * 100}%` })),
-    forecast: earliest
-      ? `${upcoming} ${earliest.locked ? "LOCK" : earliest.eta === 0 ? "RISK" : `~${Math.round(earliest.eta * 1000)} ms`}`
-      : limiting
-        ? `${names[limiting.index]} limit`
-        : "-",
-    forecastColor: earliest?.locked ? "#FF8A80" : "#FFC062",
-    tyres: locked.map((on, i) => ({
-      name: names[i],
-      locked: on,
-      predicted: Boolean(predictions[i]?.predicted),
-      title: predictions[i]
-        ? `${names[i]}: ${on ? "locking" : finite(predictions[i].threshold) ? `estimated brake limit ${Math.round(predictions[i].threshold * 100)}%` : "-"}`
-        : names[i],
-      bg: on
-        ? "#FF5A4E"
-        : predictions[i]?.predicted
-          ? "#F5A524"
-          : "rgba(255,255,255,0.08)",
-      border: on
-        ? "#FFB3AC"
-        : predictions[i]?.predicted
-          ? "#FFC062"
-          : "rgba(255,255,255,0.25)",
-    })),
-  };
 }
 
 function tyreValues(data, settings) {
@@ -295,4 +188,4 @@ function tyreValues(data, settings) {
   };
 }
 
-module.exports = { WheelHistory, wheelSlip, brakeValues, tyreValues };
+module.exports = { WheelHistory, wheelSlip, tyreValues };

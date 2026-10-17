@@ -15,7 +15,6 @@ const names = {
   laps: "Laps",
   "session-summary": "Session",
   hybrid: "Hybrid",
-  "brake-lock": "Brake lock",
   tyres: "Tyres",
   "stint-planner": "Stint planner",
 };
@@ -91,7 +90,7 @@ window.renderSectorMedia = (seconds, settings, animated = false) => {
   const columns = animated
     ? [["inputs", "delta"]]
     : [
-        ["leaderboard", "weather", "brake-lock"],
+        ["leaderboard", "weather"],
         ["inputs", "laps", "delta", "stint-planner"],
         ["relative", "session-summary", "tyres", "hybrid"],
       ];

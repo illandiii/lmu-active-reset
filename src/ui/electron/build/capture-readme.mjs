@@ -58,10 +58,8 @@ try {
   await settle();
   await page.screenshot({ path: path.join(output, "overlay-editor.png") });
   await app.evaluate(() => global.sectorTest.window().setSize(1000, 720));
-  await page.getByRole("button", { name: "Modifica", exact: true }).click();
-  await page
-    .getByRole("menuitem", { name: "Impostazioni", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Settings", exact: true }).click();
   await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
   await settle();
   await page.screenshot({ path: path.join(output, "settings.png") });

@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Integrazione cinematica — 21 settembre 2026
+## Integrazione cinematica - 21 settembre 2026
 
 Aggiornamento 3 ottobre: acquisiti **17 corpi della Cadillac sulla 14200**,
 carburante e batteria; identificata la dipendenza delle inerzie pneumatici.

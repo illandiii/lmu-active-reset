@@ -41,7 +41,6 @@
     ["history", "Lap chart", 0],
     ["best", "Best", 0],
     ["average", "Average", 0],
-    ["spread", "Spread", 0],
     ["laps", "Laps", 0],
     ["pits", "Pit stops", 0],
     ["limits", "Track limits", 0]

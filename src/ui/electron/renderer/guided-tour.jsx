@@ -33,7 +33,7 @@ export function GuidedTour({ saveKey, restoreKey, onTabChange, onFinish }) {
     {
       target: "settings",
       title: "Set your preferences",
-      text: "Open Modifica → Impostazioni to change app settings. Reduce motion minimizes interface animations. Preferences are saved automatically.",
+      text: "Open Edit → Settings to change app settings. Reduce motion minimizes interface animations. Preferences are saved automatically.",
       side: "bottom",
     },
     {
@@ -116,7 +116,7 @@ export function GuidedTour({ saveKey, restoreKey, onTabChange, onFinish }) {
             </Popover.Arrow>
             <div aria-live="polite" aria-atomic="true">
               <span className="tour-progress">
-                Quick guide · {index + 1} of {steps.length}
+                Quick guide, {index + 1} of {steps.length}
               </span>
               <Popover.Title>{step.title}</Popover.Title>
               <Popover.Description>{step.text}</Popover.Description>

@@ -332,7 +332,7 @@ if (!app.requestSingleInstanceLock()) {
           window.webContents.send("sector:status", state);
       });
       tray = new Tray(path.join(root, "assets/sector.ico"));
-      tray.setToolTip(preview ? "Sector — Preview" : "Sector");
+      tray.setToolTip(preview ? "Sector - Preview" : "Sector");
       tray.setContextMenu(
         Menu.buildFromTemplate([
           { label: "Open Sector", click: showWindow },

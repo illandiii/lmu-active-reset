@@ -66,6 +66,16 @@ test("overlay preferences persist independently and reject invalid geometry", ()
     initial.widgets.inputs.showClutch = false;
     initial.widgets.inputs.scale = 1.25;
     assert.deepEqual(config.write(file, initial), config.read(file));
+    // Existing preferences from versions with Spread remain loadable.
+    const previous = structuredClone(initial);
+    previous.widgets["session-summary"].columns.spread = false;
+    previous.widgets["session-summary"].columns.laps = false;
+    const migrated = config.write(file, previous);
+    assert.equal(
+      Object.hasOwn(migrated.widgets["session-summary"].columns, "spread"),
+      false,
+    );
+    assert.equal(migrated.widgets["session-summary"].columns.laps, false);
     for (const field of ["scale", "x", "opacity"]) {
       const bad = structuredClone(initial);
       bad.widgets.inputs[field] = Infinity;
@@ -102,7 +112,7 @@ test("inputs use measured saved-speed changes and remove clutch completely", () 
   assert.equal(values.clutchPts, "");
   assert.equal(values.gear, 3);
   const missing = model.valuesFor("inputs", null, settings);
-  assert.equal(missing.speed, "\u2014");
+  assert.equal(missing.speed, "-");
   assert.equal(missing.throttlePts, "");
 });
 test("lap history rejects partial laps and resets after rewind or session changes", () => {
@@ -136,8 +146,8 @@ test("weather never invents forecast or humidity and relative marks estimated ga
   const settings = config.defaults().widgets.weather;
   const frame = new model.TelemetryModel().update(raw());
   const weather = model.valuesFor("weather", frame, settings);
-  assert.equal(weather.humidity, "\u2014");
-  assert.equal(weather.slots[1].rain, "\u2014");
+  assert.equal(weather.humidity, "-");
+  assert.equal(weather.slots[1].rain, "-");
   frame.cars.push({
     ...frame.cars[0],
     id: 2,

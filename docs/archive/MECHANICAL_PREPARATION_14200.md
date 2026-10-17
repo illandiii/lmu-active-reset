@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Preparazione meccanica e vincoli — continuazione del 3 ottobre
+## Preparazione meccanica e vincoli - continuazione del 3 ottobre
 
 ## Continuazione del 10 ottobre: stato degli impulsi e aggiornamento LMU
 
@@ -125,7 +125,7 @@ sono una misura del completamento.
 
 ## Archivio delle prove del 3 ottobre
 
-### Archivio RAM e preparazione del checkpoint — 10 ottobre
+### Archivio RAM e preparazione del checkpoint - 10 ottobre
 
 `checkpoint_bank.h/.c` implementa uno slot RAM di dati posseduti: corpi, ricette
 geometriche e memoria degli impulsi. Il salvataggio invalido conserva lo slot

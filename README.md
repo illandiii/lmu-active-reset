@@ -49,7 +49,7 @@ If you do not know where LMU is installed, find it in your Steam Library, open
 its **Manage → Browse local files** option and use that folder in Sector.
 
 You can then choose a short guided tour. Open it again at any time through
-**Aiuto → Guida** in Sector's top menu.
+**Help → Guide** in Sector's top menu.
 
 **Active Reset requires LMU's Offline mode.** Select **Offline** in the game,
 then start a **Practice** session. LMU must also be launched without
@@ -62,7 +62,7 @@ back to it. A **checkpoint** is a saved point that includes your car's position,
 direction and driving state at that moment.
 
 1. Start LMU **without Easy Anti-Cheat (EAC)** and select **Offline** mode.
-2. Load a **Practice** session, enter **GUIDA** and wait for Sector to connect.
+2. Load a **Practice** session, enter **DRIVE** and wait for Sector to connect.
 3. Return to the game. At the point you want to practice from, press **F6** to save.
 4. Keep driving, then press **F7** to return to that checkpoint.
 
@@ -112,7 +112,7 @@ finished. Once locked, mouse clicks pass through to the game.
 
 Each widget has its own options. You can change size and transparency, hide
 columns or logos, and remove elements such as the clutch input. To choose a
-monitor, open **Modifica → Impostazioni → Overlay**.
+monitor, open **Edit → Settings → Overlay**.
 
 ![Sector overlay editor with the Inputs preview, section switches, position, size and appearance controls](docs/media/overlay-editor.png)
 
@@ -141,7 +141,7 @@ or launch `Sector.exe` again.
 ## Need help?
 
 See the [user guide](docs/README.md) for setup help, common problems and updating
-Sector. You can also open **Aiuto → Guida** inside the app.
+Sector. You can also open **Help → Guide** inside the app.
 
 ## Support Sector
 

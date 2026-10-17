@@ -86,6 +86,31 @@ try {
     );
     await page.evaluate(() => document.fonts.ready);
     const widget = page.locator(".widget-stage .lmu-widget");
+    if (name === "Session") {
+      assert.doesNotMatch(
+        await widget.innerText(),
+        /LAP-TO-LAP SPREAD|penalty at/i,
+      );
+      assert.equal(
+        await page
+          .getByRole("checkbox", { name: "Column Spread", exact: true })
+          .count(),
+        0,
+      );
+      const lapsColumn = page.getByRole("checkbox", {
+        name: "Column Laps",
+        exact: true,
+      });
+      await lapsColumn.uncheck();
+      assert.equal(await widget.getByText("LAPS", { exact: true }).count(), 0);
+      assert.equal(
+        await widget.getByText("PIT STOPS", { exact: true }).count(),
+        1,
+      );
+      await lapsColumn.check();
+    }
+    if (name === "Laps")
+      assert.doesNotMatch(await widget.innerText(), /Stint\s+\d/i);
     await widget.screenshot({
       path: path.join(output, `widget-${name.toLowerCase()}.png`),
     });

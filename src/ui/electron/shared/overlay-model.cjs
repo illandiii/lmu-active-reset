@@ -1,4 +1,4 @@
-const dash = "\u2014";
+const dash = "-";
 const finite = (v) => typeof v === "number" && Number.isFinite(v);
 const clamp = (v, min = 0, max = 1) =>
   finite(v) ? Math.max(min, Math.min(max, v)) : min;
@@ -242,13 +242,12 @@ function valuesFor(id, data, settings) {
     elapsed,
     lap: p?.lap ?? dash,
     sessionName,
-    trackCars: live ? `${data.track} \u00b7 ${cars.length} cars` : dash,
+    trackCars: live ? `${data.track}, ${cars.length} cars` : dash,
     energy:
       finite(p?.energy) && p.energy >= 0 && p.energy <= 1
         ? `${(p.energy * 100).toFixed(1)}%`
         : dash,
     fuel: finite(p?.fuel) ? `${p.fuel.toFixed(1)} L` : dash,
-    stint: car ? `Stint ${(car.pitStops || 0) + 1}` : dash,
     bestLapLabel,
     bestEnergy: finite(bestRecord?.energy)
       ? `${bestRecord.energy.toFixed(1)}%`
@@ -457,7 +456,7 @@ function valuesFor(id, data, settings) {
     max = Math.max(...times.map((l) => l.time));
   return {
     ...common,
-    sessionTrack: live ? `${sessionName} \u00b7 ${data.track}` : dash,
+    sessionTrack: live ? `${sessionName}, ${data.track}` : dash,
     classBadge: car?.cls || "",
     classColor: colors[car?.cls] || "#677383",
     progress: clamp(data?.et / (data?.et + data?.remaining)),
@@ -474,9 +473,6 @@ function valuesFor(id, data, settings) {
     })),
     firstLapLabel: times.length ? `L${times[0].lap}` : dash,
     lastLapLabel: times.length ? `L${times.at(-1).lap}` : dash,
-    spread: avg
-      ? `\u00b1 ${Math.sqrt(clean.reduce((a, l) => a + (l.time - avg) ** 2, 0) / clean.length).toFixed(2)}s`
-      : dash,
     lapCount: car?.laps ?? dash,
     pitStops: car?.pitStops ?? dash,
     lastPit: data?.lastPit ? `last on L${data.lastPit}` : "",
@@ -485,8 +481,6 @@ function valuesFor(id, data, settings) {
         ? (p.limits / data.limitStep).toFixed(1)
         : dash,
     limitMax: data?.limitStep > 0 ? data.limitMax / data.limitStep : dash,
-    limitNote:
-      data?.limitStep > 0 ? `penalty at ${data.limitMax / data.limitStep}` : "",
   };
 }
 module.exports = { TelemetryModel, valuesFor, time, classCode, make };

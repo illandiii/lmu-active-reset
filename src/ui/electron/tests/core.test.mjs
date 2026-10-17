@@ -116,7 +116,7 @@ test("view shows only acknowledged checkpoints and sanitizes malformed values", 
     saved_speed_kmh: 200,
     restore_count: 20,
   });
-  assert.equal(noCheckpoint.speed, "—");
+  assert.equal(noCheckpoint.speed, "-");
   assert.equal(noCheckpoint.count, 0);
   const saved = statusView({
     phase: "active",
@@ -128,7 +128,7 @@ test("view shows only acknowledged checkpoints and sanitizes malformed values", 
   assert.equal(saved.count, 3);
   assert.equal(
     statusView({ checkpoint: true, saved_speed_kmh: NaN }).speed,
-    "—",
+    "-",
   );
 });
 

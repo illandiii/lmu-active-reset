@@ -69,7 +69,7 @@ function OverlayWindow() {
           <div className="layout-handle">
             <span>
               {def.name}
-              {!frame?.connected ? " · Sample" : ""}
+              {!frame?.connected ? ", Sample" : ""}
             </span>
             <button aria-label="Lock layout" onClick={() => api.lock()}>
               ✓

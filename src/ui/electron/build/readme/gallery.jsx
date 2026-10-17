@@ -62,16 +62,16 @@ function valuesAt(id, settings, seconds) {
   if (id === "weather") {
     // Do not illustrate forecast capabilities that the telemetry reader does not provide.
     values.surface = "Dry track";
-    values.humidity = "—";
-    values.forecast = "—";
+    values.humidity = "-";
+    values.forecast = "-";
     values.rainLap = "";
     values.slots = values.slots.map((slot, index) =>
       index === 0
         ? slot
         : {
             ...slot,
-            temp: "—",
-            rain: "—",
+            temp: "-",
+            rain: "-",
             rainScale: 0,
             isRain: false,
             isCloud: false,

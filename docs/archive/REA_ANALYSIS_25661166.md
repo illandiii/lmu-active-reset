@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## REA e stati trasmissione — 12 ottobre 2026
+## REA e stati trasmissione - 12 ottobre 2026
 
 REA 6.4.0 e Ghidra 12.1.4 sono stati usati per decompilare sei routine della
 build Steam 25661166. Il reset completo non e' ancora operativo.

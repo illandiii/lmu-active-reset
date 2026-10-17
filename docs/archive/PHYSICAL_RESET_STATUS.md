@@ -14,7 +14,7 @@ traceable. Referenced local capture files are not included in Git.
 
 > Aggiornamento 21 settembre 2026: ricostruzione nativa dei contatti provata da fermo sulla build 14150, con 207 scritture mirate e quattro ruote verificate; vedere [CONTACT_REBUILD.md](CONTACT_REBUILD.md). Nessun checkpoint dell'auto ripristinato. Le sezioni seguenti conservano la ricerca storica su 14130; la vecchia DLL rimane esclusa dalla nuova build.
 
-## Reset fisico — indagine del 12 settembre 2026
+## Reset fisico - indagine del 12 settembre 2026
 
 ## Esito della richiesta
 

@@ -1,4 +1,4 @@
-# Prova del reset e delle collisioni — host v15
+# Prova del reset e delle collisioni - host v15
 
 Procedura aggiornata per Sector 0.1.6; evidenza live del 16 ottobre 2026. La v15 corregge
 il volume delle collisioni che attraversava la posizione precedente e quella

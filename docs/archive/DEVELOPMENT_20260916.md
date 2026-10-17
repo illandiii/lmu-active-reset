@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Sviluppo Active Reset — 16 settembre 2026
+## Sviluppo Active Reset - 16 settembre 2026
 
 **Il reset nel gioco non è ancora implementato.** Sono disponibili due componenti di preparazione provati fuori dal gioco, la diagnostica reale e l'analisi delle due build. Non esiste un comando operativo di salvataggio/ripristino né una prova di conservazione dei record dopo reset.
 

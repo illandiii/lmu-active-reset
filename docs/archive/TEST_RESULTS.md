@@ -14,7 +14,7 @@ traceable. Referenced local capture files are not included in Git.
 
 > Aggiornamento 21 settembre 2026: le nuove prove contatti 14150 (due fixture, nove test Python, ricostruzione reale delle quattro ruote) sono in [CONTACT_REBUILD.md](CONTACT_REBUILD.md) e nei log `20260921T180631160598Z_contact_experiment.*`. Sono state effettuate 207 scritture mirate dei contatti, nessun ripristino di checkpoint. Le sezioni seguenti conservano gli esiti storici precedenti.
 
-## Risultati effettivi — 12 settembre 2026
+## Risultati effettivi - 12 settembre 2026
 
 ## Compilazione e test locali
 

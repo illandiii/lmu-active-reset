@@ -8,7 +8,7 @@ fonts are bundled locally; the exported page's remote runtime is not executed.
 
 1. Open **Overlay**, choose the widgets and enable **Overlays**.
 2. Select a widget to change position, size, opacity and its available options.
-3. Choose a display through **Modifica → Impostazioni → Overlay**.
+3. Choose a display through **Edit → Settings → Overlay**.
 4. Select **Edit layout**, drag the blue strip or resize from the lower-right corner.
 5. Select **Lock layout**, the overlay check button or Escape to return mouse input to LMU.
 

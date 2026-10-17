@@ -125,13 +125,24 @@ try {
     }),
   );
   assert.equal(invalid.ok, false);
-  await page.getByRole("button", { name: "Modifica", exact: true }).click();
-  await page
-    .getByRole("menuitem", { name: "Impostazioni", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Settings", exact: true }).click();
   await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
   const display = page.getByRole("combobox", { name: "Display", exact: true });
-  await display.click();
+  const displayBounds = await display.boundingBox();
+  await page.mouse.move(
+    displayBounds.x + displayBounds.width / 2,
+    displayBounds.y + displayBounds.height / 2,
+  );
+  await page.mouse.down();
+  const pressedDisplayBounds = await display.boundingBox();
+  assert.ok(Math.abs(pressedDisplayBounds.width - displayBounds.width) < 0.5);
+  assert.ok(Math.abs(pressedDisplayBounds.height - displayBounds.height) < 0.5);
+  assert.equal(
+    await display.evaluate((node) => getComputedStyle(node).transform),
+    "none",
+  );
+  await page.mouse.up();
   await page.getByRole("option").nth(1).click();
   await page.waitForFunction(async () => {
     const value = await window.sector.initializeOverlays();
@@ -160,10 +171,8 @@ try {
   );
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await page.getByRole("dialog").waitFor({ state: "hidden" });
-  await page.getByRole("button", { name: "Modifica", exact: true }).click();
-  await page
-    .getByRole("menuitem", { name: "Impostazioni", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Settings", exact: true }).click();
   assert.equal(
     await page
       .getByRole("switch", { name: "Reduce motion" })
@@ -196,8 +205,8 @@ try {
     });
   }
   async function openGuide() {
-    await page.getByRole("button", { name: "Aiuto", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Guida", exact: true }).click();
+    await page.getByRole("button", { name: "Help", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Guide", exact: true }).click();
   }
   async function completeTour() {
     await openGuide();
@@ -206,7 +215,7 @@ try {
         .locator(`[data-tour="${target}"][data-tour-active="true"]`)
         .waitFor();
       await page
-        .getByText(new RegExp(`Quick guide . ${index + 1} of 7`), {
+        .getByText(`Quick guide, ${index + 1} of 7`, {
           exact: true,
         })
         .waitFor();
@@ -254,7 +263,7 @@ try {
   await page
     .getByRole("button", { name: "Previous step", exact: true })
     .click();
-  await page.getByText(/Quick guide . 1 of 7/, { exact: true }).waitFor();
+  await page.getByText("Quick guide, 1 of 7", { exact: true }).waitFor();
   await page.keyboard.press("Escape");
   await page.locator(".tour-popup").waitFor({ state: "hidden" });
   assert.equal(
@@ -305,6 +314,17 @@ try {
   await page.getByRole("button", { name: "Close window", exact: true }).click();
   await page.getByRole("heading", { name: "Keep Sector running?" }).waitFor();
   await settle();
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Close dialog", exact: true })
+      .count(),
+    0,
+  );
+  const backgroundLabel = await page
+    .locator(".close-actions .primary > span")
+    .boundingBox();
+  const quitLabel = await page.locator(".quit-button > span").boundingBox();
+  assert.ok(Math.abs(backgroundLabel.x - quitLabel.x) < 0.5);
   await page.screenshot({ path: path.join(output, "close.png") });
   await page.keyboard.press("Tab");
   assert.equal(

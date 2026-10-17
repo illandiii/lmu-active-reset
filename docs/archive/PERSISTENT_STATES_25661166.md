@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Stati persistenti — Steam 25661166, 10 ottobre 2026
+## Stati persistenti - Steam 25661166, 10 ottobre 2026
 
 Il reset fisico resta incompleto. Questa estensione acquisisce e conserva più
 stati e prepara payload numerici in RAM; non scrive la fisica del gioco.

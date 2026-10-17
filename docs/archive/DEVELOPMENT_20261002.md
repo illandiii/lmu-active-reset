@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Sviluppo del 2 ottobre 2026 — build 14200
+## Sviluppo del 2 ottobre 2026 - build 14200
 
 Questa pagina descrive la prima fase del 2 ottobre. La successiva cattura con
 DLL dei collegamenti ruota/mozzo, completata nella stessa serata, e il lavoro del

@@ -47,7 +47,7 @@ const templates = Object.fromEntries(
       tag(root.children[2].children[0], "position");
       tag(root.children[2].children[1], "history");
       [...grids[0].children].forEach((node, i) =>
-        tag(node, ["best", "average", "spread", "laps", "pits", "limits"][i]),
+        tag(node, ["best", "average", "laps", "pits", "limits"][i]),
       );
       grids[0].dataset.fluidGrid = "true";
     }

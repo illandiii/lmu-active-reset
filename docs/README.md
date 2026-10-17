@@ -14,7 +14,7 @@ through Steam: open LMU's **Manage → Browse local files** option in your Libra
 
 1. Launch LMU **without Easy Anti-Cheat (EAC)**.
 2. Select **Offline** mode in LMU.
-3. Start a **Practice** session and enter **GUIDA** to drive.
+3. Start a **Practice** session and enter **DRIVE** to drive.
 
 Sector can remain open while you load the session; it connects automatically
 when the game is ready.
@@ -56,7 +56,7 @@ Column and section switches let you remove information you do not need. For
 example, hide the clutch in Inputs or remove manufacturer logos from standings.
 The widget adjusts to the remaining content.
 
-For multiple monitors, choose the display in **Modifica → Impostazioni → Overlay**.
+For multiple monitors, choose the display in **Edit → Settings → Overlay**.
 Your layout and preferences are saved for the next launch.
 
 ### Samples and missing information
@@ -71,9 +71,9 @@ is not available from the game reader; you can hide those sections.
 
 ## Settings, guide and background mode
 
-- Open **Modifica → Impostazioni** for app settings and overlay display selection.
+- Open **Edit → Settings** for app settings and overlay display selection.
 - Enable **Reduce motion** there if you prefer fewer interface animations.
-- Open **Aiuto → Guida** to replay the guided tour.
+- Open **Help → Guide** to replay the guided tour.
 - Choose **Run in background** when closing the window to keep Sector active.
 - Reopen it from the Windows notification area or by launching `Sector.exe` again.
 - Choose **Quit Sector** to stop the app completely.
@@ -83,7 +83,7 @@ is not available from the game reader; you can hide those sections.
 ### Sector is waiting for LMU
 
 Check that LMU is running from the folder you selected during setup. For Active
-Reset, select **Offline** mode in LMU, load **Practice** without EAC and enter **GUIDA**. Keep Sector open
+Reset, select **Offline** mode in LMU, load **Practice** without EAC and enter **DRIVE**. Keep Sector open
 while the session loads, then check the status on the Active Reset page.
 
 ### The shortcut does nothing

@@ -14,7 +14,7 @@ traceable. Referenced local capture files are not included in Git.
 
 > Aggiornamento 16 settembre 2026: il gioco è ora 14150. Le sezioni seguenti descrivono la ricerca storica su 14130; per codice nuovo, migrazione, prove e limiti vedere [DEVELOPMENT_20260916.md](DEVELOPMENT_20260916.md). La DLL precedente non è abilitata sulla nuova build.
 
-## Inventario locale — 12 settembre 2026
+## Inventario locale - 12 settembre 2026
 
 ## Ambiente verificato
 

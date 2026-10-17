@@ -1,18 +1,17 @@
 import samples from "./samples.json";
 const common = {
   sessionName: "RACE",
-  trackCars: "Spa-Francorchamps \u00b7 56 cars",
+  trackCars: "Spa-Francorchamps, 56 cars",
   lap: 48,
   remaining: "2:14:37",
   elapsed: "3:45:23",
   best: "2:18.412",
-  surface: "Dry track \u00b7 grip 98%",
+  surface: "Dry track, grip 98%",
   air: "17\u00b0",
   trackTemp: "24\u00b0",
   humidity: "68%",
   forecast: "Rain likely in ~1h 20m",
   rainLap: "\u2248 lap 82",
-  stint: "Stint 3 \u00b7 5 laps",
   energy: "41.2%",
   fuel: "38.6 L",
   bestLapLabel: "L31",
@@ -23,7 +22,7 @@ const common = {
   averageEnergy: "3.6%",
   averageFuel: "2.42 L",
   averageGap: "+0.452",
-  sessionTrack: "6 Hours Race \u00b7 Spa-Francorchamps",
+  sessionTrack: "6 Hours Race, Spa-Francorchamps",
   classBadge: "GT3",
   classColor: "#1FA34A",
   progress: 0.626,
@@ -33,13 +32,11 @@ const common = {
   startPosition: "from P9",
   firstLapLabel: "L1",
   lastLapLabel: "L48",
-  spread: "\u00b1 0.34s",
   lapCount: 48,
   pitStops: 2,
   lastPit: "last on L43",
   limits: 2,
   limitMax: 5,
-  limitNote: "penalty at 5",
 };
 export function sampleValues(id, settings) {
   const result = JSON.parse(

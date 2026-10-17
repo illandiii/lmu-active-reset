@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Collegamento al thread fisico — 13 ottobre 2026
+## Collegamento al thread fisico - 13 ottobre 2026
 
 ## Risultato nel gioco
 

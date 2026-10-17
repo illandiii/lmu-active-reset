@@ -216,7 +216,7 @@ function App() {
               data-tour="settings"
               disabled={!settings || quitting}
             >
-              Modifica
+              Edit
             </Menu.Trigger>
             <Menu.Portal>
               <Menu.Positioner
@@ -233,7 +233,7 @@ function App() {
                       requestAnimationFrame(() => setModal("settings"))
                     }
                   >
-                    <Glyph icon={gear} /> Impostazioni
+                    <Glyph icon={gear} /> Settings
                   </Menu.Item>
                 </Menu.Popup>
               </Menu.Positioner>
@@ -244,7 +244,7 @@ function App() {
               className="help-menu-trigger guide-menu-trigger"
               disabled={!settings || quitting}
             >
-              Aiuto
+              Help
             </Menu.Trigger>
             <Menu.Portal>
               <Menu.Positioner
@@ -256,7 +256,7 @@ function App() {
               >
                 <Menu.Popup className="help-menu-popup">
                   <Menu.Item className="help-menu-item" onClick={startGuide}>
-                    <Glyph icon={help} /> Guida
+                    <Glyph icon={help} /> Guide
                   </Menu.Item>
                 </Menu.Popup>
               </Menu.Positioner>
@@ -506,14 +506,6 @@ function App() {
                   }
                 />
               </div>
-              {shownModal === "close" && (
-                <Dialog.Close
-                  className="modal-dismiss"
-                  aria-label="Close dialog"
-                >
-                  <Glyph icon={close} />
-                </Dialog.Close>
-              )}
               <Dialog.Title>
                 {shownModal === "settings"
                   ? "Settings"
@@ -554,12 +546,12 @@ function App() {
                     }}
                   >
                     <Glyph icon={layers} />
-                    Run in background
+                    <span>Run in background</span>
                     <Glyph icon={arrow} />
                   </button>
                   <button className="text-button quit-button" onClick={exit}>
                     <Glyph icon={close} />
-                    Quit Sector
+                    <span>Quit Sector</span>
                   </button>
                   <Dialog.Close className="text-button">Cancel</Dialog.Close>
                 </div>

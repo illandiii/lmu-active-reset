@@ -39,8 +39,8 @@ an isolated profile under `work/electron-preview`, not the real preferences.
 | --- | --- |
 | Active Reset | Checkpoint availability, save/restore shortcuts and confirmation sounds |
 | Overlay | Widget visibility, layout editor and per-widget configuration |
-| Modifica → Impostazioni | Reduced motion and overlay display selection |
-| Aiuto → Guida | Optional guided tour with anchored popups and arrows |
+| Edit → Settings | Reduced motion and overlay display selection |
+| Help → Guide | Optional guided tour with anchored popups and arrows |
 | Window close | Run in background, Quit Sector or Cancel |
 
 The connection/result status bar belongs to Active Reset. There is no connection

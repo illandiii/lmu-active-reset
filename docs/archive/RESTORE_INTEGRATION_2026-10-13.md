@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Integrazione reset — 13 ottobre 2026
+## Integrazione reset - 13 ottobre 2026
 
 Il reset fisico completo nel gioco non è ancora operativo. La UI è sospesa su richiesta dell’utente. Nessun accesso o scrittura alla memoria LMU effettuato in questa fase.
 

@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Ricostruzione contatti — stato al 21 settembre 2026
+## Ricostruzione contatti - stato al 21 settembre 2026
 
 Aggiornamento: la ricostruzione da fermo è stata migrata e provata anche sulla
 **14200 il 3 ottobre**, con 194 contatti. Routine, risultati e limiti sono in

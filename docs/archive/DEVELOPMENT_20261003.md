@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Sviluppo del 3 ottobre 2026 — LMU 14200
+## Sviluppo del 3 ottobre 2026 - LMU 14200
 
 La continuazione successiva risolve le dipendenze delle inerzie nella preparazione
 locale e verifica geometria/impulsi dei 20 Bar:

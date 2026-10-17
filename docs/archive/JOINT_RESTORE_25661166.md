@@ -12,7 +12,7 @@ traceable. Referenced local capture files are not included in Git.
 
 ---
 
-## Transazione fisica/scoring e contatti — 12 ottobre 2026
+## Transazione fisica/scoring e contatti - 12 ottobre 2026
 
 Il reset completo non e' operativo. Questa fase chiude due passaggi separati:
 ricostruzione contatti da fermo nel gioco e transazione congiunta su memoria

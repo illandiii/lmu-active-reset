@@ -1005,27 +1005,31 @@ textarea {
   text-align: center;
 }
 .quit-button {
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px 1fr 18px;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 10px;
   border: 1px solid transparent;
+  padding: 12px 16px;
+  min-height: 44px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+}
+.close-actions .primary {
+  display: grid;
+  grid-template-columns: 18px 1fr 18px;
+  border: 1px solid transparent;
+  text-align: left;
+}
+.close-actions svg {
+  width: 18px;
+  height: 18px;
 }
 .quit-button:hover {
   background: #5b2935;
   color: #ffd8df;
   border-color: #af5367;
-}
-.modal-dismiss {
-  position: absolute;
-  right: 16px;
-  top: 16px;
-  padding: 8px;
-  border-radius: 8px;
-  background: transparent;
-}
-.modal-dismiss:hover {
-  background: #ffffff15;
 }
 
 .titlebar {
@@ -1151,6 +1155,9 @@ textarea {
 .display-select[data-popup-open] {
   background: #2c3e57;
   border-color: #7599d2;
+}
+.display-select:active:not(:disabled) {
+  transform: none;
 }
 .display-select svg,
 .display-option svg {

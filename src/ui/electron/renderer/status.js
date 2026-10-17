@@ -15,7 +15,7 @@ export function statusView(status) {
     Number.isFinite(status.saved_speed_kmh) &&
     status.saved_speed_kmh >= 0
       ? Math.round(status.saved_speed_kmh).toLocaleString("en-GB")
-      : "—";
+      : "-";
   return {
     title: titles[status.phase] || "Waiting for LMU",
     tone:
@@ -38,7 +38,7 @@ export function statusView(status) {
             hour: "2-digit",
             minute: "2-digit",
           })
-        : "—",
+        : "-",
     message: typeof status.message === "string" ? status.message : "",
   };
 }

@@ -187,9 +187,7 @@ export function OverlayEditor() {
         </div>
         <div className="widget-inspector">
           <div className="widget-stage" ref={stage}>
-            <span className="stage-mode">
-              {frame?.connected ? "Live" : "Sample"}
-            </span>
+            {frame?.connected && <span className="stage-mode">Live</span>}
             <div
               style={{ width: def.width * scale, height: def.height * scale }}
             >

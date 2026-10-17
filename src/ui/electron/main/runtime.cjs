@@ -66,7 +66,7 @@ class Runtime extends EventEmitter {
     this.state = {
       ...emptyCheckpoint,
       phase: "idle",
-      message: "Open LMU in offline Practice without EAC.",
+      message: "",
     };
     this.child = null;
     this.blockedIdentity = null;
@@ -111,10 +111,7 @@ class Runtime extends EventEmitter {
         this.publish({
           phase: "idle",
           ...emptyCheckpoint,
-          message:
-            games.length > 1
-              ? "Keep one LMU instance open."
-              : "Open LMU in offline Practice without EAC.",
+          message: games.length > 1 ? "Keep one LMU instance open." : "",
         });
         return;
       }

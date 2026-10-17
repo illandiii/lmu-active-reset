@@ -16,10 +16,16 @@ counts and build-specific experiments are preserved in the [research archive](ar
 | Onboarding | `npm run test:onboarding` | Automatic/manual selection, invalid/canceled paths, tutorial choices and persistence |
 | Portable package | `npm run test:release` | Actual EXE in preview, version, bundled Python imports, UI and no active reset listener |
 
-The 0.1.8 desktop verification passed 39 Node unit tests, the desktop, Home and
-overlay smoke suites, native SDK self-test and serialization fixture, formatting,
-renderer build and packaged EXE smoke checks. These are recorded development
-results, not an automatically updated CI status.
+The 0.1.9 deployment-map update passed 41 Node unit tests, the overlay smoke
+suite, native SDK self-test and serialization fixture, formatting, renderer build
+and packaged EXE smoke checks. The desktop and Home smoke suites last passed
+with 0.1.8. These are recorded development results, not an automatically updated
+CI status.
+
+Deployment-map fixtures cover LMH and LMDh model recognition, both SDK encodings,
+range boundaries, valid recommendation steps, unknown vehicles and clearing
+learning after a vehicle change. Electron verifies the compact map row without
+step indicators. This update has not yet been validated in a live LMU session.
 
 New fixtures cover old-layout migration, per-wheel brake-lock detection, tyre
 temperatures and replacement, measured fuel/energy consumption, lap reserves,

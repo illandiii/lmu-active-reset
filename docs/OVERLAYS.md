@@ -93,13 +93,21 @@ power is calculated from motor torque and RPM; the state determines deploy or
 regen direction. Non-hybrid/unavailable state displays `N/A`, without substituting
 virtual energy for battery charge. The power-bar scale is a display setting.
 
-Battery trend uses complete clean laps with a constant SDK motor-map index.
+The vehicle model determines the deployment scale: LMDh uses 0 to 50 in steps
+of 10; hybrid LMH uses 0 to 200 in steps of 20. The reader supplies the player's
+SDK vehicle model, with the matching scoring vehicle as a fallback. SDK step
+indices are converted using that model's scale; already scaled readings are
+accepted only on valid steps. Unknown models or incompatible SDK ranges leave
+the map unavailable. The widget displays the current and recommended values
+without a row of step indicators.
+
+Battery trend uses complete clean laps with a constant deployment map.
 Recommendations compare maps observed for at least two laps each, within 5% of
 the current map's average lap time. Sector chooses the observed map projected
 closest to the battery target over the chosen horizon. The recommendation is
-marked `~`; it remains unavailable until enough comparable laps exist. The SDK
-map index is shown as-is: no assumed LMH/LMDh kW steps or fabricated per-step
-gains are used. Sector never changes the map. Reset/session changes clear learning.
+marked `~`; it remains unavailable until enough comparable laps exist. Per-step
+gains are measured, not assumed. Sector never changes the map. Reset, session
+and vehicle changes clear learning, so observations cannot carry between cars.
 
 Stint planner averages the most recent complete clean laps (five by default).
 Pit and invalid laps are excluded, and zero or missing consumption is not treated

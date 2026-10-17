@@ -21,6 +21,7 @@ assert.equal(raw.player.wheels[0].wear, 0.71);
 assert.equal(raw.player.wheels[0].lateralSpeed, 2);
 assert.equal(raw.player.hybrid.state, 2);
 assert.equal(raw.player.hybrid.battery, 0.45);
+assert.equal(raw.player.model, "Porsche 963");
 assert.equal(raw.cars[0].resources.compounds[0], "Soft");
 assert.ok(Math.abs(raw.cars[0].resources.energy - 0.42) < 0.0001);
 assert.deepEqual(raw.player.wheels[1].temperatures, [null, null, null]);
@@ -28,6 +29,8 @@ const data = new model.TelemetryModel().update(raw);
 const settings = config.defaults().widgets;
 assert.equal(model.valuesFor("hybrid", data, settings.hybrid).socPct, 45);
 assert.equal(model.valuesFor("hybrid", data, settings.hybrid).kw, 126);
+assert.equal(model.valuesFor("hybrid", data, settings.hybrid).current, 30);
+assert.equal(model.valuesFor("hybrid", data, settings.hybrid).platform, "LMDh");
 const leader = model.valuesFor("leaderboard", data, settings.leaderboard)
   .classes[0].rows[0];
 assert.equal(leader.veTxt, "42%");

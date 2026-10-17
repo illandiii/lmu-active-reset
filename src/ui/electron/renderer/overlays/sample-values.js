@@ -48,9 +48,10 @@ export function sampleValues(id, settings) {
       {
         connected: true,
         player: {
+          model: "Porsche 963",
           hybrid: {
             state: 2,
-            torque: 172,
+            torque: 38,
             rpm: 10000,
             battery: 0.45,
             map: 4,
@@ -58,10 +59,10 @@ export function sampleValues(id, settings) {
           },
         },
         hybridLaps: [
-          { map: 4, delta: -1.4, seconds: 123 },
-          { map: 4, delta: -1.3, seconds: 124 },
-          { map: 3, delta: 1, seconds: 124 },
-          { map: 3, delta: 1.1, seconds: 125 },
+          { map: 40, platform: "LMDh", delta: -1.4, seconds: 123 },
+          { map: 40, platform: "LMDh", delta: -1.3, seconds: 124 },
+          { map: 30, platform: "LMDh", delta: 1, seconds: 124 },
+          { map: 30, platform: "LMDh", delta: 1.1, seconds: 125 },
         ],
       },
       settings,

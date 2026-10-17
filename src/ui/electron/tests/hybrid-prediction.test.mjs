@@ -4,6 +4,7 @@ import config from "../shared/overlay-config.cjs";
 import model from "../shared/overlay-model.cjs";
 import wheelModel from "../shared/wheel-model.cjs";
 import hybrid from "../shared/hybrid-model.cjs";
+import platform from "../shared/hybrid-platform.cjs";
 const settings = config.defaults().widgets;
 function brakeFrame(t) {
   return {
@@ -184,6 +185,7 @@ const hybridFrame = () => ({
   cars: [{ id: 1, countLap: 2 }],
   player: {
     id: 1,
+    model: "Porsche 963",
     et: 0,
     lapStart: 0,
     lap: 1,
@@ -206,21 +208,22 @@ test("hybrid uses actual state, shaft power, battery and learned map observation
   assert.equal(v.trend, "-");
   assert.equal(v.suggested, "-");
   raw.hybridLaps = [
-    { map: 4, delta: -1.4, seconds: 120 },
-    { map: 4, delta: -1.4, seconds: 120 },
-    { map: 3, delta: 1, seconds: 121 },
-    { map: 3, delta: 1, seconds: 121 },
+    { map: 40, platform: "LMDh", delta: -1.4, seconds: 120 },
+    { map: 40, platform: "LMDh", delta: -1.4, seconds: 120 },
+    { map: 30, platform: "LMDh", delta: 1, seconds: 121 },
+    { map: 30, platform: "LMDh", delta: 1, seconds: 121 },
   ];
   v = hybrid.hybridValues(raw, settings.hybrid);
   assert.equal(v.trend, "-1.4%");
-  assert.equal(v.suggested, "~3");
+  assert.equal(v.current, 40);
+  assert.equal(v.platform, "LMDh");
+  assert.equal(v.suggested, "~30");
   raw.player.hybrid.map = 40;
   raw.player.hybrid.mapMax = 50;
-  raw.hybridLaps = raw.hybridLaps.map((l) => ({ ...l, map: l.map * 10 }));
   v = hybrid.hybridValues(raw, settings.hybrid);
   assert.equal(v.current, 40);
   assert.equal(v.suggested, "~30");
-  assert.equal(v.steps.length, 16);
+  assert.equal("steps" in v, false);
   raw.player.hybrid.state = 3;
   v = hybrid.hybridValues(raw, settings.hybrid);
   assert.equal(v.state, "REGEN");
@@ -231,15 +234,15 @@ test("hybrid uses actual state, shaft power, battery and learned map observation
   assert.equal(v.state, "N/A");
   assert.equal(v.socPct, "-");
   assert.equal(v.kw, "-");
-  assert.equal(v.steps.length, 0);
+  assert.equal(v.current, "-");
 });
 test("hybrid refuses unlearned or incomparable maps and invalid battery readings", () => {
   const raw = hybridFrame();
   raw.hybridLaps = [
-    { map: 4, delta: -1, seconds: 120 },
-    { map: 4, delta: -1, seconds: 120 },
-    { map: 3, delta: 1, seconds: 150 },
-    { map: 3, delta: 1, seconds: 150 },
+    { map: 40, platform: "LMDh", delta: -1, seconds: 120 },
+    { map: 40, platform: "LMDh", delta: -1, seconds: 120 },
+    { map: 30, platform: "LMDh", delta: 1, seconds: 150 },
+    { map: 30, platform: "LMDh", delta: 1, seconds: 150 },
   ];
   assert.equal(hybrid.hybridValues(raw, settings.hybrid).suggested, "-");
   raw.player.hybrid.battery = null;
@@ -257,6 +260,8 @@ test("hybrid trend records complete clean fixed-map laps and clears with the mod
   raw.player.lap = 2;
   raw.player.hybrid.battery = 0.43;
   assert.ok(Math.abs(state.update(structuredClone(raw))[0].delta + 2) < 0.001);
+  assert.equal(state.laps[0].map, 40);
+  assert.equal(state.laps[0].platform, "LMDh");
   raw.player.et = 180;
   raw.player.invalid = true;
   state.update(structuredClone(raw));
@@ -272,8 +277,97 @@ test("hybrid trend records complete clean fixed-map laps and clears with the mod
   raw.player.lapStart = 360;
   raw.player.lap = 4;
   assert.equal(state.update(raw).length, 1);
+  raw.player.model = "BMW M Hybrid V8";
+  assert.equal(state.update(raw).length, 0);
   const combined = new model.TelemetryModel();
   combined.hybrid = state;
   combined.reset();
   assert.equal(combined.hybrid.laps.length, 0);
+});
+
+test("deployment scales follow the actual car and accept both SDK encodings", () => {
+  for (const [models, name, max, step] of [
+    [
+      [
+        "Porsche 963",
+        "Cadillac V-Series.R",
+        "BMW M Hybrid V8",
+        "Alpine A424",
+        "Lamborghini SC63",
+      ],
+      "LMDh",
+      50,
+      10,
+    ],
+    [
+      [
+        "Ferrari 499P",
+        "Toyota GR010",
+        "Peugeot 9X8",
+        "Isotta Fraschini Tipo 6 LMH",
+      ],
+      "LMH",
+      200,
+      20,
+    ],
+  ]) {
+    for (const model of models) {
+      const profile = platform.hybridPlatform({ player: { model } });
+      assert.equal(profile.name, name);
+      for (let i = 0; i <= max / step; i++) {
+        assert.equal(
+          platform.deployMap({ map: i, mapMax: max / step }, profile),
+          i * step,
+        );
+        assert.equal(
+          platform.deployMap({ map: i * step, mapMax: max }, profile),
+          i * step,
+        );
+      }
+      for (const map of [-1, 7, max + step, null])
+        assert.equal(platform.deployMap({ map, mapMax: max }, profile), null);
+      assert.equal(platform.deployMap({ map: 1, mapMax: 99 }, profile), null);
+    }
+  }
+  assert.equal(
+    platform.hybridPlatform({ player: { model: "Ferrari 296 GT3" } }),
+    null,
+  );
+  assert.equal(
+    platform.hybridPlatform({
+      player: { id: 1 },
+      cars: [{ id: 2, vehicle: "Porsche 963" }],
+    }),
+    null,
+  );
+  assert.equal(
+    platform.hybridPlatform({
+      player: { id: 1 },
+      cars: [{ id: 1, vehicle: "Porsche 963 #6" }],
+    }).name,
+    "LMDh",
+  );
+});
+
+test("LMH recommendations stay on 20-unit steps and reject other platform history", () => {
+  const raw = hybridFrame();
+  raw.player.model = "Ferrari 499P";
+  raw.player.hybrid.map = 8;
+  raw.player.hybrid.mapMax = 10;
+  raw.hybridLaps = [160, 160, 140, 140].map((map) => ({
+    map,
+    platform: "LMH",
+    delta: map === 160 ? -1.4 : 1,
+    seconds: 120,
+  }));
+  const v = hybrid.hybridValues(raw, settings.hybrid);
+  assert.equal(v.platform, "LMH");
+  assert.equal(v.current, 160);
+  assert.equal(v.suggested, "~140");
+  raw.hybridLaps.forEach((lap) => {
+    lap.platform = "LMDh";
+  });
+  assert.equal(hybrid.hybridValues(raw, settings.hybrid).suggested, "-");
+  raw.player.model = "Unknown";
+  assert.equal(hybrid.hybridValues(raw, settings.hybrid).current, "-");
 });

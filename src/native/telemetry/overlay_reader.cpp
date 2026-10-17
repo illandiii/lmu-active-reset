@@ -200,6 +200,8 @@ static std::string serialize(const Frame &f, bool foreground) {
         n("fuel", t.mFuel);
         n("energy", t.mVirtualEnergy);
         n("fuelCapacity", t.mFuelCapacity);
+        o << ",\"model\":";
+        text(o, t.mVehicleModel);
         o << ",\"hybrid\":{\"state\":" << unsigned(t.mElectricBoostMotorState);
         n("battery", t.mBatteryChargeFraction);
         n("torque", t.mElectricBoostMotorTorque);
@@ -324,6 +326,7 @@ int main(int argc, char **argv) {
         match.telemetry.mElectricBoostMotorRPM = 10000;
         match.telemetry.mMotorMap = 3;
         match.telemetry.mMotorMapMax = 5;
+        strcpy(match.telemetry.mVehicleModel, "Porsche 963");
         match.scoring.mInRealtime = true;
         strcpy(match.telemetry.mFrontTireCompoundName, "Soft");
         data->telemetry.telemInfo[0] = match.telemetry;

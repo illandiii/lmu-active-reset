@@ -200,6 +200,26 @@ try {
     .locator(".widget-hybrid")
     .getByText("DEPLOY", { exact: true })
     .waitFor();
+  await page
+    .locator(".widget-hybrid")
+    .getByText("DEPLOY LMDh", { exact: true })
+    .waitFor();
+  await page
+    .locator(".widget-hybrid")
+    .getByText("~30", { exact: true })
+    .waitFor();
+  assert.equal(
+    await page
+      .locator('.widget-hybrid [data-column="recommendation"] > div')
+      .count(),
+    1,
+  );
+  assert.equal(
+    await page
+      .locator(".widget-hybrid > div")
+      .evaluate((el) => el.style.height),
+    "114px",
+  );
   const batteryColumn = page.getByRole("checkbox", {
     name: "Column Battery",
     exact: true,

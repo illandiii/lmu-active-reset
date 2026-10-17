@@ -84,7 +84,9 @@ compound and virtual-energy columns show the available data for each car and
 can be hidden independently.
 
 **Hybrid** shows battery charge, electric power and deploy/regen state. Set the
-battery target and the number of laps to reach it. Sector learns battery changes
+battery target and the number of laps to reach it. The deployment map automatically
+uses your car's range: 0 to 50 in steps of 10 for LMDh, or 0 to 200 in steps of 20
+for hybrid LMH. Sector learns battery changes
 from clean laps with a constant map; it suggests only maps observed over at least
 two laps each at a similar pace. The suggestion stays `-` until enough data exists.
 It does not change the map for you. Non-hybrid cars show `N/A`.

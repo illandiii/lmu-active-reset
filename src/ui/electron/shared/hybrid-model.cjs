@@ -1,16 +1,15 @@
+const {
+  hybridPlatform,
+  deployMap,
+  validDeployMap,
+  vehicleIdentity,
+} = require("./hybrid-platform.cjs");
 const finite = Number.isFinite;
 const available = (h) => [1, 2, 3].includes(h?.state);
 const battery = (h) =>
   available(h) && finite(h.battery) && h.battery >= 0 && h.battery <= 1
     ? h.battery
     : null;
-const mapKnown = (h) =>
-  Number.isInteger(h?.map) &&
-  Number.isInteger(h?.mapMax) &&
-  h.mapMax > 0 &&
-  h.map >= 0 &&
-  h.map <= h.mapMax &&
-  h.mapMax <= 255;
 
 class HybridHistory {
   constructor() {
@@ -19,9 +18,18 @@ class HybridHistory {
     this.laps = [];
   }
   update(raw) {
+    const identity = vehicleIdentity(raw);
+    if (identity !== this.identity) {
+      this.start = null;
+      this.previous = null;
+      this.laps = [];
+      this.identity = identity;
+    }
+    const platform = hybridPlatform(raw);
     const p = raw.player,
       h = p?.hybrid,
       charge = battery(h);
+    const map = deployMap(h, platform);
     const car = raw.cars?.find((c) => c.id === p?.id);
     if (!p || !available(h) || charge === null || !raw.driving) {
       this.start = null;
@@ -34,10 +42,11 @@ class HybridHistory {
         p.lap === this.start.lap + 1 &&
         this.start.clean &&
         car?.countLap === 2 &&
-        h.map === this.start.map
+        map === this.start.map
       ) {
         this.laps.unshift({
-          map: h.map,
+          map,
+          platform: platform.name,
           delta: (charge - this.start.charge) * 100,
           seconds: p.et - this.start.time,
         });
@@ -50,12 +59,12 @@ class HybridHistory {
         lap: p.lap,
         time: p.et,
         charge,
-        map: h.map,
-        clean: mapKnown(h),
+        map,
+        clean: map !== null,
       };
     if (
       this.start &&
-      (p.invalid || car?.pit || this.start.map !== h.map || !mapKnown(h))
+      (p.invalid || car?.pit || this.start.map !== map || map === null)
     )
       this.start.clean = false;
     this.previous = p.lap;
@@ -64,10 +73,11 @@ class HybridHistory {
 }
 
 function hybridValues(data, settings) {
+  const platform = data?.connected ? hybridPlatform(data) : null;
   const h = data?.connected ? data.player?.hybrid : null;
   const supported = available(h),
     charge = battery(h);
-  const current = supported && mapKnown(h) ? h.map : null;
+  const current = supported ? deployMap(h, platform) : null;
   // Mechanical power in kW from the SDK motor shaft torque and speed.
   const power =
     supported && finite(h.torque) && finite(h.rpm)
@@ -85,7 +95,8 @@ function hybridValues(data, settings) {
   const stats = new Map();
   for (const lap of records) {
     if (
-      !Number.isInteger(lap.map) ||
+      !validDeployMap(lap.map, platform) ||
+      lap.platform !== platform?.name ||
       !finite(lap.delta) ||
       !finite(lap.seconds) ||
       lap.seconds <= 0
@@ -101,13 +112,12 @@ function hybridValues(data, settings) {
   const trend = own.length ? mean(own, "delta") : null;
   let suggested = null;
   // Recommend only maps actually observed over complete clean laps at similar pace.
-  // The SDK map is an index; never invent LMH/LMDh power steps or per-step gains.
+  // Recommendations use the selected vehicle's deployment scale, not SDK indices.
   if (current !== null && charge !== null && own.length >= 2) {
     const pace = mean(own, "seconds");
     const candidates = [...stats].filter(
       ([map, laps]) =>
-        map >= 0 &&
-        map <= h.mapMax &&
+        validDeployMap(map, platform) &&
         laps.length >= 2 &&
         Math.abs(mean(laps, "seconds") / pace - 1) <= 0.05,
     );
@@ -128,11 +138,8 @@ function hybridValues(data, settings) {
       suggested = candidates[0][0];
     }
   }
-  // Large SDK map ranges use a compact visual scale without inventing valid steps.
-  const stepCount = current === null ? 0 : Math.min(16, h.mapMax + 1);
-  const marker = (value) =>
-    value === null ? -1 : Math.round((value / h.mapMax) * (stepCount - 1));
   return {
+    platform: supported ? platform?.name || "MAP" : "MAP",
     state: mode,
     stateBg:
       mode === "DEPLOY"
@@ -156,16 +163,6 @@ function hybridValues(data, settings) {
     current: current ?? "-",
     suggested: suggested === null ? "-" : `~${suggested}`,
     targetSoc: settings.targetSoc,
-    steps:
-      current === null
-        ? []
-        : Array.from({ length: stepCount }, (_, i) => ({
-            bg: i === marker(suggested) ? settings.accent : "rgba(0,0,0,0.5)",
-            border:
-              i === marker(current)
-                ? "1px solid #F2F4F6"
-                : "1px solid rgba(255,255,255,0.15)",
-          })),
   };
 }
 module.exports = { HybridHistory, hybridValues };

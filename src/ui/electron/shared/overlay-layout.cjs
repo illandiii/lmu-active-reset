@@ -30,9 +30,9 @@ function dimensions(id, settings, values) {
   }
   if (id === "hybrid") {
     height =
-      124 -
+      114 -
       (visible(settings, "bar") ? 0 : 20) -
-      (visible(settings, "recommendation") ? 0 : 46);
+      (visible(settings, "recommendation") ? 0 : 36);
   }
   if (id === "stint-planner") {
     const rows = ["energy", "fuel"].filter((key) =>

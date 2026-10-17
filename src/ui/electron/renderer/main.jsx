@@ -49,6 +49,7 @@ function App() {
   const [onboarding, setOnboarding] = useState(null);
   const tourStartTab = useRef("reset");
   const [quitting, setQuitting] = useState(false);
+  const backgroundAfterClose = useRef(false);
   const modalRef = useRef(null);
   const modalContent = useRef(null);
   if (modal) modalContent.current = modal;
@@ -212,6 +213,7 @@ function App() {
           <Menu.Root>
             <Menu.Trigger
               className="help-menu-trigger"
+              data-tour="settings"
               disabled={!settings || quitting}
             >
               Modifica
@@ -306,18 +308,6 @@ function App() {
             </Tabs.Tab>
             <Tabs.Indicator className="tab-indicator" />
           </Tabs.List>
-          <div className="header-tools">
-            <button
-              data-tour="settings"
-              className="settings-button"
-              aria-label="Settings"
-              title="Settings"
-              disabled={!settings || quitting}
-              onClick={() => setModal("settings")}
-            >
-              <Glyph icon={gear} />
-            </button>
-          </div>
         </header>
         <main className="scroll-area">
           <Tabs.Panel value="reset" className="page">
@@ -446,17 +436,19 @@ function App() {
             </div>
           )}
         </main>
-        <div
-          data-tour="connection"
-          className={`statusbar ${view.tone}`}
-          role="status"
-        >
-          <span className="connection">
-            <span className="dot" />
-            {view.title}
-          </span>
-          <span className="status-detail">{view.message}</span>
-        </div>
+        {tab === "reset" && (
+          <div
+            data-tour="connection"
+            className={`statusbar ${view.tone}`}
+            role="status"
+          >
+            <span className="connection">
+              <span className="dot" />
+              {view.title}
+            </span>
+            <span className="status-detail">{view.message}</span>
+          </div>
+        )}
       </Tabs.Root>
       {onboarding?.required && (
         <Onboarding
@@ -485,6 +477,12 @@ function App() {
       )}
       <Dialog.Root
         open={modal !== null}
+        onOpenChangeComplete={(open) => {
+          if (!open && backgroundAfterClose.current) {
+            backgroundAfterClose.current = false;
+            void api.background();
+          }
+        }}
         onOpenChange={(open) => {
           if (!open) setModal(null);
         }}
@@ -529,7 +527,7 @@ function App() {
                 className={shownModal === "settings" ? "sr-only" : undefined}
               >
                 {shownModal === "settings"
-                  ? "Appearance preferences."
+                  ? "Appearance and overlay display preferences."
                   : shownModal === "close"
                     ? "Keep your shortcuts active in the background, or quit Sector."
                     : captureHint}
@@ -550,8 +548,9 @@ function App() {
                   <button
                     className="primary"
                     onClick={() => {
+                      // Finish the exit animation before Chromium hides the window.
+                      backgroundAfterClose.current = true;
                       setModal(null);
-                      api.background();
                     }}
                   >
                     <Glyph icon={layers} />

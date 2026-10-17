@@ -33,7 +33,7 @@ export function GuidedTour({ saveKey, restoreKey, onTabChange, onFinish }) {
     {
       target: "settings",
       title: "Set your preferences",
-      text: "The gear opens app settings. Reduce motion minimizes interface animations. Preferences are saved automatically.",
+      text: "Open Modifica → Impostazioni to change app settings. Reduce motion minimizes interface animations. Preferences are saved automatically.",
       side: "bottom",
     },
     {

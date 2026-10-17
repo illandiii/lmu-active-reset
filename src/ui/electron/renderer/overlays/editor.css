@@ -8,17 +8,11 @@
 .overlay-toolbar .switch {
   margin-left: 0;
 }
-.overlay-toolbar select {
-  margin-left: auto;
-  max-width: 230px;
-  background: #1b2432;
-  border: 1px solid #ffffff16;
-  color: #d5deed;
-  font: inherit;
-  padding: 10px;
-  border-radius: 7px;
-}
 .layout-toggle {
+  width: 148px;
+  flex: 0 0 148px;
+  margin-left: auto;
+  justify-content: center;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -49,12 +43,6 @@
   font-size: 12px;
   padding: 14px 12px;
   border-radius: 7px;
-}
-.overlay-editor input[type="checkbox"] {
-  accent-color: #82acff;
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
 }
 .widget-stage {
   position: relative;
@@ -122,8 +110,8 @@
   cursor: pointer;
 }
 .overlay-parts {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-top: 20px;
 }
@@ -133,11 +121,6 @@
   gap: 7px;
   font-size: 11px;
   color: #c2ccdd;
-}
-.overlay-connection {
-  color: #9ba8bc;
-  font-size: 11px;
-  margin-top: 18px;
 }
 .overlay-error {
   color: #ffc1b3;
@@ -160,9 +143,6 @@
   .overlay-toolbar {
     flex-wrap: wrap;
   }
-  .overlay-toolbar select {
-    max-width: 180px;
-  }
   .overlay-controls {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -176,44 +156,83 @@
 }
 .overlay-editor input[type="checkbox"] {
   appearance: none;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   flex: none;
-  border: 2px solid #697b97;
-  border-radius: 6px;
+  border: 1px solid #64748b;
+  border-radius: 4px;
   background: #111a27;
   display: grid;
   place-content: center;
   margin: 0;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
 }
 .overlay-editor input[type="checkbox"]:checked {
-  background: #8db7ff;
-  border-color: #8db7ff;
+  background: #4f83de;
+  border-color: #6797e7;
+}
+.overlay-editor input[type="checkbox"]::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  clip-path: polygon(12% 44%, 39% 70%, 87% 18%, 100% 31%, 40% 94%, 0 57%);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 130ms ease,
+    transform 160ms var(--ease-out);
 }
 .overlay-editor input[type="checkbox"]:checked::after {
-  content: "";
-  width: 10px;
-  height: 6px;
-  border-left: 3px solid #102039;
-  border-bottom: 3px solid #102039;
-  transform: rotate(-45deg) translateY(-1px);
+  opacity: 1;
+  transform: scale(1);
 }
+.overlay-parts input[type="checkbox"] {
+  order: 2;
+  margin-left: auto;
+}
+
 .overlay-parts {
   gap: 8px;
   margin: 16px 0;
 }
 .overlay-parts label {
-  padding: 10px 12px;
-  border: 1px solid #ffffff18;
+  padding: 12px 14px;
+  min-height: 44px;
+  border: 1px solid #ffffff10;
   border-radius: 8px;
-  background: #192333;
+  background: #171f2b;
   cursor: pointer;
   font-size: 12px;
 }
 .overlay-parts label:has(:checked) {
-  border-color: #7299d6;
-  background: #243854;
+  border-color: #ffffff1c;
+  background: #1d293a;
 }
 .overlay-parts label:hover {
-  background: #304867;
+  background: #293a51;
+  border-color: #6f91c7;
+}
+
+.overlay-parts:empty {
+  display: none;
+}
+.overlay-parts label {
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+.overlay-parts label:focus-within {
+  outline: 2px solid #82acff;
+  outline-offset: 2px;
+}
+html[data-reduce-motion="true"] .overlay-editor input[type="checkbox"]::after {
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay-editor input[type="checkbox"]::after {
+    transition: none !important;
+  }
 }

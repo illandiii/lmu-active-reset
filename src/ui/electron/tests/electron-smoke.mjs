@@ -30,6 +30,7 @@ try {
     () => !document.querySelector(".key-button").disabled,
   );
   await page.evaluate(() => document.fonts.ready);
+  await app.evaluate(() => global.sectorTest.window().showInactive());
   const settle = () =>
     page.evaluate(() =>
       Promise.all(
@@ -129,6 +130,21 @@ try {
     .getByRole("menuitem", { name: "Impostazioni", exact: true })
     .click();
   await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
+  const display = page.getByRole("combobox", { name: "Display", exact: true });
+  await display.click();
+  await page.getByRole("option").nth(1).click();
+  await page.waitForFunction(async () => {
+    const value = await window.sector.initializeOverlays();
+    return value.config.displayId === value.displays[0].id;
+  });
+  await display.click();
+  await page
+    .getByRole("option", { name: "Primary display", exact: true })
+    .click();
+  await page.waitForFunction(
+    async () =>
+      (await window.sector.initializeOverlays()).config.displayId === null,
+  );
   await settle();
   await page.screenshot({ path: path.join(output, "settings.png") });
   assert.equal(
@@ -144,7 +160,10 @@ try {
   );
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await page.getByRole("dialog").waitFor({ state: "hidden" });
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Modifica", exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: "Impostazioni", exact: true })
+    .click();
   assert.equal(
     await page
       .getByRole("switch", { name: "Reduce motion" })

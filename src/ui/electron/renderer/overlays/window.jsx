@@ -9,6 +9,22 @@ const api = window.sectorOverlay;
 function OverlayWindow() {
   const [state, setState] = useState(null);
   const drag = useRef(null);
+  const resizeFrame = useRef(null);
+  function finishResize() {
+    cancelAnimationFrame(resizeFrame.current);
+    resizeFrame.current = null;
+    const current = drag.current;
+    drag.current = null;
+    if (current) void api.scale(current.latest);
+  }
+  useEffect(() => {
+    if (!state?.editing) finishResize();
+    return () => {
+      cancelAnimationFrame(resizeFrame.current);
+      resizeFrame.current = null;
+      drag.current = null;
+    };
+  }, [state?.editing]);
   useEffect(() => {
     let received = false;
     const off = api.onFrame((value) => {
@@ -63,17 +79,35 @@ function OverlayWindow() {
             className="resize-handle"
             aria-label="Resize widget"
             onPointerDown={(e) => {
+              if (e.button !== 0) return;
+              e.preventDefault();
               e.currentTarget.setPointerCapture(e.pointerId);
-              drag.current = { x: e.screenX, scale: settings.scale };
+              drag.current = {
+                x: e.screenX,
+                scale,
+                width: def.width,
+                latest: scale,
+              };
             }}
-            onPointerUp={(e) => {
-              if (drag.current) {
-                void api.scale(
-                  drag.current.scale + (e.screenX - drag.current.x) / def.width,
-                );
-                drag.current = null;
-              }
+            onPointerMove={(e) => {
+              if (!drag.current) return;
+              drag.current.latest = Math.max(
+                0.5,
+                Math.min(
+                  2,
+                  drag.current.scale +
+                    (e.screenX - drag.current.x) / drag.current.width,
+                ),
+              );
+              if (resizeFrame.current !== null) return;
+              resizeFrame.current = requestAnimationFrame(() => {
+                resizeFrame.current = null;
+                if (drag.current) void api.scale(drag.current.latest, false);
+              });
             }}
+            onPointerUp={finishResize}
+            onPointerCancel={finishResize}
+            onLostPointerCapture={finishResize}
             onKeyDown={(e) => {
               if (
                 ["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"].includes(

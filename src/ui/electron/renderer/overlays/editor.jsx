@@ -5,7 +5,7 @@ import { sampleValues } from "./sample-values.js";
 import model from "../../shared/overlay-model.cjs";
 import { Icon } from "@iconify/react";
 import lock from "@iconify-icons/solar/lock-keyhole-linear";
-import move from "@iconify-icons/solar/move-to-folder-linear";
+import move from "@iconify-icons/solar/move-square-linear";
 import "./editor.css";
 const api = window.sector;
 function NumberField({
@@ -16,7 +16,13 @@ function NumberField({
   step = 1,
   onCommit,
   suffix = "",
+  live = false,
 }) {
+  const [draft, setDraft] = useState(String(value));
+  const focused = useRef(false);
+  useEffect(() => {
+    if (!focused.current) setDraft(String(value));
+  }, [value]);
   return (
     <label className="overlay-field">
       <span>{label}</span>
@@ -24,16 +30,32 @@ function NumberField({
         <input
           aria-label={label}
           type="number"
-          key={value}
-          defaultValue={value}
+          value={draft}
           min={min}
           max={max}
           step={step}
-          onBlur={(e) => {
+          onFocus={() => {
+            focused.current = true;
+          }}
+          onChange={(e) => {
+            setDraft(e.target.value);
             const n = e.target.valueAsNumber;
-            if (Number.isFinite(n) && n >= min && n <= max && n !== value)
+            if (
+              live &&
+              Number.isFinite(n) &&
+              n >= min &&
+              n <= max &&
+              n !== value
+            )
               onCommit(n);
-            else e.target.value = value;
+          }}
+          onBlur={(e) => {
+            focused.current = false;
+            const n = e.target.valueAsNumber;
+            if (Number.isFinite(n) && n >= min && n <= max) {
+              if (n !== value) onCommit(n);
+              setDraft(String(n));
+            } else setDraft(String(value));
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") e.currentTarget.blur();
@@ -109,7 +131,7 @@ export function OverlayEditor() {
     ? model.valuesFor(selected, frame, setting)
     : sampleValues(selected, setting);
   const def = layout.dimensions(selected, setting, values);
-  const scale = Math.min(1, (width - 32) / def.width);
+  const scale = Math.min(setting.scale, (width - 32) / def.width);
   return (
     <div className="overlay-editor" data-tour="overlay-editor">
       <div className="overlay-toolbar">
@@ -123,23 +145,6 @@ export function OverlayEditor() {
           <span />
         </button>
         <span>Overlays</span>
-        <select
-          aria-label="Display"
-          value={config.displayId ?? ""}
-          onChange={(e) =>
-            save({
-              ...config,
-              displayId: e.target.value === "" ? null : Number(e.target.value),
-            })
-          }
-        >
-          <option value="">Primary display</option>
-          {state.displays.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.label}
-            </option>
-          ))}
-        </select>
         <button
           className="secondary layout-toggle"
           aria-pressed={state.editing}
@@ -219,8 +224,6 @@ export function OverlayEditor() {
                 {label}
               </label>
             ))}
-          </div>
-          <div className="overlay-parts">
             {(selected === "inputs"
               ? [
                   ["showClutch", "Clutch"],
@@ -259,6 +262,7 @@ export function OverlayEditor() {
             />
             <NumberField
               label="Size"
+              live
               value={Math.round(setting.scale * 100)}
               min={50}
               max={200}
@@ -275,15 +279,19 @@ export function OverlayEditor() {
               onCommit={(opacity) => update({ opacity: opacity / 100 })}
               suffix="%"
             />
-            <label className="overlay-field">
-              <span>Accent</span>
-              <input
-                type="color"
-                aria-label="Accent"
-                value={setting.accent}
-                onChange={(e) => update({ accent: e.target.value })}
-              />
-            </label>
+            {((selected === "inputs" && setting.showWheel) ||
+              (selected === "session-summary" &&
+                layout.visible(setting, "position"))) && (
+              <label className="overlay-field">
+                <span>Accent</span>
+                <input
+                  type="color"
+                  aria-label="Accent"
+                  value={setting.accent}
+                  onChange={(e) => update({ accent: e.target.value })}
+                />
+              </label>
+            )}
             {["leaderboard", "relative", "laps"].includes(selected) && (
               <NumberField
                 label="Rows"
@@ -312,7 +320,6 @@ export function OverlayEditor() {
           {error || state.error}
         </p>
       )}
-      {config.enabled && <p className="overlay-connection">{state.status}</p>}
     </div>
   );
 }

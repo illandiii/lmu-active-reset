@@ -21,6 +21,7 @@ try {
   await page.getByRole("tab", { name: "Overlay", exact: true }).click();
   await page.getByRole("switch", { name: "Enable overlays" }).waitFor();
   await page.evaluate(() => document.fonts.ready);
+  await app.evaluate(() => global.sectorTest.window().showInactive());
   await page.screenshot({
     path: path.join(output, "overlay-editor-inputs.png"),
   });
@@ -33,6 +34,7 @@ try {
     .getByRole("checkbox", { name: "Steering wheel", exact: true })
     .uncheck();
   assert.equal(await page.locator(".input-wheel").isVisible(), false);
+  assert.equal(await page.getByLabel("Accent", { exact: true }).count(), 0);
   await page
     .getByRole("checkbox", { name: "Steering wheel", exact: true })
     .check();
@@ -43,6 +45,19 @@ try {
     ["Opacity", "55"],
   ]) {
     await page.getByRole("spinbutton", { name, exact: true }).fill(value);
+    if (name === "Size") {
+      await page.waitForFunction(
+        async () =>
+          (await window.sector.initializeOverlays()).config.widgets.inputs
+            .scale === 1.25,
+      );
+      assert.equal(
+        await page
+          .getByRole("spinbutton", { name, exact: true })
+          .evaluate((node) => node === document.activeElement),
+        true,
+      );
+    }
     await page.getByRole("spinbutton", { name, exact: true }).press("Tab");
   }
   await page.waitForFunction(
@@ -65,6 +80,10 @@ try {
     "Session",
   ]) {
     await page.getByRole("button", { name, exact: true }).click();
+    assert.equal(
+      await page.getByLabel("Accent", { exact: true }).count(),
+      name === "Session" ? 1 : 0,
+    );
     await page.evaluate(() => document.fonts.ready);
     const widget = page.locator(".widget-stage .lmu-widget");
     await widget.screenshot({
@@ -110,10 +129,23 @@ try {
     for (const w of Object.values(config.widgets)) w.enabled = true;
     o.save(config);
   });
+  const editWidth = (
+    await page
+      .getByRole("button", { name: "Edit layout", exact: true })
+      .boundingBox()
+  ).width;
   await page.getByRole("button", { name: "Edit layout", exact: true }).click();
   await page
     .getByRole("button", { name: "Lock layout", exact: true })
     .waitFor();
+  assert.equal(
+    (
+      await page
+        .getByRole("button", { name: "Lock layout", exact: true })
+        .boundingBox()
+    ).width,
+    editWidth,
+  );
   await app.evaluate(async () => {
     const overlays = global.sectorTest.overlays();
     for (const win of overlays.windows.values()) {
@@ -131,12 +163,14 @@ try {
     }
   });
   const overlayPages = app.windows().filter((p) => p !== page);
+  let inputPage;
   for (const popup of overlayPages) {
     popup.on("pageerror", (e) => errors.push(e.message));
     await popup.locator(".lmu-widget").waitFor();
     const current = await popup.evaluate(() =>
       window.sectorOverlay.initialize(),
     );
+    if (current.id === "inputs") inputPage = popup;
     await popup.evaluate(() => document.fonts.ready);
     const chrome = await popup.addStyleTag({
       content: ".layout-handle,.resize-handle{display:none}",
@@ -177,6 +211,43 @@ try {
   assert.equal(inputs.visible, true);
   assert.equal(inputs.bounds.width, 650);
   assert.equal(inputs.focusable, true);
+  const resize = inputPage.getByRole("button", {
+    name: "Resize widget",
+    exact: true,
+  });
+  const handle = await resize.boundingBox();
+  const start = {
+    x: handle.x + handle.width / 2,
+    y: handle.y + handle.height / 2,
+  };
+  await inputPage.mouse.move(start.x, start.y);
+  await inputPage.mouse.down();
+  await inputPage.mouse.move(start.x + 52, start.y, { steps: 5 });
+  // Assert both native bounds and rendered scale change before releasing the mouse.
+  await inputPage.waitForFunction(
+    async () => (await window.sectorOverlay.initialize()).settings.scale > 1.3,
+  );
+  const liveWidth = await app.evaluate(
+    () => global.sectorTest.overlays().windows.get("inputs").getBounds().width,
+  );
+  assert.ok(liveWidth > inputs.bounds.width);
+  assert.ok(
+    await inputPage
+      .locator(".widget-scale")
+      .evaluate(
+        (node) => new DOMMatrix(getComputedStyle(node).transform).a > 1.3,
+      ),
+  );
+  await inputPage.mouse.move(start.x + 78, start.y, { steps: 3 });
+  await inputPage.mouse.up();
+  await inputPage.waitForFunction(
+    async () => (await window.sectorOverlay.initialize()).settings.scale > 1.35,
+  );
+  assert.equal(
+    await app.evaluate(() => global.sectorTest.overlays().scaleTimer),
+    null,
+  );
+  await inputPage.evaluate(() => window.sectorOverlay.scale(1.25));
   // Exercise actual BrowserWindow movement and persisted coordinates.
   await app.evaluate(() =>
     global.sectorTest.overlays().windows.get("inputs").setPosition(130, 210),
@@ -195,6 +266,7 @@ try {
     0,
   );
   await page.getByRole("switch", { name: "Enable overlays" }).click();
+  assert.equal(await page.locator(".overlay-connection").count(), 0);
   await page.waitForFunction(
     async () => (await window.sector.initializeOverlays()).config.enabled,
   );

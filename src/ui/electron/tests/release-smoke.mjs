@@ -39,6 +39,7 @@ try {
   await page
     .getByRole("button", { name: "Change save shortcut, F6", exact: true })
     .waitFor();
+  await app.evaluate(() => global.sectorTest.window().showInactive());
   assert.equal(await app.evaluate(({ app }) => app.getVersion()), version);
   assert.equal(await app.evaluate(({ app }) => app.isPackaged), true);
   assert.equal(

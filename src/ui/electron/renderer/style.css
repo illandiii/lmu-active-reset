@@ -768,16 +768,6 @@ html[data-input="keyboard"] *::before {
   }
 }
 
-.settings-button {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 9px;
-  background: #1b2432;
-  color: #c1d2ee;
-  flex: none;
-}
 .checkpoint-title {
   font-size: 30px;
   font-weight: 500;
@@ -1004,12 +994,6 @@ textarea {
   user-select: text;
   -webkit-user-select: text;
 }
-.header-tools {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
 .window-controls svg {
   width: 16px;
   height: 16px;
@@ -1128,6 +1112,87 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+.preference-category {
+  margin: 22px 0 12px;
+  color: #8fa1ba;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.display-settings {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+}
+.preference-label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.display-select {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #ffffff1c;
+  border-radius: 8px;
+  background: #222d3e;
+  color: #e1e9f7;
+  font-size: 12px;
+  text-align: left;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+.display-select:hover,
+.display-select[data-popup-open] {
+  background: #2c3e57;
+  border-color: #7599d2;
+}
+.display-select svg,
+.display-option svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.display-chevron {
+  margin-left: auto;
+  display: flex;
+  transition: transform 160ms ease;
+}
+.display-select[data-popup-open] .display-chevron {
+  transform: rotate(180deg);
+}
+.display-positioner {
+  z-index: 120;
+}
+.display-popup {
+  min-width: var(--anchor-width);
+  max-width: calc(100vw - 32px);
+  max-height: var(--available-height);
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid #ffffff24;
+  border-radius: 9px;
+  background: #1b2636;
+  box-shadow: 0 12px 30px #0007;
+}
+.display-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+.display-option[data-highlighted] {
+  background: #304867;
 }
 
 /* Animate the popup itself, leaving its positioning container and focus intact. */

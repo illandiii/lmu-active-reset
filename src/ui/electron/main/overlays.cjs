@@ -54,6 +54,7 @@ class Overlays {
   }
   setEditing(value) {
     if (typeof value !== "boolean") throw new Error("Invalid edit mode.");
+    if (!value) this.flushScale();
     this.editing = value;
     this.sync();
     return this.state();
@@ -200,19 +201,38 @@ class Overlays {
         scale: this.windowBounds(id).scale,
       };
     });
-    ipcMain.handle("sector:overlay-scale", (event, scale) => {
+    ipcMain.handle("sector:overlay-scale", (event, scale, commit = true) => {
       const id = owner(event);
-      if (!this.editing || !Number.isFinite(scale)) return;
-      const config = structuredClone(this.config);
-      config.widgets[id].scale = Math.max(0.5, Math.min(2, scale));
-      return this.save(config);
+      if (
+        !this.editing ||
+        !Number.isFinite(scale) ||
+        typeof commit !== "boolean"
+      )
+        return;
+      this.config.widgets[id].scale = Math.max(0.5, Math.min(2, scale));
+      // Resize native windows immediately; coalesce disk writes while dragging.
+      clearTimeout(this.scaleTimer);
+      if (commit) {
+        this.scaleTimer = null;
+        return this.save(this.config);
+      }
+      this.scaleTimer = setTimeout(() => this.flushScale(), 200);
+      this.sync();
+      return { ok: true };
     });
     ipcMain.handle("sector:overlay-lock", (event) => {
       owner(event);
       return this.setEditing(false);
     });
   }
+  flushScale() {
+    if (!this.scaleTimer) return;
+    clearTimeout(this.scaleTimer);
+    this.scaleTimer = null;
+    this.save(this.config);
+  }
   stop() {
+    this.flushScale();
     this.closed = true;
     clearTimeout(this.moveTimer);
     this.telemetry.stop();

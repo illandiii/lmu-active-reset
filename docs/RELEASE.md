@@ -1,4 +1,4 @@
-# Sector 0.1.5 for Windows x64
+# Sector 0.1.6 for Windows x64
 
 The portable release starts with `Sector.exe`. Keep its adjacent resources and DLLs.
 It includes Electron, embedded CPython 3.13.12, the overlay reader, telemetry diagnostic
@@ -13,11 +13,11 @@ Node/Python. This build is unsigned.
    into `work/release-tools/`. The release script checks its pinned SHA-256.
 3. In `src/ui/electron`, run `npm ci`, `node node_modules/electron/install.js`, `npm run release`,
    then `npm run test:release`.
-   The output is `releases/Sector-0.1.5-win-x64`. Existing outputs are never overwritten.
+   The output is `releases/Sector-0.1.6-win-x64`. Existing outputs are never overwritten.
 
 Packaging follows Electron's [manual distribution layout](https://www.electronjs.org/docs/latest/tutorial/application-distribution)
 and uses Python's [embedded distribution](https://docs.python.org/3/using/windows.html#the-embeddable-package).
-The executable has the Sector icon and file/product version 0.1.5. Native binary
+The executable has the Sector icon and file/product version 0.1.6. Native binary
 hashes are checked against the shipped compatibility profiles. SDK headers, game
 binaries, captures, developer tools and machine-specific installation paths are excluded.
 
@@ -60,4 +60,4 @@ Old documentation references to removed scripts describe historical experiments;
 the original scripts can be recovered from Git history.
 
 `dev` contains development releases. `prod` is the default branch and is promoted
-only on explicit user request; creating 0.1.5 does not promote it to production.
+only on explicit user request; creating 0.1.6 does not promote it to production.

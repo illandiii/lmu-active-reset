@@ -1,10 +1,12 @@
 import React from "react";
 import { Icon } from "@iconify/react";
 import play from "@iconify-icons/solar/play-linear";
+import { DisplaySettings } from "./overlays/display-settings.jsx";
 
 export function Preferences({ settings, pending, updateSettings }) {
   return (
     <div className="preferences">
+      <h3 className="preference-category">Appearance</h3>
       <div className="setting-row motion-setting">
         <h3 id="motion-label">Reduce motion</h3>
         <button
@@ -23,6 +25,7 @@ export function Preferences({ settings, pending, updateSettings }) {
           <span />
         </button>
       </div>
+      <DisplaySettings />
     </div>
   );
 }
